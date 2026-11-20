@@ -40,3 +40,17 @@ El workflow `.github/workflows/verificar-tema.yml` ejecuta pruebas de navegació
 GitHub Actions despliega el frontend estático por FTPS. Se transfieren solo HTML, CSS, JS y logo, no carpetas de desarrollo ni datos sensibles. La carpeta Laravel `/htdocs/api-v2` permanece separada y protegida.
 
 **No subir un `.env` o credenciales de la base en este repositorio.**
+
+
+## Integración JWT V2 — actualización de noviembre 2026
+La versión actual conserva los siete padres originales: Inicio, Pedidos, Clientes, Productos, Inventario, Informes y Administración. Debajo de Productos están las diez clasificaciones; debajo de Administración está Perfiles y permisos.
+
+La interfaz de catálogos admite **dos modos separados**:
+- **Demostración local**, sin cuenta real y con datos de `localStorage`. No equivale a información de la empresa ni autoriza uso de MySQL.
+- **Catálogos autenticados**, usando `assets/js/catalogos-api.js`: inicio de sesión Laravel en `/api/v1/sesion`, JWT HS256 tipo Bearer, token solo en memoria, permisos de lectura/escritura por rol y revocación con `DELETE /api/v1/sesion`. Cada acción autenticada se valida en backend.
+
+**No se deben confundir:** los demás CRUD del prototipo (Pedidos/Clientes/Inventario/Informes) aún no están integrados al backend productivo. El backend Laravel está protegido y el gateway `/api` devuelve estado no habilitado hasta instalar las migraciones y la configuración privada correctas.
+
+Prueba de integración completa con navegador, Laravel y MySQL temporal: [GitHub Actions](https://github.com/msanzana/rutahyd2front/actions/runs/44749026047). No se accedió a MySQL de producción ni se usaron contraseñas de usuarios reales.
+
+**Nunca publicar usuario/contraseña reales, hash ni secreto JWT en este repositorio.** Para preparar la instalación consultar `docs/JWT_ADMIN_PRODUCCION.md` del backend.
