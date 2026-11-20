@@ -12,10 +12,10 @@ async function stubApi(page,role,permissions,callbacks={}) {
       status, contentType:'application/json',body:JSON.stringify(value)
     });
     if(path==='/api/v1/sesion')return respond({
-      token:'a'.repeat(64),
+      token:'ciHeader.ciPayload.ciSignature',token_type:'Bearer',
       usuario:{id:2,nombre:'Usuario de prueba',rol:role,permisos:permissions}
     });
-    if(req.headers().authorization!=='Bearer '+'a'.repeat(64))
+    if(req.headers().authorization!=='Bearer '+'ciHeader.ciPayload.ciSignature')
       return respond({error:'Token inválido'},401);
     if(path==='/api/v1/perfiles/usuarios'){
       return respond({usuarios:[
