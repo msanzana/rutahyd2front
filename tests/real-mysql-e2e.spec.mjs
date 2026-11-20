@@ -26,7 +26,7 @@ test('navegador real conecta frontend, Laravel, MySQL y respeta los padres del m
   // Los siete padres V2 deben conservar su posición relativa.
   const padres=await page.locator('.sidebar .nav > [data-nav],.sidebar .nav > .nav-group')
     .evaluateAll(items=>items.map(item=>item.dataset.nav || item.querySelector('[data-nav]')?.dataset.nav));
-  expect(padres.filter(Boolean).slice(0,7)).toEqual([
+  expect(padres.filter(Boolean)).toEqual([
     'inicio','pedidos','clientes','productos','inventario','informes','administracion'
   ]);
 
