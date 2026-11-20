@@ -17,6 +17,15 @@ async function stubApi(page,role,permissions,callbacks={}) {
     });
     if(req.headers().authorization!=='Bearer '+'a'.repeat(64))
       return respond({error:'Token inválido'},401);
+    if(path==='/api/v1/perfiles/usuarios'){
+      return respond({usuarios:[
+        {id:1,nombre:'Administrador',correo_electronico:'admin@example.cl',perfil:'Administrador',rol_id:1,activo:1},
+        {id:22,nombre:'Vendedor de prueba',correo_electronico:'vendedor@example.cl',perfil:'Vendedor',rol_id:2,activo:1}
+      ]});
+    }
+    if(path==='/api/v1/perfiles/usuarios/22/rol'&&req.method()==='PUT'){
+      callbacks.assignment=req.postDataJSON();return respond({actualizado:true,usuario_id:22});
+    }
     if(path==='/api/v1/perfiles/catalogos'){
       const values={};
       CATALOGS.forEach(k=>values[k]={ver:false,gestionar:false});
@@ -88,4 +97,9 @@ test('administrador gestiona permiso Ver y Gestionar de cada rol',async({page})=
   await page.locator('#rolesForm button[type="submit"]').click();
   await expect.poll(()=>state.saved?.modulos?.marcas?.gestionar).toBe(true);
   expect(state.saved.modulos.marcas.ver).toBe(true);
+  await expect(page.locator('#usersProfiles')).toContainText('Vendedor de prueba');
+  const user=page.locator('#usersProfiles tbody tr').filter({hasText:'Vendedor de prueba'});
+  await user.locator('select').selectOption('2');
+  await user.getByRole('button',{name:'Asignar'}).click();
+  await expect.poll(()=>state.assignment?.rol_id).toBe(2);
 });
