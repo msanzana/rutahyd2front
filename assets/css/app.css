@@ -236,3 +236,10 @@ button{cursor:pointer}a{color:inherit}h1,h2,h3,p{margin-top:0}
 .sidebar .nav{min-height:0;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:rgba(223,186,250,.4) transparent}
 .sidebar .nav::-webkit-scrollbar{width:5px}
 .sidebar .nav::-webkit-scrollbar-thumb{background:rgba(223,186,250,.4);border-radius:7px}
+
+.profiles-users{margin-top:28px;border-top:1px solid var(--line);padding-top:20px}
+.profiles-users h3{margin:0 0 8px}
+.profile-user-assignment{display:flex;align-items:center;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.profile-user-assignment select{width:auto;min-width:128px;max-width:185px}
+.profile-user-assignment small{color:var(--muted)}
+@media(max-width:650px){.profile-user-assignment{justify-content:center}.permissions-table{min-width:560px}}
