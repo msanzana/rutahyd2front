@@ -31,9 +31,9 @@ test('sesión remota, catálogos CRUD y clasificación con API simulada', async 
     requests.push({path,method:request.method(),authorization:request.headers().authorization||null});
     if(path==='/api/v1/sesion'){
       return route.fulfill({status:200,contentType:'application/json',
-        body:JSON.stringify({token:'a'.repeat(64),usuario:{nombre:'Administrador',rol:'administrador',permisos:['productos.gestionar']}})});
+        body:JSON.stringify({token:'ciHeader.ciPayload.ciSignature',token_type:'Bearer',usuario:{nombre:'Administrador',rol:'administrador',permisos:['productos.gestionar']}})});
     }
-    if(request.headers().authorization!=='Bearer '+'a'.repeat(64))
+    if(request.headers().authorization!=='Bearer '+'ciHeader.ciPayload.ciSignature')
       return route.fulfill({status:401,body:'{}'});
     const match=path.match(/^\/api\/v1\/catalogos\/([a-z_]+)(?:\/(\d+))?$/);
     if(match){
@@ -89,7 +89,7 @@ test('sesión remota, catálogos CRUD y clasificación con API simulada', async 
   await form.getByRole('button',{name:'Guardar clasificación en MySQL'}).click();
   await expect(page.locator('#remoteStatus')).toContainText('Clasificación guardada');
   expect(requests.some(x=>x.path==='/api/v1/productos/123/clasificacion'&&x.method==='PATCH')).toBeTruthy();
-  expect(requests.filter(x=>x.path.includes('/catalogos/')).every(x=>x.authorization==='Bearer '+'a'.repeat(64))).toBeTruthy();
+  expect(requests.filter(x=>x.path.includes('/catalogos/')).every(x=>x.authorization==='Bearer '+'ciHeader.ciPayload.ciSignature')).toBeTruthy();
   await page.locator('#adminRemoto').getByRole('button',{name:'Cerrar sesión remota'}).click();
   await expect(page.locator('#adminRemoto input[type="password"]')).toBeVisible();
 });
