@@ -204,13 +204,13 @@
     $('#breadcrumbCurrent').textContent = key ? 'Productos / '+catalogos.CONFIG[key].title : SECTION_NAMES[current];
     updateProductMenu();
     if(key||current==='productos')setProductExpanded(true);
-    $('[data-nav].nav-sublink').forEach(button=>{
+    $$('[data-nav].nav-sublink').forEach(button=>{
       const selected=button.dataset.nav===current;
       button.classList.toggle('active',selected);
       if(selected)button.setAttribute('aria-current','page');
       else button.removeAttribute('aria-current');
     });
-    $('[data-nav].nav-link').forEach(button => {
+    $$('[data-nav].nav-link').forEach(button => {
       const selected = button.dataset.nav === current || (button.dataset.nav==='productos' && Boolean(key));
       button.classList.toggle('active',selected);
       if (selected) button.setAttribute('aria-current','page'); else button.removeAttribute('aria-current');
