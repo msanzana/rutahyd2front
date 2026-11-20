@@ -121,6 +121,7 @@
     productRecords=typeof productProvider==='function'?productProvider:()=>[];
     // La sección se monta dentro de la pantalla Administración sin cambiar el resto de la app.
     const root=$('#workspaceContent');if(!root)return;
+    if($('#catalogAdmin',root)){render();return;}
     const wrapper=el('section','catalog-admin');
     wrapper.id='catalogAdmin';
     wrapper.innerHTML='<div class="catalog-intro"><div><span class="overline">MAESTROS COMERCIALES</span><h2>Clasificación y atributos de productos</h2><p>Administra la jerarquía Rubro → Departamento → Familia → Línea, marcas, modelos y atributos. Todo queda en este navegador.</p></div></div><div class="catalog-admin-grid"><aside class="catalog-sidebar" aria-label="Catálogos de administración"><h3>Catálogos</h3><div class="catalog-tabs" id="catalogTabs"></div></aside><section class="catalog-main"><div id="catalogContent"></div></section></div>';
