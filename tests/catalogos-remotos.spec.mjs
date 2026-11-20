@@ -4,9 +4,10 @@ test('administración remota pide login y mantiene demo local independiente', as
   await page.goto('/#administracion');
   await expect(page.locator('#adminRemoto')).toContainText('Administración MySQL');
   await expect(page.locator('#catalogAdmin')).toHaveCount(0);
+  await page.locator('#toggleProductSubnav').click();
   await page.locator('[data-nav="catalogos.rubros"]').click();
   await expect(page.locator('#catalogAdmin')).toBeVisible();
-  await page.locator('[data-nav="administracion"]').click();
+  await page.locator('.nav-link[data-nav="administracion"]').click();
   await expect(page.locator('#adminRemoto input[type="password"]')).toBeVisible();
   await expect(page.locator('#adminRemoto')).not.toContainText('Guardar clasificación en MySQL');
 });
