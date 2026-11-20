@@ -99,6 +99,9 @@
     configure, authenticate, login, signOut,
     profile: () => send('/perfil'),
     roleCatalogPermissions: () => send('/perfiles/catalogos'),
+    usersForProfiles: () => send('/perfiles/usuarios'),
+    assignUserRole: (userId,roleId) =>
+      send('/perfiles/usuarios/' + id(userId) + '/rol','PUT',{rol_id:Number(id(roleId))}),
     saveRoleCatalogPermissions: (roleId, modulos) =>
       send('/perfiles/' + id(roleId) + '/catalogos','PUT',{modulos}),
     list: (catalogo) => send('/catalogos/' + key(catalogo)),
