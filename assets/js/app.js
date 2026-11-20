@@ -10,6 +10,7 @@
   };
   const DEFAULT_DATA = () => ({ pedidos: [], clientes: [], productos: [], activity: [] });
   const db = loadData();
+  const catalogos = window.RutaCatalogos;
   let view = 'inicio';
   let query = '';
   let editing = null;
@@ -65,13 +66,22 @@
       fields:[
         {key:'codigo',label:'Código / SKU',type:'text',required:true,max:40},
         {key:'nombre',label:'Nombre del producto',type:'text',required:true,max:120},
-        {key:'categoria',label:'Categoría',type:'text',max:70},
+        {key:'rubroId',label:'Rubro',type:'catalog',catalog:'rubros',required:true},
+        {key:'departamentoId',label:'Departamento',type:'catalog',catalog:'departamentos',required:true},
+        {key:'familiaId',label:'Familia',type:'catalog',catalog:'familias',required:true},
+        {key:'lineaId',label:'Línea',type:'catalog',catalog:'lineas',required:true},
+        {key:'marcaId',label:'Marca',type:'catalog',catalog:'marcas',required:true},
+        {key:'modeloId',label:'Modelo',type:'catalog',catalog:'modelos',required:true},
+        {key:'tipoUnidadId',label:'Tipo de unidad',type:'catalog',catalog:'tipos_unidad',required:true},
+        {key:'gramajeId',label:'Gramos',type:'catalog',catalog:'gramajes',required:true},
+        {key:'tipoEnvasadoId',label:'Tipo de envasado',type:'catalog',catalog:'tipos_envasado',required:true},
+        {key:'condicionTributariaId',label:'Condición tributaria',type:'catalog',catalog:'condiciones_tributarias',required:true},
         {key:'precio',label:'Precio (CLP)',type:'number',required:true,min:0,step:'1'},
         {key:'stock',label:'Stock actual',type:'number',required:true,min:0,step:'1'},
         {key:'minimo',label:'Stock mínimo',type:'number',required:true,min:0,step:'1'},
         {key:'estado',label:'Estado',type:'select',options:['Activo','Inactivo'],required:true}
       ],
-      columns:[['codigo','SKU'],['nombre','Producto'],['categoria','Categoría'],['precio','Precio'],['stock','Stock'],['estado','Estado']]
+      columns:[['codigo','SKU'],['nombre','Producto'],['lineaId','Línea'],['marcaId','Marca'],['modeloId','Modelo'],['gramajeId','Gramos'],['condicionTributariaId','IVA'],['precio','Precio'],['stock','Stock'],['estado','Estado']]
     },
     pedidos: {
       title:'Pedidos', singular:'pedido', description:'Registra y da seguimiento a pedidos de demostración.',
@@ -229,7 +239,7 @@
     const kinds = {
       inventario:{title:'Inventario',description:'Supervisa existencias y edita el stock de los productos de prueba.',eyebrow:'CONTROL DE EXISTENCIAS',singular:'producto'},
       informes:{title:'Informes',description:'Consulta indicadores y exporta reportes de tus registros locales.',eyebrow:'REPORTES OPERATIVOS'},
-      administracion:{title:'Administración',description:'Información del entorno local y sus controles.',eyebrow:'CONFIGURACIÓN'}
+      administracion:{title:'Administración',description:'Maestros de clasificación, marcas, presentaciones, gramajes y condición tributaria.',eyebrow:'CATÁLOGOS Y CONFIGURACIÓN'}
     };
     const cfg=definitions[view] || kinds[view];
     $('#workspaceEyebrow').textContent = cfg.eyebrow || 'GESTIÓN COMERCIAL';
@@ -239,7 +249,7 @@
     $('#exportButton').hidden = view === 'administracion';
     $('#newButtonText').textContent='Nuevo '+(cfg.singular || 'registro');
     if (view==='informes') renderReports();
-    else if (view==='administracion') renderAdmin();
+    else if (view==='administracion') { renderAdmin(); catalogos?.mount(()=>db.productos); }
     else renderTable(view === 'inventario' ? 'productos' : view);
   }
 
@@ -247,12 +257,13 @@
     const rows=db[kind] || [];
     if (!query) return rows.slice();
     const find=safeText(query);
-    return rows.filter(row=>Object.values(row).some(value=>safeText(value).includes(find)));
+    return rows.filter(row=>Object.entries(row).some(([key,value])=>safeText(value).includes(find)||(catalogos?.LABELS[key]&&safeText(catalogos.productLabel(key,value)).includes(find))));
   }
 
   function formatCell(row,key) {
     if (key==='precio'||key==='total') return money(row[key]);
     if (key==='fecha') return displayDate(row[key]);
+    if (catalogos?.LABELS[key]) return catalogos.productLabel(key,row[key]);
     return valueString(row[key]) || '—';
   }
 
@@ -363,6 +374,10 @@
 
   function openForm(kind,id) {
     if (!definitions[kind]) return;
+    if (kind==='productos' && id===null && !catalogos.canCreateProduct()) {
+      toast('warning','Completa los catálogos','Debes configurar rubro, departamento, familia, línea, marca, modelo, unidad, gramos y envasado en Administración.');
+      navigate('administracion');return;
+    }
     if (kind==='pedidos' && !db.clientes.length) {
       toast('warning','Primero agrega un cliente','Para crear un pedido es necesario seleccionar un cliente registrado.');
       navigate('clientes');return;
@@ -383,9 +398,9 @@
       if(field.required) label.appendChild(node('span','required','*'));
       row.appendChild(label);
       let control;
-      if (field.type==='select'||field.type==='client') {
+      if (field.type==='select'||field.type==='client'||field.type==='catalog') {
         control=node('select');
-        const options=field.type==='client'?db.clientes.filter(c=>c.estado!=='Inactivo').map(c=>c.nombre):field.options;
+        const options=field.type==='client'?db.clientes.filter(c=>c.estado!=='Inactivo').map(c=>c.nombre):(field.type==='catalog'?[]:field.options);
         if(field.type==='client') {
           const blank=node('option','', 'Selecciona un cliente');blank.value='';control.appendChild(blank);
         }
@@ -402,12 +417,13 @@
       if(field.max) control.maxLength=field.max;
       if(field.placeholder) control.placeholder=field.placeholder;
       control.id='field-'+field.key;control.name=field.key;control.required=!!field.required;
-      if (record) control.value=valueString(record[field.key]);
+      if (record && field.type!=='catalog') control.value=valueString(record[field.key]);
       else if(field.key==='fecha') control.value=today();
       else if(field.key==='estado') control.value=(field.options||[])[0]||'';
       else if (field.type==='number') control.value='0';
       row.appendChild(control);area.appendChild(row);
     });
+    if(kind==='productos') catalogos.attachProductForm(area,record);
     $('#formDialog').showModal();
     setTimeout(()=>area.querySelector('input,select,textarea')?.focus(),30);
   }
@@ -437,6 +453,20 @@
         }
         values[field.key]=val;
       } else values[field.key]=raw;
+      if(field.type==='catalog'&&raw&&!catalogos.catalog(field.catalog).some(r=>String(r.id)===raw&&r.activo!==false)){
+        input.setAttribute('aria-invalid','true');error.textContent='Selecciona un '+field.label+' válido y activo.';error.hidden=false;input.focus();return;
+      }
+    }
+    if(kind==='productos') {
+      const pairs=[['departamentos','departamentoId','rubroId'],['familias','familiaId','departamentoId'],
+                   ['lineas','lineaId','familiaId'],['modelos','modeloId','marcaId']];
+      for (const [table,child,parent] of pairs) {
+        const record=catalogos.catalog(table).find(x=>String(x.id)===values[child]);
+        if (!record||String(record.parentId)!==values[parent]) {
+          error.textContent='La clasificación seleccionada no es coherente: '+child+'.';
+          error.hidden=false;return;
+        }
+      }
     }
     const unique = kind==='clientes'?'rut':kind==='productos'?'codigo':'numero';
     if(db[kind].some(row=>String(row.id)!==String(id) && safeText(row[unique])===safeText(values[unique]))) {
@@ -474,6 +504,7 @@
     if(!pendingConfirm) return;
     if(pendingConfirm.type==='reset') {
       Object.assign(db,DEFAULT_DATA());
+      catalogos?.reset();
       persist();toast('success','Demostración reiniciada','Todos los registros locales fueron eliminados.');
     } else {
       const {kind,id}=pendingConfirm;
@@ -510,7 +541,7 @@
       return '"'+text.replaceAll('"','""')+'"';
     };
     const rows=[cfg.fields.map(field=>protectExcel(field.label)).join(';')];
-    db[kind].forEach(rec=>rows.push(fields.map(k=>protectExcel(rec[k])).join(';')));
+    db[kind].forEach(rec=>rows.push(fields.map(k=>protectExcel(catalogos?.LABELS[k]?catalogos.productLabel(k,rec[k]):rec[k])).join(';')));
     const blob=new Blob(['\ufeff'+rows.join('\r\n')],{type:'text/csv;charset=utf-8'});
     const uri=URL.createObjectURL(blob);
     const a=document.createElement('a');a.href=uri;a.download='rutahd2-'+kind+'-'+today()+'.csv';a.click();
@@ -522,6 +553,9 @@
     renderHome();
     if(view!=='inicio') renderWorkspace();
   }
+
+  window.RutaHDAvisos={toast};
+  if(catalogos) catalogos.onChange=()=>{if(view==='administracion')catalogos.mount(()=>db.productos);};
 
   document.addEventListener('click',(e)=>{
     const nav=e.target.closest('[data-nav]');
