@@ -52,6 +52,7 @@ jobs:
           APP_ENV: testing
           APP_DEBUG: 'false'
           APP_KEY: 'base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA='
+          RUTAHD_JWT_SECRET: 'CI_ONLY_JWT_TEST_SIGNING_KEY_DO_NOT_USE_IN_PRODUCTION_2026'
           APP_URL: 'http://127.0.0.1:8000'
           DB_CONNECTION: mysql
           DB_HOST: '127.0.0.1'
@@ -73,6 +74,7 @@ jobs:
           APP_ENV: testing
           APP_DEBUG: 'false'
           APP_KEY: 'base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA='
+          RUTAHD_JWT_SECRET: 'CI_ONLY_JWT_TEST_SIGNING_KEY_DO_NOT_USE_IN_PRODUCTION_2026'
           APP_URL: 'http://127.0.0.1:8000'
           DB_CONNECTION: mysql
           DB_HOST: '127.0.0.1'
