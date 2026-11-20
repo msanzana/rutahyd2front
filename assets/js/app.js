@@ -179,7 +179,10 @@
     const authorized=allowedCatalogs();
     const showParent=!access()?.authenticated() || access().has('productos.gestionar') || authorized.length>0;
     $('#productsNavGroup').hidden=!showParent;
-    $('#navPerfiles').hidden=!(access()?.authenticated()&&access()?.isAdmin());
+    const adminVisible=Boolean(access()?.authenticated()&&access()?.isAdmin());
+    $('#navPerfiles').hidden=!adminVisible;
+    $('#toggleAdminSubnav').hidden=!adminVisible;
+    if(!adminVisible)setAdminExpanded(false);
     const list=$('#productSubnav [data-nav="productos"]');
     if(list)list.hidden=Boolean(access()?.authenticated()&&!access().has('productos.gestionar'));
     if(!authorized.length && access()?.authenticated() && !access().has('productos.gestionar')) {
@@ -191,6 +194,12 @@
     $('#productSubnav').hidden=!expanded;
     $('#toggleProductSubnav').setAttribute('aria-expanded',expanded?'true':'false');
     $('#toggleProductSubnav').setAttribute('aria-label',expanded?'Contraer submódulos de Productos':'Expandir submódulos de Productos');
+  }
+  function setAdminExpanded(expanded) {
+    const expand=Boolean(expanded&&access()?.authenticated()&&access()?.isAdmin());
+    $('#adminSubnav').hidden=!expand;
+    $('#toggleAdminSubnav').setAttribute('aria-expanded',expand?'true':'false');
+    $('#toggleAdminSubnav').setAttribute('aria-label',expand?'Contraer submódulos de Administración':'Expandir submódulos de Administración');
   }
   function navigate(section) {
     if(section==='productos' && !canNavigate(section) && allowedCatalogs().length) section='catalogos.'+allowedCatalogs()[0];
@@ -204,6 +213,7 @@
     $('#breadcrumbCurrent').textContent = key ? 'Productos / '+catalogos.CONFIG[key].title : SECTION_NAMES[current];
     updateProductMenu();
     if(key||current==='productos')setProductExpanded(true);
+    if((current==='administracion'||current==='perfiles')&&access()?.isAdmin())setAdminExpanded(true);
     $$('[data-nav].nav-sublink').forEach(button=>{
       const selected=button.dataset.nav===current;
       button.classList.toggle('active',selected);
@@ -211,7 +221,7 @@
       else button.removeAttribute('aria-current');
     });
     $$('[data-nav].nav-link').forEach(button => {
-      const selected = button.dataset.nav === current || (button.dataset.nav==='productos' && Boolean(key));
+      const selected = button.dataset.nav === current || (button.dataset.nav==='productos' && Boolean(key)) || (button.dataset.nav==='administracion' && current==='perfiles');
       button.classList.toggle('active',selected);
       if (selected) button.setAttribute('aria-current','page'); else button.removeAttribute('aria-current');
     });
@@ -634,6 +644,11 @@
       setProductExpanded($('#productSubnav').hidden);
       return;
     }
+    if(e.target.closest('#toggleAdminSubnav')){
+      e.preventDefault();
+      setAdminExpanded($('#adminSubnav').hidden);
+      return;
+    }
     const nav=e.target.closest('[data-nav]');
     if(nav){e.preventDefault();navigate(nav.dataset.nav);return;}
     if(e.target.closest('[data-close-sidebar]')) {
@@ -681,6 +696,7 @@
   });
   document.addEventListener('rutahd:permisos-actualizados',()=>{
     updateProductMenu();
+    if((view==='administracion'||view==='perfiles')&&access()?.isAdmin())setAdminExpanded(true);
     if(!canNavigate(view)){navigate('inicio');return;}
     if(view!=='inicio')renderWorkspace();
     const perfil=access()?.usuario();
