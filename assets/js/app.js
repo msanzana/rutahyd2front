@@ -550,9 +550,12 @@
   $('#newButton').addEventListener('click',()=>openForm(view==='inventario'?'productos':view,null));
   $('#exportButton').addEventListener('click',()=>exportCSV(view==='inventario'?'productos':view));
   $('#globalSearch').addEventListener('input', e => {
-    query=e.target.value.trim();
-    if(view==='inicio' && query) navigate('clientes');
-    query=e.target.value.trim();
+    const requested=e.target.value.trim();
+    if(view==='inicio' && requested) {
+      navigate('clientes');
+      $('#globalSearch').value=requested;
+    }
+    query=requested;
     if(['pedidos','clientes','productos','inventario'].includes(view)) renderWorkspace();
   });
   $('#recordForm').addEventListener('submit',saveForm);

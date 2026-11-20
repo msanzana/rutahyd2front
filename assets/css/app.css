@@ -169,3 +169,6 @@ button{cursor:pointer}a{color:inherit}h1,h2,h3,p{margin-top:0}
 }
 @media(max-width:380px){.stat-card{flex-direction:column;align-items:flex-start}.search{width:39vw}.module-card{min-height:133px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+/* Mantener saltos de línea en fichas informativas. */
+#infoDescription{white-space:pre-line}
