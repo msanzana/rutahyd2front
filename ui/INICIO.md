@@ -1,0 +1,1 @@
+Diseño completo de Ruta H&D2 V2: index.html, assets/css/app.css y assets/js/app.js. Demo funcional sin conexión a producción.
