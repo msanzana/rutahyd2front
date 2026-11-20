@@ -1,0 +1,76 @@
+name: Recuperar logotipo oficial de Ruta H&D V1
+on:
+  push:
+    branches: [ main ]
+    paths: [ '.github/workflows/importar-logo-v1.yml' ]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  recuperar-logo:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Descargar archivo original de la aplicación V1
+        run: |
+          set -euo pipefail
+          mkdir -p assets/img
+          curl --fail --silent --show-error --location --retry 3 --max-time 45 \
+            'https://pedidos-hd-cunco.neonlarch29.chatgpt.site/img/logo-hd.jpg' \
+            -o assets/img/logo-hd-oficial-v1.jpg
+          test "$(file --mime-type -b assets/img/logo-hd-oficial-v1.jpg)" = "image/jpeg"
+          bytes=$(wc -c < assets/img/logo-hd-oficial-v1.jpg)
+          test "$bytes" -gt 200 && test "$bytes" -lt 5000000
+          echo "LOGO_ORIGEN: V1 /img/logo-hd.jpg"
+          echo "TIPO: $(file -b assets/img/logo-hd-oficial-v1.jpg)"
+          echo "TAMAÑO: $bytes bytes"
+          sha256sum assets/img/logo-hd-oficial-v1.jpg
+      - name: Usar imagen exacta en barra lateral del frontend violeta
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          html=p.read_text(encoding='utf-8')
+          before='<span class="brand-mark" aria-hidden="true">R</span>'
+          after='<img class="brand-mark brand-logo-official" src="assets/img/logo-hd-oficial-v1.jpg" alt="Logotipo oficial H&amp;D" width="64" height="64">'
+          if before in html: html=html.replace(before,after,1)
+          elif after not in html: raise RuntimeError('No se encontró el elemento original del logo')
+          p.write_text(html,encoding='utf-8')
+          csspath=Path('assets/css/theme-violet.css')
+          css=csspath.read_text(encoding='utf-8')
+          css_override='''
+          /* Logotipo H&D V1: fotografía oficial sin filtros ni recoloreado. */
+          .brand-logo-official {
+            display: block;
+            width: 64px;
+            height: 64px;
+            flex: 0 0 64px;
+            background: #ffffff;
+            padding: 3px;
+            object-fit: contain;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,.65);
+          }
+          @media(max-width: 760px) {
+            .brand-logo-official { width: 54px; height: 54px; flex-basis: 54px; }
+          }
+          '''
+          if '.brand-logo-official {' not in css: css+='\n'+css_override
+          csspath.write_text(css,encoding='utf-8')
+          readme=Path('README.md')
+          txt=readme.read_text(encoding='utf-8')
+          section='\n## Logotipo oficial (Ruta H&D V1)\nSe conserva el archivo JPEG original descargado de `https://pedidos-hd-cunco.neonlarch29.chatgpt.site/img/logo-hd.jpg`, identificado en la página V1 como `img.brand-logo` con `alt="H&D"`. La copia local está en `assets/img/logo-hd-oficial-v1.jpg`, sin alteraciones de píxeles ni recoloreado.\n'
+          if '## Logotipo oficial (Ruta H&D V1)' not in txt: txt+=section
+          readme.write_text(txt,encoding='utf-8')
+          print('Vista violeta preparada con recurso original H&D V1')
+          PY
+      - name: Publicar copia original versionada en repositorio frontend
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/img/logo-hd-oficial-v1.jpg index.html assets/css/theme-violet.css README.md
+          if git diff --cached --quiet; then echo "No hay cambios nuevos"; exit 0; fi
+          git commit -m "feat(brand): use authentic H&D logo from original Ruta V1"
+          git push origin HEAD:main
