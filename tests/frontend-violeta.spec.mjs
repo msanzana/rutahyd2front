@@ -31,7 +31,7 @@ test('las tarjetas son referencias, no datos inventados', async ({ page }) => {
   await page.goto('/');
   await expect(page.locator('.module')).toHaveCount(6);
   await expect(page.locator('.module .status')).toHaveCount(6);
-  await expect(page.getByText('Sin datos reales')).toBeVisible();
+  await expect(page.locator('.footer').getByText('Prototipo de interfaz · Sin datos reales')).toBeVisible();
 });
 
 test('captura de escritorio sin desbordamiento', async ({ page }) => {
