@@ -249,7 +249,7 @@
     $('#exportButton').hidden = view === 'administracion';
     $('#newButtonText').textContent='Nuevo '+(cfg.singular || 'registro');
     if (view==='informes') renderReports();
-    else if (view==='administracion') { renderAdmin(); catalogos?.mount(()=>db.productos); }
+    else if (view==='administracion') { renderAdmin(); catalogos?.mount(()=>db.productos); window.RutaHDRemoto?.mount($('#workspaceContent')); }
     else renderTable(view === 'inventario' ? 'productos' : view);
   }
 
