@@ -15,7 +15,7 @@ test('carga interfaz violeta, identidad H&D y sin cifras inventadas', async ({pa
 test('crea, edita y elimina cliente con confirmación', async ({page}) => {
   await page.goto('/');
   await page.locator('[data-nav="clientes"].nav-link').click();
-  await expect(page.getByRole('heading',{name:'Clientes'})).toBeVisible();
+  await expect(page.getByRole('heading',{name:'Clientes',exact:true})).toBeVisible();
   await page.locator('#newButton').click();
   await expect(page.getByRole('heading',{name:'Nuevo cliente'})).toBeVisible();
   await page.locator('#field-nombre').fill('Cliente de prueba');
@@ -24,7 +24,7 @@ test('crea, edita y elimina cliente con confirmación', async ({page}) => {
   await page.locator('#field-email').fill('prueba@example.cl');
   await page.locator('#recordForm [type="submit"]').click();
   await expect(page.locator('.data-table')).toContainText('Cliente de prueba');
-  await expect(page.locator('.toast.success')).toBeVisible();
+  await expect(page.locator('.toast.success').first()).toBeVisible();
   await page.reload();
   await page.locator('[data-nav="clientes"].nav-link').click();
   await expect(page.locator('.data-table')).toContainText('Cliente de prueba');
@@ -72,7 +72,7 @@ test('genera informes y CSV a partir de datos reales del navegador', async ({pag
   await page.locator('[data-action="export"][data-kind="clientes"]').click();
   const download=await downloadEvent;
   expect(download.suggestedFilename()).toMatch(/^rutahd2-clientes-.*\.csv$/);
-  await expect(page.locator('.toast.success')).toBeVisible();
+  await expect(page.locator('.toast.success').first()).toBeVisible();
 });
 
 test('muestra detalles, avisos e información de uso', async ({page}) => {
@@ -90,7 +90,7 @@ test('es adaptable a pantallas móviles, sin desplazamiento horizontal', async (
   await expect(page.locator('#menuToggle')).toBeVisible();
   await page.locator('#menuToggle').click();
   await page.locator('.sidebar [data-nav="pedidos"]').click();
-  await expect(page.getByRole('heading',{name:'Pedidos'})).toBeVisible();
+  await expect(page.getByRole('heading',{name:'Pedidos',exact:true})).toBeVisible();
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2)).toBeTruthy();
   await page.screenshot({path:'artifacts/rutahd2-panel-movil.png',fullPage:true});
 });
