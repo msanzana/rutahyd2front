@@ -30,7 +30,10 @@
     ['condicionTributariaId','condiciones_tributarias',null]
   ];
   const cache=Object.fromEntries(KEYS.map(k=>[k,[]]));
-  let authorized=false,selected='rubros',root=null,busy=false;
+  let authorized=false,selected='rubros',restrictedKey=null,root=null,busy=false;
+  const access=()=>window.RutaHDAccesos;
+  const canSee=key=>access()?.canViewCatalog(key)??true;
+  const canManage=key=>access()?.canManageCatalog(key)??true;
   const el=(tag,cls,text)=>{
     const x=document.createElement(tag);
     if(cls)x.className=cls;
@@ -62,12 +65,17 @@
     finally{busy=false;}
   }
   async function refresh(){
-    const response=await Promise.all(KEYS.map(k=>API().list(k)));
-    KEYS.forEach((key,i)=>{cache[key]=response[i].items;});
+    const permitted=KEYS.filter(key=>canSee(key));
+    const response=await Promise.all(permitted.map(key=>API().list(key)));
+    KEYS.forEach(key=>cache[key]=[]);
+    permitted.forEach((key,i)=>{cache[key]=response[i].items;});
+    if(!permitted.includes(selected))selected=permitted[0]||'rubros';
     authorized=true;render();
     status('Catálogos cargados desde la API autenticada. No se importaron los datos locales.');
   }
-  function mount(parent){
+  function mount(parent,key=null){
+    restrictedKey=key&&KEYS.includes(key)?key:null;
+    if(restrictedKey)selected=restrictedKey;
     const container=el('section','surface-panel');
     container.id='adminRemoto';
     container.style.marginBottom='20px';
@@ -84,22 +92,36 @@
     root.appendChild(header);
     const message=el('p','catalog-footnote','');message.id='remoteStatus';root.appendChild(message);
     if(!authorized){renderLogin();return;}
+    const keys=KEYS.filter(key=>canSee(key));
+    if(!keys.length && !access()?.has('productos.gestionar')){
+      root.appendChild(el('p','catalog-footnote','Tu perfil no tiene acceso a los catálogos de Productos.'));
+      return;
+    }
     const bar=el('div','workspace-actions');
     bar.style.flexWrap='wrap';
     add(bar,button('Actualizar datos',()=>guarded(refresh)),
       button('Cerrar sesión remota',()=>{
         API().signOut();authorized=false;
+        access()?.clear();
         KEYS.forEach(k=>cache[k]=[]);render();status('Sesión remota cerrada.');
       }));
     root.appendChild(bar);
-    const tabs=el('div','catalog-tabs');
-    KEYS.forEach(key=>{
-      const b=button(CONFIG[key][0],()=>{selected=key;render();},'catalog-tab');
-      b.classList.toggle('selected',selected===key);tabs.appendChild(b);
-    });
-    root.appendChild(tabs);
+    if(!restrictedKey){
+      const tabs=el('div','catalog-tabs');
+      keys.forEach(key=>{
+        const b=button(CONFIG[key][0],()=>{selected=key;render();},'catalog-tab');
+        b.classList.toggle('selected',selected===key);tabs.appendChild(b);
+      });
+      root.appendChild(tabs);
+    }
+    if(!keys.includes(selected)){
+      root.appendChild(el('p','catalog-footnote','Acceso denegado al submódulo solicitado.'));
+      return;
+    }
     const action=el('div','workspace-actions');
-    action.appendChild(button('Nuevo registro de '+CONFIG[selected][0],()=>edit(null),'button primary'));
+    const create=button('Nuevo registro de '+CONFIG[selected][0],()=>edit(null),'button primary');
+    create.disabled=!canManage(selected);
+    action.appendChild(create);
     root.appendChild(action);
     const list=el('div','catalog-table-scroll'),table=el('table','catalog-table');
     const headerRow=el('tr');
@@ -110,12 +132,14 @@
       const tr=el('tr'),name=el('td','',rec.nombre);
       tr.appendChild(name);tr.appendChild(el('td','',rec.activo?'Activo':'Inactivo'));
       const actions=el('td','catalog-actions');
-      actions.appendChild(button('Editar',()=>edit(rec),'catalog-small-button'));
-      actions.appendChild(button('Eliminar',()=>remove(rec),'catalog-small-button danger-text'));
+      const editBtn=button('Editar',()=>edit(rec),'catalog-small-button');
+      const deleteBtn=button('Eliminar',()=>remove(rec),'catalog-small-button danger-text');
+      editBtn.disabled=!canManage(selected);deleteBtn.disabled=!canManage(selected);
+      actions.appendChild(editBtn);actions.appendChild(deleteBtn);
       tr.appendChild(actions);rows.appendChild(tr);
     });
     table.appendChild(rows);list.appendChild(table);root.appendChild(list);
-    renderProductAssignment();
+    if(!restrictedKey && access()?.has('productos.gestionar'))renderProductAssignment();
   }
   function renderLogin(){
     const form=el('form','form-grid');
@@ -134,7 +158,8 @@
       const secret=password.value;password.value='';
       guarded(async()=>{
         API().configure(url.value.trim());
-        await API().login(email.value.trim(),secret);
+        const usuario=await API().login(email.value.trim(),secret);
+        access()?.setSession(usuario);
         await refresh();
       });
     });
@@ -161,6 +186,7 @@
     dialog.showModal();
   }
   function edit(rec){
+    if(!canManage(selected)){status('Tu perfil no puede modificar este catálogo.',true);return;}
     const key=selected,parentKey=CONFIG[key][1],body=el('div','form-grid');
     const name=el('input');name.required=true;name.maxLength=100;name.value=rec?.nombre??'';
     add(body,el('label','','Nombre o valor'),name);
@@ -192,6 +218,7 @@
     });
   }
   function remove(rec){
+    if(!canManage(selected)){status('Tu perfil no puede eliminar este catálogo.',true);return;}
     const key=selected;
     dialog('¿Eliminar '+rec.nombre+'?',el('p','','Se eliminará en la base de datos. Solo es posible si no existen relaciones.'),async()=>{
       await API().remove(key,rec.id);await refresh();status('Registro eliminado del servidor.');
