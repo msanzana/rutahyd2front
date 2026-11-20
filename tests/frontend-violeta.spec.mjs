@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 async function addCatalog(page,key,name,parent=false){
-  await page.locator('.catalog-tab[data-catalog="'+key+'"]').click();
+  await page.locator('[data-nav="catalogos.'+key+'"]').click();
   await page.locator('[data-catalog-action="new"][data-catalog="'+key+'"]').click();
   await page.locator('#catalogName').fill(name);
   if(parent)await page.locator('#catalogParent').selectOption({index:1});
@@ -11,7 +11,6 @@ async function addCatalog(page,key,name,parent=false){
 }
 
 async function setupTaxonomy(page){
-  await page.locator('.nav-link[data-nav="administracion"]').click();
   await addCatalog(page,'rubros','Alimentos');
   await addCatalog(page,'departamentos','Abarrotes',true);
   await addCatalog(page,'familias','Conservas',true);
@@ -74,7 +73,7 @@ test('crea, edita y elimina cliente con confirmación', async ({page}) => {
 test('configura catálogos jerárquicos y clasifica producto con impuestos', async ({page}) => {
   await page.goto('/#productos');
   await page.locator('#newButton').click();
-  await expect(page.getByRole('heading',{name:'Administración',exact:true})).toBeVisible();
+  await expect(page.getByRole('heading',{name:'Rubros',exact:true})).toBeVisible();
   await expect(page.locator('.toast.warning').first()).toContainText('Completa los catálogos');
   await setupTaxonomy(page);
   await page.locator('.nav-link[data-nav="productos"]').click();
@@ -109,7 +108,7 @@ test('configura catálogos jerárquicos y clasifica producto con impuestos', asy
 });
 
 test('CRUD de rubros y protección ante catálogos referenciados', async ({page}) => {
-  await page.goto('/#administracion');
+  await page.goto('/#catalogos.rubros');
   await addCatalog(page,'rubros','Ferretería');
   await page.locator('.catalog-small-button[data-catalog-action="edit"]').click();
   await page.locator('#catalogName').fill('Ferretería general');
@@ -124,31 +123,30 @@ test('CRUD de rubros y protección ante catálogos referenciados', async ({page}
   await expect(page.locator('.catalog-empty')).toBeVisible();
 
   await setupTaxonomy(page);
-  await page.locator('.catalog-tab[data-catalog="rubros"]').click();
+  await page.locator('[data-nav="catalogos.rubros"]').click();
   await page.locator('.catalog-small-button[data-catalog-action="delete"]').click();
   await expect(page.locator('.toast.warning').first()).toContainText('Registro en uso');
   await expect(page.locator('.catalog-table')).toContainText('Alimentos');
 });
 
 test('dependencias de familia y modelo filtradas por su padre', async ({page}) => {
-  await page.goto('/#administracion');
+  await page.goto('/#catalogos.rubros');
   await addCatalog(page,'rubros','Primer rubro');
   await addCatalog(page,'rubros','Segundo rubro');
   await addCatalog(page,'departamentos','Depto primero',true);
-  await page.locator('.catalog-tab[data-catalog="departamentos"]').click();
+  await page.locator('[data-nav="catalogos.departamentos"]').click();
   await page.locator('[data-catalog-action="new"][data-catalog="departamentos"]').click();
   await page.locator('#catalogName').fill('Depto segundo');
   await page.locator('#catalogParent').selectOption({index:2});
   await page.locator('#catalogForm [type="submit"]').click();
-  await page.locator('.catalog-tab[data-catalog="marcas"]').click();
+  await page.locator('[data-nav="catalogos.marcas"]').click();
   await addCatalog(page,'marcas','Marca Uno');
   await addCatalog(page,'marcas','Marca Dos');
   await addCatalog(page,'modelos','Modelo Uno',true);
-  await page.locator('.catalog-tab[data-catalog="rubros"]').click();
+  await page.locator('[data-nav="catalogos.rubros"]').click();
   await expect(page.locator('.catalog-table')).toContainText('Primer rubro');
   await page.reload();
-  await page.locator('.nav-link[data-nav="administracion"]').click();
-  await page.locator('.catalog-tab[data-catalog="departamentos"]').click();
+  await page.locator('[data-nav="catalogos.departamentos"]').click();
   await expect(page.locator('.catalog-table')).toContainText('Depto primero');
   await expect(page.locator('.catalog-table')).toContainText('Depto segundo');
 });
