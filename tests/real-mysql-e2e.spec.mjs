@@ -62,7 +62,17 @@ test('navegador real conecta frontend, Laravel, MySQL y respeta los padres del m
   await page.locator('.nav-link[data-nav="administracion"]').click();
   await page.locator('#adminRemoto').getByRole('button',{name:'Cerrar sesión remota'}).click();
   await session(page,'lector@ejemplo.invalid','NoUsarEnProduccion-2026');
-  await page.locator('#toggleProductSubnav').click();
+  const submenu=page.locator('#productSubnav');
+  if(await submenu.isHidden())await page.locator('#toggleProductSubnav').click();
+  const permisosVisibles=await page.evaluate(()=>({
+    autenticado:window.RutaHDAccesos.authenticated(),
+    puedeVerRubros:window.RutaHDAccesos.canViewCatalog('rubros'),
+    puedeVerMarcas:window.RutaHDAccesos.canViewCatalog('marcas'),
+    grupoOculto:document.getElementById('productsNavGroup').hidden,
+    subMenuOculto:document.getElementById('productSubnav').hidden,
+    rubroOculto:document.querySelector('[data-catalog-key="rubros"]').hidden
+  }));
+  console.log('DIAGNOSTICO_MENU_CI',JSON.stringify(permisosVisibles));
   await expect(page.locator('[data-catalog-key="rubros"]')).toBeVisible();
   await expect(page.locator('[data-catalog-key="marcas"]')).toBeHidden();
   await expect(page.locator('#navPerfiles')).toBeHidden();
