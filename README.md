@@ -29,3 +29,6 @@ La vista muestra los módulos de RutaH&D2 como **prototipo visual**: no inventa 
 ## Archivos
 - `index.html`: vista inicial de estilo violeta.
 - `assets/css/theme-violet.css`: sistema de diseño reutilizable.
+
+## Logotipo oficial (Ruta H&D V1)
+Se conserva el archivo JPEG original descargado de `https://pedidos-hd-cunco.neonlarch29.chatgpt.site/img/logo-hd.jpg`, identificado en la página V1 como `img.brand-logo` con `alt="H&D"`. La copia local está en `assets/img/logo-hd-oficial-v1.jpg`, sin alteraciones de píxeles ni recoloreado.

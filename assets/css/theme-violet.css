@@ -190,3 +190,20 @@ a:focus-visible, button:focus-visible {
   html { scroll-behavior: auto; }
   *, *::before, *::after { transition-duration: .01ms !important; }
 }
+
+
+/* Logotipo H&D V1: fotografía oficial sin filtros ni recoloreado. */
+.brand-logo-official {
+  display: block;
+  width: 64px;
+  height: 64px;
+  flex: 0 0 64px;
+  background: #ffffff;
+  padding: 3px;
+  object-fit: contain;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.65);
+}
+@media(max-width: 760px) {
+  .brand-logo-official { width: 54px; height: 54px; flex-basis: 54px; }
+}
