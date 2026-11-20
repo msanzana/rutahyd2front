@@ -62,7 +62,7 @@ test('Productos anida diez subítems y navega sin duplicarlos en Administración
   await expect(page.locator('#workspaceTitle')).toHaveText('Marcas');
   await expect(page.locator('#catalogAdmin')).toBeVisible();
   await expect(page.locator('#catalogAdmin .catalog-sidebar')).not.toBeVisible();
-  await page.locator('[data-nav="administracion"]').click();
+  await page.locator('.nav-link[data-nav="administracion"]').click();
   await expect(page.locator('#catalogAdmin')).toHaveCount(0);
 });
 
@@ -70,6 +70,7 @@ test('perfil con Rubros solo lectura oculta módulos y bloquea CRUD aunque se us
   await stubApi(page,'vendedor',permisos('rubros'));
   await login(page);
   await expect(page.locator('#adminRemoto')).toContainText('Catálogos cargados');
+  await page.locator('#toggleProductSubnav').click();
   await expect(page.locator('[data-catalog-key="rubros"]')).toBeVisible();
   await expect(page.locator('[data-catalog-key="marcas"]')).toBeHidden();
   await expect(page.locator('#navPerfiles')).toBeHidden();
