@@ -6,7 +6,7 @@
   const KEY = 'rutahd2-demo-local-v1';
   const SECTION_NAMES = {
     inicio: 'Inicio', pedidos: 'Pedidos', clientes: 'Clientes', productos: 'Productos',
-    inventario: 'Inventario', informes: 'Informes', administracion: 'Administración'
+    inventario: 'Inventario', informes: 'Informes', administracion: 'Administración', perfiles: 'Perfiles y permisos'
   };
   const DEFAULT_DATA = () => ({ pedidos: [], clientes: [], productos: [], activity: [] });
   const db = loadData();
@@ -160,23 +160,65 @@
     $('#infoDialog').showModal();
   }
 
+  const catalogKey = section => section?.startsWith('catalogos.') ? section.slice('catalogos.'.length) : null;
+  const access = () => window.RutaHDAccesos;
+  const allowedCatalogs = () => catalogos?.ORDER?.filter(key=>access()?.canViewCatalog(key)) || [];
+  const canNavigate = section => {
+    const key=catalogKey(section);
+    if(key)return catalogos?.CONFIG[key] && access()?.canViewCatalog(key);
+    if(section==='perfiles')return Boolean(access()?.authenticated()&&access()?.isAdmin());
+    if(section==='productos' && access()?.authenticated())
+      return access().has('productos.gestionar');
+    return Boolean(SECTION_NAMES[section]);
+  };
+  function updateProductMenu() {
+    catalogos?.ORDER?.forEach(key=>{
+      const b=document.querySelector('[data-catalog-key="'+key+'"]');
+      if(b)b.hidden=!access()?.canViewCatalog(key);
+    });
+    const authorized=allowedCatalogs();
+    const showParent=!access()?.authenticated() || access().has('productos.gestionar') || authorized.length>0;
+    $('#productsNavGroup').hidden=!showParent;
+    $('#navPerfiles').hidden=!(access()?.authenticated()&&access()?.isAdmin());
+    const list=$('#productSubnav [data-nav="productos"]');
+    if(list)list.hidden=Boolean(access()?.authenticated()&&!access().has('productos.gestionar'));
+    if(!authorized.length && access()?.authenticated() && !access().has('productos.gestionar')) {
+      $('#productSubnav').hidden=true;
+      $('#toggleProductSubnav').setAttribute('aria-expanded','false');
+    }
+  }
+  function setProductExpanded(expanded) {
+    $('#productSubnav').hidden=!expanded;
+    $('#toggleProductSubnav').setAttribute('aria-expanded',expanded?'true':'false');
+    $('#toggleProductSubnav').setAttribute('aria-label',expanded?'Contraer submódulos de Productos':'Expandir submódulos de Productos');
+  }
   function navigate(section) {
-    const current = SECTION_NAMES[section] ? section : 'inicio';
+    if(section==='productos' && !canNavigate(section) && allowedCatalogs().length) section='catalogos.'+allowedCatalogs()[0];
+    const current = canNavigate(section) ? section : 'inicio';
     view = current;
     query = '';
     $('#globalSearch').value = '';
     $('#homeView').hidden = current !== 'inicio';
     $('#workspaceView').hidden = current === 'inicio';
-    $('#breadcrumbCurrent').textContent = SECTION_NAMES[current];
-    $$('[data-nav].nav-link').forEach(button => {
-      const selected = button.dataset.nav === current;
+    const key=catalogKey(current);
+    $('#breadcrumbCurrent').textContent = key ? 'Productos / '+catalogos.CONFIG[key].title : SECTION_NAMES[current];
+    updateProductMenu();
+    if(key||current==='productos')setProductExpanded(true);
+    $('[data-nav].nav-sublink').forEach(button=>{
+      const selected=button.dataset.nav===current;
+      button.classList.toggle('active',selected);
+      if(selected)button.setAttribute('aria-current','page');
+      else button.removeAttribute('aria-current');
+    });
+    $('[data-nav].nav-link').forEach(button => {
+      const selected = button.dataset.nav === current || (button.dataset.nav==='productos' && Boolean(key));
       button.classList.toggle('active',selected);
       if (selected) button.setAttribute('aria-current','page'); else button.removeAttribute('aria-current');
     });
     $('#appShell').classList.remove('sidebar-open');
     if (current === 'inicio') renderHome(); else renderWorkspace();
     if (location.hash.substring(1) !== current) history.replaceState(null,'','#'+current);
-    document.title = 'Ruta H&D2 · '+SECTION_NAMES[current];
+    document.title = 'Ruta H&D2 · '+(key ? catalogos.CONFIG[key].title : SECTION_NAMES[current]);
     window.scrollTo({top:0,behavior:'instant'});
   }
 
@@ -236,6 +278,29 @@
   }
 
   function renderWorkspace() {
+    const key=catalogKey(view);
+    if(key && catalogos?.CONFIG[key]) {
+      const cfg=catalogos.CONFIG[key];
+      $('#workspaceEyebrow').textContent='PRODUCTOS / CLASIFICACIONES';
+      $('#workspaceTitle').textContent=cfg.title;
+      $('#workspaceDescription').textContent='Mantenimiento independiente de '+cfg.title.toLocaleLowerCase('es-CL')+'. Los datos de prueba son locales; para MySQL utiliza una sesión autorizada.';
+      $('#newButton').hidden=true;
+      $('#exportButton').hidden=true;
+      $('#workspaceContent').replaceChildren();
+      catalogos.mount(()=>db.productos);
+      catalogos.selectCatalog(key);
+      window.RutaHDRemoto?.mount($('#workspaceContent'),key);
+      return;
+    }
+    if(view==='perfiles'){
+      $('#workspaceEyebrow').textContent='ADMINISTRACIÓN / ACCESOS';
+      $('#workspaceTitle').textContent='Perfiles y permisos';
+      $('#workspaceDescription').textContent='Controla qué submódulos de Productos puede ver o gestionar cada perfil.';
+      $('#newButton').hidden=true;$('#exportButton').hidden=true;
+      $('#workspaceContent').replaceChildren();
+      window.RutaHDPerfiles?.mount($('#workspaceContent'));
+      return;
+    }
     const kinds = {
       inventario:{title:'Inventario',description:'Supervisa existencias y edita el stock de los productos de prueba.',eyebrow:'CONTROL DE EXISTENCIAS',singular:'producto'},
       informes:{title:'Informes',description:'Consulta indicadores y exporta reportes de tus registros locales.',eyebrow:'REPORTES OPERATIVOS'},
@@ -558,6 +623,11 @@
   if(catalogos) catalogos.onChange=()=>{if(view==='administracion')catalogos.mount(()=>db.productos);};
 
   document.addEventListener('click',(e)=>{
+    if(e.target.closest('#toggleProductSubnav')){
+      e.preventDefault();
+      setProductExpanded($('#productSubnav').hidden);
+      return;
+    }
     const nav=e.target.closest('[data-nav]');
     if(nav){e.preventDefault();navigate(nav.dataset.nav);return;}
     if(e.target.closest('[data-close-sidebar]')) {
@@ -603,7 +673,16 @@
     if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='k'){e.preventDefault();$('#globalSearch').focus();}
     if(e.key==='Escape') $('#appShell').classList.remove('sidebar-open');
   });
+  document.addEventListener('rutahd:permisos-actualizados',()=>{
+    updateProductMenu();
+    if(!canNavigate(view)){navigate('inicio');return;}
+    if(view!=='inicio')renderWorkspace();
+    const perfil=access()?.usuario();
+    const role=$('.profile-label small');
+    if(role)role.textContent=perfil?'Perfil: '+perfil.rol:'Vista de demostración';
+  });
   window.addEventListener('hashchange',()=>navigate(location.hash.slice(1)||'inicio'));
+  updateProductMenu();
   navigate(location.hash.slice(1)||'inicio');
   toast('info','Bienvenido a Ruta H&D2','Estás usando un entorno de demostración local.',3500);
 })();
