@@ -73,7 +73,7 @@ test('crea, edita y elimina cliente con confirmación', async ({page}) => {
 test('configura catálogos jerárquicos y clasifica producto con impuestos', async ({page}) => {
   await page.goto('/#productos');
   await page.locator('#newButton').click();
-  await expect(page.getByRole('heading',{name:'Rubros',exact:true})).toBeVisible();
+  await expect(page.locator('#workspaceTitle')).toHaveText('Rubros');
   await expect(page.locator('.toast.warning').first()).toContainText('Completa los catálogos');
   await setupTaxonomy(page);
   await page.locator('.nav-link[data-nav="productos"]').click();
