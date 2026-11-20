@@ -4,122 +4,132 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#2e1065">
-  <meta name="description" content="Ruta H&D2 — vista de diseño del frontend con una paleta de violetas y lilas.">
-  <title>Ruta H&D2 · Identidad violeta</title>
-  <link rel="stylesheet" href="assets/css/theme-violet.css">
+  <meta name="description" content="Ruta H&D2 — plataforma de gestión comercial y operativa.">
+  <title>Ruta H&D2 · Gestión Comercial</title>
+  <link rel="stylesheet" href="assets/css/app.css">
 </head>
 <body>
-  <div class="shell">
-    <aside class="sidebar" aria-label="Navegación de diseño">
-      <a class="brand-row" href="#inicio" aria-label="Ruta H y D 2, volver al inicio">
-        <img class="brand-mark brand-logo-official" src="assets/img/logo-hd-oficial-v1.jpg" alt="Logotipo oficial H&amp;D" width="64" height="64">
-        <span><span class="brand-name">Ruta H&amp;D2</span><span class="brand-caption">Gestión comercial</span></span>
+  <svg class="svg-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></symbol>
+    <symbol id="i-orders" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 3.5V2h6v1.5M9 9h6M9 13h6M9 17h3"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2zM16 5a3 3 0 0 1 0 6m2 3a5 5 0 0 1 3 5v1"/></symbol>
+    <symbol id="i-box" viewBox="0 0 24 24"><path d="m12 2 9 5v10l-9 5-9-5V7zM3 7l9 5 9-5M12 12v10"/></symbol>
+    <symbol id="i-stock" viewBox="0 0 24 24"><path d="m3 7 9-5 9 5-9 5zM3 12l9 5 9-5M3 17l9 5 9-5"/></symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 21V11m5 10V5m5 16v-8m5 8V3M2 21h20"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"/><path d="m19.4 15 .8 1.6-2.1 2.1-1.6-.8a9 9 0 0 1-1.5.6l-.5 1.9h-3l-.5-1.9a9 9 0 0 1-1.5-.6l-1.6.8-2.1-2.1.8-1.6a9 9 0 0 1-.6-1.5L4 13v-3l1.9-.5c.1-.5.3-1 .6-1.5l-.8-1.6 2.1-2.1 1.6.8c.5-.3 1-.5 1.5-.6L11.5 3h3l.5 1.9c.5.1 1 .3 1.5.6l1.6-.8 2.1 2.1-.8 1.6c.3.5.5 1 .6 1.5l1.9.5v3l-1.9.5c-.1.5-.3 1-.6 1.5z" transform="translate(-1 -.5) scale(.96)"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="7"/><path d="m16 16 5 5"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 8-3 9h18c0-1-3-2-3-9M10 21h4"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v13m-5-5 5 5 5-5M4 18v3h16v-3"/></symbol>
+    <symbol id="i-edit" viewBox="0 0 24 24"><path d="m4 16 11-11 4 4L8 20H4zM13 7l4 4"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3m3 0-1 14H7L6 7m4 4v6m4-6v6"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m4 12 5 5L20 6"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="M5 5 19 19M19 5 5 19"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.2"/></symbol>
+    <symbol id="i-warning" viewBox="0 0 24 24"><path d="m12 3 10 18H2zM12 9v5M12 18v.2"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></symbol>
+  </svg>
+  <div class="app-shell" id="appShell">
+    <aside class="sidebar" id="sidebar">
+      <a class="brand" href="#inicio" data-nav="inicio">
+        <img class="brand-logo" src="assets/img/logo-hd-oficial-v1.jpg" alt="Logotipo oficial Comercializadora H&D" width="70" height="70">
+        <span><strong>Ruta H&amp;D2</strong><small>Gestión Comercial</small></span>
       </a>
-      <nav aria-label="Secciones de la muestra">
-        <p class="nav-caption">Vista de diseño</p>
-        <div class="sidebar-nav">
-          <a class="nav-link" aria-current="page" href="#inicio"><span class="nav-glyph" aria-hidden="true">⌂</span> Inicio</a>
-          <a class="nav-link" href="#modulos"><span class="nav-glyph" aria-hidden="true">▦</span> Módulos</a>
-          <a class="nav-link" href="#paleta"><span class="nav-glyph" aria-hidden="true">◈</span> Paleta violeta</a>
-        </div>
+      <div class="sidebar-heading">ESPACIO DE TRABAJO</div>
+      <nav class="nav" aria-label="Menú principal">
+        <button type="button" data-nav="inicio" class="nav-link active"><svg class="icon"><use href="#i-home"/></svg><span>Inicio</span></button>
+        <button type="button" data-nav="pedidos" class="nav-link"><svg class="icon"><use href="#i-orders"/></svg><span>Pedidos</span></button>
+        <button type="button" data-nav="clientes" class="nav-link"><svg class="icon"><use href="#i-users"/></svg><span>Clientes</span></button>
+        <button type="button" data-nav="productos" class="nav-link"><svg class="icon"><use href="#i-box"/></svg><span>Productos</span></button>
+        <button type="button" data-nav="inventario" class="nav-link"><svg class="icon"><use href="#i-stock"/></svg><span>Inventario</span></button>
+        <button type="button" data-nav="informes" class="nav-link"><svg class="icon"><use href="#i-chart"/></svg><span>Informes</span></button>
+        <button type="button" data-nav="administracion" class="nav-link"><svg class="icon"><use href="#i-settings"/></svg><span>Administración</span></button>
       </nav>
-      <div class="sidebar-bottom">
-        <span class="mini-label">Diseño V2 · Espectro violeta</span>
-        <p>Interfaz visual sin datos reales. La conexión con Laravel se realizará por separado.</p>
+      <div class="sidebar-footer">
+        <span class="sidebar-status-dot"></span> Entorno de demostración
+        <small>Los datos permanecen en este navegador.</small>
       </div>
     </aside>
-    <div class="main" id="inicio">
+    <div class="sidebar-scrim" data-close-sidebar></div>
+    <div class="main-area">
       <header class="topbar">
-        <div class="crumb">Ruta H&amp;D2 <span aria-hidden="true">/</span> <strong>Diseño de interfaz</strong></div>
-        <span class="topbar-pill">● Vista previa · Violeta</span>
+        <div class="topbar-left">
+          <button class="icon-button mobile-menu" type="button" id="menuToggle" aria-label="Abrir menú"><svg class="icon"><use href="#i-menu"/></svg></button>
+          <div class="breadcrumbs"><span>Ruta H&amp;D2</span><svg class="icon small"><use href="#i-chevron"/></svg><strong id="breadcrumbCurrent">Inicio</strong></div>
+        </div>
+        <div class="topbar-right">
+          <label class="search" for="globalSearch"><svg class="icon"><use href="#i-search"/></svg><input id="globalSearch" type="search" autocomplete="off" placeholder="Buscar registros..."><kbd>Ctrl K</kbd></label>
+          <button type="button" class="icon-button notification-button" id="notificationButton" aria-label="Información sobre el entorno"><svg class="icon"><use href="#i-bell"/></svg><span class="notification-dot"></span></button>
+          <div class="profile"><span class="avatar">HD</span><span class="profile-label"><b>Comercializadora H&amp;D</b><small>Vista de demostración</small></span></div>
+        </div>
       </header>
-      <main class="content">
-        <section class="hero" aria-labelledby="titulo-principal">
-          <div class="hero-content">
-            <span class="eyebrow">Identidad visual · Ruta H&amp;D2</span>
-            <h1 id="titulo-principal">La gestión toma una nueva tonalidad.</h1>
-            <p>Un sistema de diseño más coherente y elegante, construido con violetas profundos, lavandas suaves y contrastes claros para el trabajo diario.</p>
-            <div class="actions">
-              <a class="btn btn-light" href="#paleta">Explorar paleta <span aria-hidden="true">↗</span></a>
-              <a class="btn btn-outline" href="#modulos">Ver módulos</a>
+      <main class="page">
+        <div class="environment-notice"><svg class="icon"><use href="#i-info"/></svg><span><strong>Vista funcional de demostración.</strong> Puedes crear y editar registros en este navegador. No está conectada a la base de datos de producción.</span><button type="button" data-action="about" class="text-action">Más información</button></div>
+        <section class="home" id="homeView">
+          <div class="hero">
+            <div class="hero-content">
+              <span class="eyebrow">PLATAFORMA COMERCIAL Y OPERATIVA</span>
+              <h1>Tu operación, en un solo lugar.</h1>
+              <p>Gestiona clientes, pedidos, productos e inventario desde una interfaz clara, segura y preparada para crecer.</p>
+              <div class="hero-actions"><button type="button" class="button light" data-action="create" data-kind="pedidos"><svg class="icon"><use href="#i-plus"/></svg> Nuevo pedido</button><button type="button" class="button outline-light" data-nav="informes">Ver informes <svg class="icon"><use href="#i-chevron"/></svg></button></div>
             </div>
+            <div class="hero-logo-wrap"><img src="assets/img/logo-hd-oficial-v1.jpg" alt="H&D, confianza y calidad" class="hero-logo"></div>
           </div>
-        </section>
-        <section class="section" id="modulos" aria-labelledby="titulo-modulos">
-          <div class="section-heading">
-            <div>
-              <p class="section-kicker">Aplicación comercial</p>
-              <h2 id="titulo-modulos">Módulos con identidad violeta</h2>
-            </div>
-            <p class="section-note">Estos paneles ilustran la paleta y no representan datos conectados al sistema.</p>
+          <div class="home-heading"><div><span class="overline">VISIÓN GENERAL</span><h2>Resumen operativo</h2></div><span class="caption">Información de los registros de prueba</span></div>
+          <div class="stats-grid">
+            <article class="stat-card"><span class="stat-icon purple"><svg class="icon"><use href="#i-orders"/></svg></span><div><span class="stat-label">Pedidos</span><strong id="statOrders">0</strong><small>Total registrados</small></div></article>
+            <article class="stat-card"><span class="stat-icon lavender"><svg class="icon"><use href="#i-users"/></svg></span><div><span class="stat-label">Clientes</span><strong id="statClients">0</strong><small>En este navegador</small></div></article>
+            <article class="stat-card"><span class="stat-icon blue"><svg class="icon"><use href="#i-box"/></svg></span><div><span class="stat-label">Productos</span><strong id="statProducts">0</strong><small>En catálogo local</small></div></article>
+            <article class="stat-card"><span class="stat-icon orange"><svg class="icon"><use href="#i-warning"/></svg></span><div><span class="stat-label">Stock bajo</span><strong id="statLowStock">0</strong><small>Según stock mínimo</small></div></article>
           </div>
+          <div class="home-heading modules-heading"><div><span class="overline">ACCESOS PRINCIPALES</span><h2>Módulos de gestión</h2></div></div>
           <div class="module-grid">
-            <article class="module">
-              <span class="module-icon" aria-hidden="true">▣</span>
-              <h3>Productos y catálogo</h3>
-              <p>Listados, categorías y fichas de productos con selección y acciones en violeta.</p>
-              <span class="status">Diseño de referencia</span>
-            </article>
-            <article class="module">
-              <span class="module-icon" aria-hidden="true">▤</span>
-              <h3>Inventario y bodegas</h3>
-              <p>Existencias, movimientos y transferencias con jerarquía visual consistente.</p>
-              <span class="status">Diseño de referencia</span>
-            </article>
-            <article class="module">
-              <span class="module-icon" aria-hidden="true">◇</span>
-              <h3>Ventas y cotizaciones</h3>
-              <p>Flujos comerciales con controles destacados y estados fáciles de reconocer.</p>
-              <span class="status">Diseño de referencia</span>
-            </article>
-            <article class="module">
-              <span class="module-icon" aria-hidden="true">◯</span>
-              <h3>Clientes</h3>
-              <p>Datos de clientes y seguimiento comercial con superficies luminosas y limpias.</p>
-              <span class="status">Diseño de referencia</span>
-            </article>
-            <article class="module">
-              <span class="module-icon" aria-hidden="true">≡</span>
-              <h3>Notas de venta</h3>
-              <p>Estados, pagos y documentos con enlaces y botones de alto contraste.</p>
-              <span class="status">Diseño de referencia</span>
-            </article>
-            <article class="module">
-              <span class="module-icon" aria-hidden="true">✧</span>
-              <h3>Documentos DTE</h3>
-              <p>Sección visual para documentos tributarios; sin integración con el SII en esta vista.</p>
-              <span class="status">Diseño de referencia</span>
-            </article>
+            <button class="module-card" data-nav="pedidos"><span class="module-icon"><svg class="icon"><use href="#i-orders"/></svg></span><strong>Pedidos</strong><small>Seguimiento comercial</small><svg class="icon arrow"><use href="#i-chevron"/></svg></button>
+            <button class="module-card" data-nav="clientes"><span class="module-icon"><svg class="icon"><use href="#i-users"/></svg></span><strong>Clientes</strong><small>Directorio y contactos</small><svg class="icon arrow"><use href="#i-chevron"/></svg></button>
+            <button class="module-card" data-nav="productos"><span class="module-icon"><svg class="icon"><use href="#i-box"/></svg></span><strong>Productos</strong><small>Catálogo y precios</small><svg class="icon arrow"><use href="#i-chevron"/></svg></button>
+            <button class="module-card" data-nav="inventario"><span class="module-icon"><svg class="icon"><use href="#i-stock"/></svg></span><strong>Inventario</strong><small>Existencias y alertas</small><svg class="icon arrow"><use href="#i-chevron"/></svg></button>
+            <button class="module-card" data-nav="informes"><span class="module-icon"><svg class="icon"><use href="#i-chart"/></svg></span><strong>Informes</strong><small>Análisis y exportación</small><svg class="icon arrow"><use href="#i-chevron"/></svg></button>
+            <button class="module-card" data-nav="administracion"><span class="module-icon"><svg class="icon"><use href="#i-settings"/></svg></span><strong>Administración</strong><small>Configuración del entorno</small><svg class="icon arrow"><use href="#i-chevron"/></svg></button>
+          </div>
+          <div class="overview-grid">
+            <section class="surface-panel">
+              <div class="panel-heading"><div><span class="overline">TENDENCIA</span><h3>Pedidos en los últimos 7 días</h3></div><span class="pill neutral">Datos locales</span></div>
+              <div id="homeChart" class="chart-area" aria-label="Gráfico de pedidos"></div>
+            </section>
+            <section class="surface-panel">
+              <div class="panel-heading"><div><span class="overline">MOVIMIENTO</span><h3>Actividad reciente</h3></div></div>
+              <div id="activityList" class="activity-list"><div class="empty-activity">Aún no hay actividad registrada.</div></div>
+            </section>
           </div>
         </section>
-        <section class="section" id="paleta" aria-labelledby="titulo-paleta">
-          <div class="section-heading">
-            <div>
-              <p class="section-kicker">Sistema de diseño</p>
-              <h2 id="titulo-paleta">Una escala, infinitos matices</h2>
-            </div>
-            <p class="section-note">Escala centralizada desde el violeta más suave hasta el tono profundo.</p>
-          </div>
-          <div class="palette-panel">
-            <div class="swatches" aria-label="Escala violeta de 50 a 950">
-              <div class="swatch"><div class="swatch-box"></div><div class="swatch-name">50</div><div class="swatch-hex">#FAF5FF</div></div>
-              <div class="swatch"><div class="swatch-box"></div><div class="swatch-name">100</div><div class="swatch-hex">#F3E8FF</div></div>
-              <div class="swatch"><div class="swatch-box"></div><div class="swatch-name">200</div><div class="swatch-hex">#E9D5FF</div></div>
-              <div class="swatch"><div class="swatch-box"></div><div class="swatch-name">300</div><div class="swatch-hex">#D8B4FE</div></div>
-              <div class="swatch"><div class="swatch-box"></div><div class="swatch-name">400</div><div class="swatch-hex">#C084FC</div></div>
-              <div class="swatch"><div class="swatch-box"></div><div class="swatch-name">500</div><div class="swatch-hex">#A855F7</div></div>
-              <div class="swatch"><div class="swatch-box"></div><div class="swatch-name">600</div><div class="swatch-hex">#9333EA</div></div>
-              <div class="swatch"><div class="swatch-box"></div><div class="swatch-name">700</div><div class="swatch-hex">#7E22CE</div></div>
-              <div class="swatch"><div class="swatch-box"></div><div class="swatch-name">800</div><div class="swatch-hex">#6B21A8</div></div>
-              <div class="swatch"><div class="swatch-box"></div><div class="swatch-name">900</div><div class="swatch-hex">#581C87</div></div>
-              <div class="swatch"><div class="swatch-box"></div><div class="swatch-name">950</div><div class="swatch-hex">#3B0764</div></div>
-            </div>
-            <div class="info-note"><strong>Color principal:</strong> #6D28D9 · <strong>Profundo:</strong> #2E1065 · <strong>Superficie:</strong> #FFFFFF · <strong>Fondo:</strong> #FAF8FF. Los componentes comparten variables CSS para cambiar de tema sin modificar cada pantalla.</div>
-          </div>
+        <section id="workspaceView" class="workspace" hidden>
+          <div class="workspace-header"><div><span class="overline" id="workspaceEyebrow">GESTIÓN DE DATOS</span><h1 id="workspaceTitle">Clientes</h1><p id="workspaceDescription">Administra los registros de prueba.</p></div><div class="workspace-actions"><button id="exportButton" type="button" class="button ghost"><svg class="icon"><use href="#i-download"/></svg> Exportar CSV</button><button id="newButton" type="button" class="button primary"><svg class="icon"><use href="#i-plus"/></svg><span id="newButtonText">Nuevo</span></button></div></div>
+          <div class="workspace-content" id="workspaceContent"></div>
         </section>
-        <footer class="footer"><span>Ruta H&amp;D2 · Sistema visual violeta</span><span>Prototipo de interfaz · Sin datos reales</span></footer>
+        <footer class="page-footer"><span>© Ruta H&amp;D2 · Comercializadora H&amp;D</span><span>Interfaz de demostración · Espectro violeta</span></footer>
       </main>
     </div>
   </div>
+  <dialog id="formDialog" class="modal" aria-labelledby="formDialogTitle">
+    <form id="recordForm" novalidate>
+      <div class="modal-heading"><div><span class="overline">GESTIÓN DE REGISTROS</span><h2 id="formDialogTitle">Nuevo registro</h2></div><button type="button" class="icon-button" data-close-form aria-label="Cerrar ventana"><svg class="icon"><use href="#i-close"/></svg></button></div>
+      <div class="modal-body"><div class="form-grid" id="formFields"></div><p class="form-error" id="formError" role="alert" hidden></p></div>
+      <div class="modal-footer"><button type="button" class="button ghost" data-close-form>Cancelar</button><button type="submit" class="button primary"><svg class="icon"><use href="#i-check"/></svg> Guardar cambios</button></div>
+    </form>
+  </dialog>
+  <dialog id="confirmDialog" class="modal confirm-modal" aria-labelledby="confirmTitle">
+    <div class="confirm-symbol"><svg class="icon"><use href="#i-warning"/></svg></div>
+    <h2 id="confirmTitle">¿Eliminar este registro?</h2><p id="confirmDescription">Esta acción no se puede deshacer en este navegador.</p>
+    <div class="modal-footer centered"><button type="button" class="button ghost" id="confirmCancel">Cancelar</button><button type="button" class="button danger" id="confirmAccept"><svg class="icon"><use href="#i-trash"/></svg> Eliminar</button></div>
+  </dialog>
+  <dialog id="infoDialog" class="modal confirm-modal" aria-labelledby="infoTitle">
+    <div class="info-symbol"><svg class="icon"><use href="#i-info"/></svg></div><h2 id="infoTitle">Sobre esta demostración</h2>
+    <p id="infoDescription">Los datos se almacenan únicamente en el navegador; no se sincronizan con InfinityFree.</p>
+    <div class="modal-footer centered"><button type="button" class="button primary" id="infoClose">Entendido</button></div>
+  </dialog>
+  <div id="toastRegion" class="toast-region" role="status" aria-live="polite" aria-atomic="false"></div>
+  <script src="assets/js/app.js" defer></script>
 </body>
 </html>
