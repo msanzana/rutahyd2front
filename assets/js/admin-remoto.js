@@ -205,6 +205,14 @@
     const idRow=el('label','field','ID numérico del producto en MySQL');
     const productId=el('input');productId.type='number';productId.min='1';productId.step='1';productId.required=true;
     idRow.appendChild(productId);form.appendChild(idRow);
+    const identity=el('p','catalog-footnote','Primero consulta el producto para comprobar su identidad y clasificación actual.');
+    form.appendChild(identity);
+    let loaded=null;
+    const approval=el('input');approval.type='checkbox';
+    productId.addEventListener('input',()=>{
+      loaded=null;approval.checked=false;
+      identity.textContent='Producto sin verificar. Consulta el ID antes de guardar.';
+    });
     const controls={};
     PRODUCTS.forEach(([field,catalog])=>{
       const label=el('label','field',CONFIG[catalog][0]),select=el('select');
@@ -228,14 +236,43 @@
     }
     PRODUCTS.forEach(([field])=>controls[field].addEventListener('change',update));
     update();
+    form.appendChild(button('Consultar producto en MySQL',()=>guarded(async()=>{
+      const id=Number(productId.value);
+      if(!Number.isSafeInteger(id)||id<1){status('Ingresa un ID válido para consultar.',true);return;}
+      const registro=await API().getProductClassification(id);
+      if(Number(registro.id)!==id)throw new Error('El ID consultado no coincide.');
+      loaded={id,nombre:registro.nombre,sku:registro.sku};
+      identity.textContent='Producto verificado: '+registro.nombre+' · SKU: '+registro.sku+' · ID: '+id;
+      PRODUCTS.forEach(([field])=>{
+        const value=registro.clasificacion?.[field];
+        if(value!==undefined&&value!==null){
+          controls[field].value=String(value);
+          update();
+        }
+      });
+      approval.checked=false;
+      status('Producto consultado. Confirma la identidad antes de guardar.');
+    })));
+    const approvalLabel=el('label','field');
+    approvalLabel.appendChild(approval);
+    approvalLabel.appendChild(el('span','',
+      'Confirmo que el ID, SKU y nombre corresponden al producto que quiero modificar.'));
+    form.appendChild(approvalLabel);
     const submit=el('button','button primary','Guardar clasificación en MySQL');submit.type='submit';
     form.appendChild(submit);
     form.addEventListener('submit',event=>{
       event.preventDefault();
       guarded(async()=>{
+        if(!loaded||Number(productId.value)!==loaded.id){
+          status('Consulta el producto para verificar su identidad antes de guardar.',true);return;
+        }
+        if(!approval.checked){
+          status('Confirma la identidad del producto antes de modificarlo.',true);return;
+        }
         const payload=Object.fromEntries(PRODUCTS.map(([field])=>[field,Number(controls[field].value)]));
-        await API().classifyProduct(Number(productId.value),payload);
-        status('Clasificación guardada en el producto '+productId.value+'.');
+        await API().classifyProduct(loaded.id,payload);
+        approval.checked=false;
+        status('Clasificación guardada para '+loaded.nombre+' (SKU '+loaded.sku+').');
       });
     });
     panel.appendChild(form);root.appendChild(panel);
