@@ -172,3 +172,33 @@ button{cursor:pointer}a{color:inherit}h1,h2,h3,p{margin-top:0}
 
 /* Mantener saltos de línea en fichas informativas. */
 #infoDescription{white-space:pre-line}
+
+/* Administración de clasificación comercial */
+.catalog-admin{margin-bottom:26px}
+.catalog-intro{padding:23px 26px 22px;background:linear-gradient(115deg,#fff,#f5eeff);border:1px solid #e9def9;border-radius:16px;margin-bottom:17px}
+.catalog-intro h2{font-size:21px;margin:4px 0 7px;letter-spacing:-.45px}
+.catalog-intro p{margin:0;color:var(--muted);font-size:13px;max-width:760px}
+.catalog-admin-grid{display:grid;grid-template-columns:235px minmax(0,1fr);align-items:start;gap:18px}
+.catalog-sidebar,.catalog-main{background:var(--surface);border:1px solid var(--line);border-radius:15px;box-shadow:var(--shadow)}
+.catalog-sidebar{padding:18px 12px}
+.catalog-sidebar h3{margin:0 12px 12px;font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+.catalog-tabs{display:flex;flex-direction:column;gap:4px}
+.catalog-tab{background:transparent;border:0;display:flex;justify-content:space-between;align-items:center;gap:9px;width:100%;border-radius:9px;padding:11px 12px;color:#4e415d;text-align:left;font-size:12px;font-weight:650}
+.catalog-tab:hover{background:#f8f4ff}.catalog-tab.selected{background:#eee4fc;color:#6220a8}
+.catalog-counter{border-radius:99px;background:#f1edf6;color:#76678b;min-width:23px;text-align:center;font-size:11px;padding:1px 5px}
+.catalog-tab.selected .catalog-counter{background:#dbc6f7;color:#571b91}
+.catalog-main{min-width:0;overflow:hidden}
+.catalog-header{display:flex;justify-content:space-between;align-items:center;gap:15px;padding:21px 23px;border-bottom:1px solid var(--line)}
+.catalog-header h3{font-size:19px;letter-spacing:-.35px;margin:0 0 5px}
+.catalog-header p{font-size:12px;color:var(--muted);margin:0}
+.catalog-empty{padding:55px 20px;text-align:center;color:var(--muted);font-size:13px}
+.catalog-table-scroll{overflow:auto}
+.catalog-table{border-collapse:collapse;width:100%;min-width:540px;font-size:12px}
+.catalog-table th{text-align:left;color:#635575;background:#f7f3fc;padding:13px 16px;font-size:11px}
+.catalog-table td{padding:13px 16px;border-top:1px solid #f1edf6;word-break:break-word}
+.catalog-actions{white-space:nowrap}.catalog-small-button{border:1px solid #e4d6f4;border-radius:7px;padding:6px 9px;color:#63259f;background:#f9f4ff;font-size:11px;font-weight:700;margin:2px}
+.catalog-small-button:hover{background:#efddff}.catalog-small-button.danger-text{color:#bb3545;background:#fff6f7;border-color:#f2dade}
+.catalog-footnote{padding:11px 23px;border-top:1px solid var(--line);font-size:11px;color:var(--muted);margin:0}
+.catalog-dialog{max-width:500px}
+@media(max-width:930px){.catalog-admin-grid{grid-template-columns:1fr}.catalog-tabs{flex-direction:row;flex-wrap:wrap}.catalog-tab{width:auto;gap:10px}.catalog-sidebar{padding:15px}.catalog-sidebar h3{margin:0 0 10px}.catalog-main{min-width:0}}
+@media(max-width:620px){.catalog-intro{padding:18px}.catalog-header{padding:17px;align-items:flex-start;flex-direction:column}.catalog-header .button{width:100%}.catalog-tabs{flex-direction:row;max-height:200px;overflow:auto}.catalog-tab{flex-basis:calc(50% - 4px)}.catalog-small-button{padding:5px 7px}}
