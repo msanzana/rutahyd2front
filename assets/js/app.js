@@ -288,6 +288,7 @@
       $('#exportButton').hidden=true;
       $('#workspaceContent').replaceChildren();
       catalogos.mount(()=>db.productos);
+      $('#catalogAdmin')?.classList.add('catalog-menu-view');
       catalogos.selectCatalog(key);
       window.RutaHDRemoto?.mount($('#workspaceContent'),key);
       return;
@@ -314,7 +315,7 @@
     $('#exportButton').hidden = view === 'administracion';
     $('#newButtonText').textContent='Nuevo '+(cfg.singular || 'registro');
     if (view==='informes') renderReports();
-    else if (view==='administracion') { renderAdmin(); catalogos?.mount(()=>db.productos); window.RutaHDRemoto?.mount($('#workspaceContent')); }
+    else if (view==='administracion') { renderAdmin(); window.RutaHDRemoto?.mount($('#workspaceContent')); }
     else renderTable(view === 'inventario' ? 'productos' : view);
   }
 
@@ -440,8 +441,8 @@
   function openForm(kind,id) {
     if (!definitions[kind]) return;
     if (kind==='productos' && id===null && !catalogos.canCreateProduct()) {
-      toast('warning','Completa los catálogos','Debes configurar rubro, departamento, familia, línea, marca, modelo, unidad, gramos y envasado en Administración.');
-      navigate('administracion');return;
+      toast('warning','Completa los catálogos','Debes configurar los diez catálogos desde los submódulos de Productos.');
+      navigate('catalogos.rubros');return;
     }
     if (kind==='pedidos' && !db.clientes.length) {
       toast('warning','Primero agrega un cliente','Para crear un pedido es necesario seleccionar un cliente registrado.');
