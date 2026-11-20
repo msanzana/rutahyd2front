@@ -54,6 +54,11 @@ async function login(page) {
 
 test('Productos anida diez subítems y navega sin duplicarlos en Administración',async({page})=>{
   await page.goto('/');
+  const padres=await page.locator('.sidebar .nav > .nav-link, .sidebar .nav > .nav-group')
+    .evaluateAll(items=>items.map(el=>el.dataset.nav||el.querySelector('.nav-link')?.dataset.nav));
+  expect(padres.slice(0,7)).toEqual([
+    'inicio','pedidos','clientes','productos','inventario','informes','administracion'
+  ]);
   const all=page.locator('[data-catalog-key]');
   await expect(all).toHaveCount(10);
   await page.locator('#toggleProductSubnav').click();
@@ -76,7 +81,8 @@ test('perfil con Rubros solo lectura oculta módulos y bloquea CRUD aunque se us
   await expect(page.locator('#navPerfiles')).toBeHidden();
   await page.locator('[data-nav="catalogos.rubros"]').click();
   await expect(page.locator('#workspaceTitle')).toHaveText('Rubros');
-  await expect(page.locator('#catalogAdmin [data-catalog-action="new"]')).toBeDisabled();
+  await expect(page.locator('#catalogAdmin')).toHaveCount(0); // sesión real separada de demo
+  await expect(page.locator('#adminRemoto')).toBeVisible();
   await expect(page.locator('#adminRemoto').getByRole('button',{name:'Nuevo registro de Rubros'})).toBeDisabled();
   await page.evaluate(()=>{location.hash='#catalogos.marcas';});
   await expect(page.locator('#breadcrumbCurrent')).toHaveText('Inicio');
