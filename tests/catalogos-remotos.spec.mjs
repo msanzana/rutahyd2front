@@ -3,7 +3,10 @@ import {test, expect} from '@playwright/test';
 test('administración remota pide login y mantiene demo local independiente', async ({page})=>{
   await page.goto('/#administracion');
   await expect(page.locator('#adminRemoto')).toContainText('Administración MySQL');
+  await expect(page.locator('#catalogAdmin')).toHaveCount(0);
+  await page.locator('[data-nav="catalogos.rubros"]').click();
   await expect(page.locator('#catalogAdmin')).toBeVisible();
+  await page.locator('[data-nav="administracion"]').click();
   await expect(page.locator('#adminRemoto input[type="password"]')).toBeVisible();
   await expect(page.locator('#adminRemoto')).not.toContainText('Guardar clasificación en MySQL');
 });
@@ -27,7 +30,7 @@ test('sesión remota, catálogos CRUD y clasificación con API simulada', async 
     requests.push({path,method:request.method(),authorization:request.headers().authorization||null});
     if(path==='/api/v1/sesion'){
       return route.fulfill({status:200,contentType:'application/json',
-        body:JSON.stringify({token:'a'.repeat(64),usuario:{nombre:'Administrador',rol:'administrador'}})});
+        body:JSON.stringify({token:'a'.repeat(64),usuario:{nombre:'Administrador',rol:'administrador',permisos:['productos.gestionar']}})});
     }
     if(request.headers().authorization!=='Bearer '+'a'.repeat(64))
       return route.fulfill({status:401,body:'{}'});
