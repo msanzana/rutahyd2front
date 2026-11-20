@@ -1,0 +1,58 @@
+name: Optimizar logo H&D con transparencia
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/optimizar-logo-transparente.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  exportar:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Convertir logo circular a WebP con bordes transparentes
+        run: |
+          python3 -m pip install --quiet --break-system-packages Pillow
+          python3 - <<'PY'
+          from PIL import Image, ImageDraw
+          from pathlib import Path
+          src=Path('assets/img/logo-hd-oficial-v1.jpg')
+          out=Path('assets/img/logo-hd-transparente.webp')
+          img=Image.open(src).convert('RGBA')
+          w,h=img.size
+          scale=4
+          mask=Image.new('L',(w*scale,h*scale),0)
+          draw=ImageDraw.Draw(mask)
+          diameter=min(w,h)
+          margin=int(diameter*0.007*scale)
+          left=(w*scale-diameter*scale)//2+margin
+          top=(h*scale-diameter*scale)//2+margin
+          draw.ellipse((left,top,left+diameter*scale-2*margin,top+diameter*scale-2*margin),fill=255)
+          mask=mask.resize((w,h),Image.Resampling.LANCZOS)
+          img.putalpha(mask)
+          img.save(out,'WEBP',quality=92,method=6)
+          assert Image.open(out).getpixel((0,0))[3]==0
+          print('ORIGEN:',src,'tamano:',(w,h))
+          print('TRANSPARENTE:',out,'bytes:',out.stat().st_size)
+          PY
+      - name: Cambiar referencia de logo en frontend
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+          old='assets/img/logo-hd-oficial-v1.jpg'
+          new='assets/img/logo-hd-transparente.webp'
+          assert old in s or new in s
+          p.write_text(s.replace(old,new))
+          PY
+      - name: Versionar logo optimizado
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/img/logo-hd-transparente.webp index.html
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "feat(brand): use official circular HD logo with transparent exterior"
+          git push origin HEAD:main
