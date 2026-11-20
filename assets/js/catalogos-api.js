@@ -23,10 +23,13 @@
     if (!['https:','http:'].includes(url.protocol) || url.username || url.password ||
         url.search || url.hash) throw new Error('URL de API no permitida.');
     const localDev=['localhost','127.0.0.1'].includes(window.location.hostname);
-    if (url.hostname !== window.location.hostname && !localDev) {
-      throw new Error('Para proteger la sesión, la API debe estar alojada en el mismo dominio.');
+    if (url.origin !== window.location.origin && !localDev) {
+      throw new Error('Para proteger la sesión, la API debe estar alojada en el mismo origen HTTPS.');
     }
-    endpoint = url.toString().replace(/\/$/,'').replace(/\/api\/v1$/,'') + '/api/v1';
+    if (url.pathname !== '/' && url.pathname !== '/api/v1' && url.pathname !== '/api/v1/') {
+      throw new Error('La ruta de API debe ser la raíz del servidor o /api/v1.');
+    }
+    endpoint = url.origin + '/api/v1';
   }
 
   function authenticate(token) {
@@ -37,6 +40,10 @@
   }
 
   function signOut() { bearer = null; }
+  async function logout() {
+    try { if (bearer) await send('/sesion','DELETE'); }
+    finally { bearer = null; }
+  }
   async function login(email, password) {
     if (!endpoint) throw new Error('Configura primero el servidor.');
     if (typeof email !== 'string' || !email.includes('@') || !password)
@@ -52,6 +59,9 @@
       });
     } finally { clearTimeout(timer); }
     if (!response.ok) throw new Error('No se pudo iniciar sesión (HTTP ' + response.status + ')');
+    if (!(response.headers.get('Content-Type') || '').includes('application/json')) {
+      throw new Error('La dirección no respondió como API JSON. Laravel aún puede estar deshabilitado.');
+    }
     const data = await response.json();
     authenticate(data.token);
     return data.usuario;
@@ -96,7 +106,7 @@
     return String(value);
   }
   const api = Object.freeze({
-    configure, authenticate, login, signOut,
+    configure, authenticate, login, logout, signOut,
     profile: () => send('/perfil'),
     roleCatalogPermissions: () => send('/perfiles/catalogos'),
     usersForProfiles: () => send('/perfiles/usuarios'),
