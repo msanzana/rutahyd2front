@@ -22,6 +22,10 @@
     }
     if (!['https:','http:'].includes(url.protocol) || url.username || url.password ||
         url.search || url.hash) throw new Error('URL de API no permitida.');
+    const localDev=['localhost','127.0.0.1'].includes(window.location.hostname);
+    if (url.hostname !== window.location.hostname && !localDev) {
+      throw new Error('Para proteger la sesión, la API debe estar alojada en el mismo dominio.');
+    }
     endpoint = url.toString().replace(/\/$/,'').replace(/\/api\/v1$/,'') + '/api/v1';
   }
 
@@ -99,6 +103,8 @@
       send('/catalogos/' + key(catalogo) + '/' + id(identificador), 'PUT', datos),
     remove: (catalogo, identificador) =>
       send('/catalogos/' + key(catalogo) + '/' + id(identificador), 'DELETE'),
+    getProductClassification: (identificador) =>
+      send('/productos/' + id(identificador) + '/clasificacion'),
     classifyProduct: (identificador, datos) => {
       if (!datos || FIELDS.some(k=>!Number.isSafeInteger(Number(datos[k])) || Number(datos[k]) < 1)) {
         throw new Error('Clasificación incompleta.');
