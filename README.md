@@ -33,7 +33,7 @@ El workflow `.github/workflows/verificar-tema.yml` ejecuta pruebas de navegació
 - `index.html` — shell accesible y cuadros de diálogo.
 - `assets/css/app.css` — sistema visual violeta responsive.
 - `assets/js/app.js` — lógica interactiva local, sin dependencias de pago.
-- `assets/img/logo-hd-transparente.webp` — logo circular H&D sobre fondo exterior transparente, derivado del archivo de Ruta H&D V1.
+- `assets/img/marca-hd.webp` — logo circular H&D sobre fondo exterior transparente, derivado del archivo de Ruta H&D V1.
 - `tests/frontend-violeta.spec.mjs` — pruebas de extremo a extremo con Playwright.
 
 ## Publicación
