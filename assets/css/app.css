@@ -231,3 +231,8 @@ button{cursor:pointer}a{color:inherit}h1,h2,h3,p{margin-top:0}
 .permissions-table input:disabled{opacity:.5;cursor:not-allowed}
 .profile-permission-footer{display:flex;align-items:center;gap:12px}
 @media(max-width:800px){.product-subnav{margin-left:16px}.perfiles-panel{padding:15px}.permissions-table td,.permissions-table th{padding:10px 8px}}
+
+/* Desplazamiento vertical del árbol de Productos en pantallas bajas */
+.sidebar .nav{min-height:0;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:rgba(223,186,250,.4) transparent}
+.sidebar .nav::-webkit-scrollbar{width:5px}
+.sidebar .nav::-webkit-scrollbar-thumb{background:rgba(223,186,250,.4);border-radius:7px}
