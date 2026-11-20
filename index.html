@@ -63,8 +63,15 @@
         </div>
         <button type="button" data-nav="inventario" class="nav-link"><svg class="icon"><use href="#i-stock"/></svg><span>Inventario</span></button>
         <button type="button" data-nav="informes" class="nav-link"><svg class="icon"><use href="#i-chart"/></svg><span>Informes</span></button>
-        <button type="button" data-nav="administracion" class="nav-link"><svg class="icon"><use href="#i-settings"/></svg><span>Administración</span></button>
-        <button type="button" data-nav="perfiles" class="nav-link" id="navPerfiles" hidden><svg class="icon"><use href="#i-users"/></svg><span>Perfiles y permisos</span></button>
+        <div class="nav-group" id="adminNavGroup">
+          <div class="nav-parent">
+            <button type="button" data-nav="administracion" class="nav-link"><svg class="icon"><use href="#i-settings"/></svg><span>Administración</span></button>
+            <button type="button" class="nav-expand" id="toggleAdminSubnav" aria-label="Expandir submódulos de Administración" aria-controls="adminSubnav" aria-expanded="false" hidden><svg class="icon small"><use href="#i-chevron"/></svg></button>
+          </div>
+          <div id="adminSubnav" class="product-subnav" role="menu" aria-label="Submódulos de Administración" hidden>
+            <button type="button" data-nav="perfiles" class="nav-sublink" id="navPerfiles" role="menuitem" hidden><span>Perfiles y permisos</span></button>
+          </div>
+        </div>
       </nav>
       <div class="sidebar-footer">
         <span class="sidebar-status-dot"></span> Entorno de demostración
