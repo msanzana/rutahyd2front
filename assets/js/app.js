@@ -287,10 +287,15 @@
       $('#newButton').hidden=true;
       $('#exportButton').hidden=true;
       $('#workspaceContent').replaceChildren();
-      catalogos.mount(()=>db.productos);
-      $('#catalogAdmin')?.classList.add('catalog-menu-view');
-      catalogos.selectCatalog(key);
-      window.RutaHDRemoto?.mount($('#workspaceContent'),key);
+      if(access()?.authenticated()) {
+        // La sesión real nunca debe mezclar datos MySQL con la demo local.
+        window.RutaHDRemoto?.mount($('#workspaceContent'),key);
+      } else {
+        catalogos.mount(()=>db.productos);
+        $('#catalogAdmin')?.classList.add('catalog-menu-view');
+        catalogos.selectCatalog(key);
+        window.RutaHDRemoto?.mount($('#workspaceContent'),key);
+      }
       return;
     }
     if(view==='perfiles'){
