@@ -50,7 +50,7 @@
   };
   const errorText=e=>{
     if(e?.status===401)return 'Sesión vencida: vuelve a iniciar sesión.';
-    if(e?.status===403)return 'El usuario no tiene permiso productos.gestionar.';
+    if(e?.status===403)return 'El perfil no tiene permiso para operar este submódulo.';
     if(e?.status===404)return 'El recurso no existe o aún no se ha desplegado.';
     if(e?.status===409)return 'Conflicto: registro duplicado o con referencias.';
     if(e?.status===422)return 'Datos inválidos: revisa nombre, jerarquía y condición tributaria.';
@@ -61,7 +61,7 @@
     if(busy)return;
     busy=true;
     try {await fn();}
-    catch(e){status(errorText(e),true);if(e?.status===401){API().signOut();authorized=false;render();}}
+    catch(e){status(errorText(e),true);if(e?.status===401){API().signOut();authorized=false;access()?.clear();render();}}
     finally{busy=false;}
   }
   async function refresh(){
@@ -100,11 +100,15 @@
     const bar=el('div','workspace-actions');
     bar.style.flexWrap='wrap';
     add(bar,button('Actualizar datos',()=>guarded(refresh)),
-      button('Cerrar sesión remota',()=>{
-        API().signOut();authorized=false;
+      button('Cerrar sesión remota',()=>guarded(async()=>{
+        try { await API().logout(); }
+        catch(e) { API().signOut(); }
+        authorized=false;
         access()?.clear();
-        KEYS.forEach(k=>cache[k]=[]);render();status('Sesión remota cerrada.');
-      }));
+        KEYS.forEach(k=>cache[k]=[]);
+        render();
+        status('Sesión remota cerrada y token descartado.');
+      })));
     root.appendChild(bar);
     if(!restrictedKey){
       const tabs=el('div','catalog-tabs');
@@ -149,6 +153,7 @@
       wrapper.appendChild(name);wrapper.appendChild(input);form.appendChild(wrapper);return input;
     };
     const url=field('URL de la API Laravel','url','https://dominio-seguro.example');
+    url.value=window.location.origin;
     const email=field('Correo del administrador','email','administracion@example.cl');
     const password=field('Contraseña','password','');
     form.appendChild(el('p','catalog-footnote','No uses el formulario mientras la API esté bloqueada o no tenga autenticación verificada.'));
@@ -158,9 +163,16 @@
       const secret=password.value;password.value='';
       guarded(async()=>{
         API().configure(url.value.trim());
-        const usuario=await API().login(email.value.trim(),secret);
-        access()?.setSession(usuario);
-        await refresh();
+        try {
+          const usuario=await API().login(email.value.trim(),secret);
+          access()?.setSession(usuario);
+          await refresh();
+        } catch (error) {
+          API().signOut();
+          authorized=false;
+          access()?.clear();
+          throw error;
+        }
       });
     });
     root.appendChild(form);
