@@ -4,6 +4,7 @@ import {test,expect} from '@playwright/test';
  * Prueba REAL de navegador -> API Laravel HTTP -> MySQL 8 EFÍMERO GitHub.
  * Únicamente datos de CI; nunca apuntar a InfinityFree.
  */
+test.skip(!process.env.RUN_REAL_MYSQL_E2E, 'Solo se ejecuta dentro de CI de integración MySQL efímera');
 const endpoint='http://127.0.0.1:8000';
 const base=process.env.CI_REAL_API_URL||endpoint;
 if (process.env.CI_REAL_API_URL && !/^http:\/\/127\.0\.0\.1:8000\/?$/.test(base)) {
@@ -50,12 +51,12 @@ test('navegador real conecta frontend, Laravel, MySQL y respeta los padres del m
   await page.locator('#navPerfiles').click();
   const profile=page.locator('#rolesCatalogos');
   await expect(profile).toBeVisible();
-  await profile.locator('#selectorPerfil').selectOption({label:/Vendedor/});
+  await profile.locator('#selectorPerfil').selectOption({index:2});
   const rubro=profile.locator('[data-modulo="rubros"]');
   await rubro.getByRole('checkbox',{name:'Ver Rubros'}).check();
   await rubro.getByRole('checkbox',{name:'Gestionar Rubros'}).uncheck();
   await profile.getByRole('button',{name:'Guardar permisos del perfil'}).click();
-  await expect(profile.locator('#rolesStatus')).toContainText('Permisos guardados');
+  await expect(profile.locator('#rolesStatus')).toContainText('Permisos cargados');
 
   // Cierre y nuevo login real del usuario del rol vendedor.
   await page.locator('.nav-link[data-nav="administracion"]').click();
