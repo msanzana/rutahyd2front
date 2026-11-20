@@ -1,6 +1,6 @@
-/* Ruta H&D2 — cliente API opcional para catálogos.
- * No se carga ni activa automáticamente en la demo actual.
- * El bearer token vive solo en memoria, jamás en localStorage.
+/* Ruta H&D2: cliente API de catálogos con Bearer JWT.
+ * Los tokens viven únicamente en memoria; jamás en localStorage.
+ * Sin JWT y API validada, solo funciona el modo demostración.
  */
 (() => {
   'use strict';
@@ -33,8 +33,9 @@
   }
 
   function authenticate(token) {
-    if (typeof token !== 'string' || !/^[a-f0-9]{64}$/i.test(token)) {
-      throw new Error('Token de acceso inválido.');
+    if (typeof token !== 'string' || token.length > 4096 ||
+        !/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(token)) {
+      throw new Error('Token Bearer JWT inválido.');
     }
     bearer = token;
   }
@@ -63,6 +64,7 @@
       throw new Error('La dirección no respondió como API JSON. Laravel aún puede estar deshabilitado.');
     }
     const data = await response.json();
+    if (data.token_type !== 'Bearer') throw new Error('La API no devolvió un JWT Bearer.');
     authenticate(data.token);
     return data.usuario;
   }
