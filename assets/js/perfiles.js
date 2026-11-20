@@ -37,6 +37,7 @@
       roles=response.roles||[];
       if(!roles.some(r=>String(r.id)===String(selectedId))) selectedId=roles.find(r=>r.editable)?.id||roles[0]?.id;
       renderMatrix();
+      await renderUsers();
       status('Permisos cargados desde el servidor. Los cambios se aplican inmediatamente en las próximas solicitudes.');
     }catch(e){status('No fue posible consultar permisos (HTTP '+(e.status||'conexión')+').',true);}
   }
@@ -50,6 +51,64 @@
     const message=el('p','catalog-footnote');message.id='rolesStatus';
     root.appendChild(message);
     load();
+  }
+  async function renderUsers(){
+    if(!root || !access().authenticated() || !access().isAdmin())return;
+    $('#usersProfiles',root)?.remove();
+    const panel=el('section','profiles-users');panel.id='usersProfiles';
+    panel.appendChild(el('h3','','Usuarios y sus perfiles'));
+    panel.appendChild(el('p','catalog-footnote',
+      'Cada usuario hereda los permisos del perfil asignado. Por seguridad, esta pantalla no permite cambiar cuentas administradoras ni elevar usuarios al rol administrador.'));
+    root.appendChild(panel);
+    try{
+      const result=await api().usersForProfiles();
+      const users=result.usuarios||[];
+      if(!users.length){
+        panel.appendChild(el('p','catalog-footnote','No hay usuarios para asignar.'));return;
+      }
+      const grid=el('div','permissions-table-scroll');
+      const table=el('table','permissions-table');
+      const head=el('thead'),row=el('tr');
+      ['Usuario','Perfil actual','Cambiar perfil'].forEach(label=>row.appendChild(el('th','',label)));
+      head.appendChild(row);table.appendChild(head);
+      const body=el('tbody');
+      users.forEach(user=>{
+        const tr=el('tr');
+        tr.appendChild(el('td','',user.nombre+' ('+user.correo_electronico+')'));
+        tr.appendChild(el('td','',user.perfil));
+        const cell=el('td'),group=el('div','profile-user-assignment');
+        const choice=el('select');choice.setAttribute('aria-label','Perfil de '+user.nombre);
+        roles.forEach(role=>{
+          const option=el('option','',role.nombre);
+          option.value=role.id;choice.appendChild(option);
+        });
+        choice.value=String(user.rol_id);
+        const current=roles.find(r=>Number(r.id)===Number(user.rol_id));
+        if(current?.codigo==='administrador'){
+          choice.disabled=true;group.appendChild(choice);
+          group.appendChild(el('small','', 'Administrador protegido'));
+        }else{
+          const save=el('button','button ghost','Asignar');
+          save.type='button';
+          save.addEventListener('click',async()=>{
+            if(busy)return;
+            busy=true;
+            try{
+              await api().assignUserRole(user.id,choice.value);
+              status('Nuevo perfil asignado a '+user.nombre+'.');
+              await renderUsers();
+            }catch(e){status('No se pudo asignar el perfil (HTTP '+(e.status||'conexión')+').',true);}
+            finally{busy=false;}
+          });
+          group.appendChild(choice);group.appendChild(save);
+        }
+        cell.appendChild(group);tr.appendChild(cell);body.appendChild(tr);
+      });
+      table.appendChild(body);grid.appendChild(table);panel.appendChild(grid);
+    }catch(e){
+      panel.appendChild(el('p','catalog-footnote',
+        'No se pudieron consultar los usuarios (HTTP '+(e.status||'conexión')+').'));
+    }
   }
   function renderMatrix(){
     if(!root)return;
