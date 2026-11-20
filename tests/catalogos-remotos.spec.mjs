@@ -52,8 +52,12 @@ test('sesión remota, catálogos CRUD y clasificación con API simulada', async 
         return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(found)});
       }
     }
-    if(path==='/api/v1/productos/123/clasificacion')
-      return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({id:123})});
+    if(path==='/api/v1/productos/123/clasificacion'){
+      const response=request.method()==='GET'
+        ? {id:123,sku:'SKU-123',nombre:'Producto existente',clasificacion:{}}
+        : {id:123};
+      return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(response)});
+    }
     return route.fulfill({status:404,body:'{}'});
   });
   await page.goto('/#administracion');
@@ -71,10 +75,13 @@ test('sesión remota, catálogos CRUD y clasificación con API simulada', async 
 
   const form=page.locator('#adminRemoto form').last();
   await form.locator('input[type="number"]').fill('123');
+  await form.getByRole('button',{name:'Consultar producto en MySQL'}).click();
+  await expect(form).toContainText('Producto existente');
   for(const key of ['rubroId','departamentoId','familiaId','lineaId','marcaId','modeloId',
                     'tipoUnidadId','gramajeId','tipoEnvasadoId','condicionTributariaId']){
     await form.locator('select[data-field="'+key+'"]').selectOption({index:1});
   }
+  await form.locator('input[type="checkbox"]').check();
   await form.getByRole('button',{name:'Guardar clasificación en MySQL'}).click();
   await expect(page.locator('#remoteStatus')).toContainText('Clasificación guardada');
   expect(requests.some(x=>x.path==='/api/v1/productos/123/clasificacion'&&x.method==='PATCH')).toBeTruthy();
