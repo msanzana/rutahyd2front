@@ -1,34 +1,42 @@
-# Ruta H&D2 — Frontend (espectro violeta)
+# Ruta H&D2 — Frontend violeta
 
-Base visual del frontend de **Ruta H&D2**. Este repositorio estaba vacío el 19 de noviembre de 2026; se creó una base visual inicial porque el alojamiento `rutahyd2.free.nf` todavía mostraba la página predeterminada de InfinityFree.
+**Sitio de comercializadora H&D**, versión visual funcional de demostración.
 
-## Paleta violeta
-La hoja `assets/css/theme-violet.css` es la **fuente única de colores**. Incluye la escala `--violet-50` a `--violet-950` y variables semánticas para encabezados, botones, fondos, bordes, estados y foco.
+## Interfaz implementada
+- Pantalla de inicio corporativa con paleta violeta, logotipo circular H&D, indicadores locales, módulos y actividad.
+- Menú responsive: inicio, pedidos, clientes, productos, inventario, informes y administración.
+- CRUD de demostración: formularios con validación, altas, vistas de detalle, ediciones y eliminaciones con confirmación.
+- Avisos (toast) de éxito, error, advertencia e información.
+- Inventario derivado del catálogo, alertas de stock bajo, búsqueda y exportación CSV de pedidos/clientes/productos.
+- Informes con gráfica de pedidos según los datos realmente creados en el navegador.
+- Sin cifras inventadas de producción. El almacenamiento se realiza **exclusivamente en localStorage**. No se debe ingresar información personal real en esta demo.
 
-| Uso | Valor |
-| --- | --- |
-| Primario | `#6D28D9` |
-| Hover / selección | `#5B21B6` |
-| Violeta profundo | `#2E1065` |
-| Lila claro | `#F5F3FF` |
-| Texto principal | `#211438` |
-| Fondo | `#FAF8FF` |
+## Integración del backend
+**El backend Laravel V2 NO está activado aún.** Los archivos se transfirieron en staging protegido mediante FTPS, pero falta `.env` privado, conexión real MySQL, autenticación, tabla `tokens_acceso`, alta de administrador y prueba HTTPS. Esta interfaz **no invoca** todavía API real ni escribe en MySQL.
 
-## Vista previa local
-Abrir `index.html` en el navegador. No requiere NPM, servidores, APIs ni servicios de pago.
+La conexión final debe implementar login autenticado y un adaptador seguro para los recursos del backend; nunca publicar secretos, tokens ni rutas internas sin controles.
 
-La vista muestra los módulos de RutaH&D2 como **prototipo visual**: no inventa cifras de ventas ni se conecta todavía a la API. El archivo `index.html` carga el tema desde `assets/css/theme-violet.css`.
+## Desarrollo
+Abrir `index.html` directamente o ejecutar un servidor estático para la demostración:
+```bash
+python3 -m http.server 4173
+```
+Para ejecutar pruebas con Chromium:
+```bash
+npm install
+npx playwright install chromium
+npm test
+```
+El workflow `.github/workflows/verificar-tema.yml` ejecuta pruebas de navegación, CRUD y responsividad.
 
-## Estado y seguridad
-- No se ha reemplazado ningún frontend preexistente: el repositorio estaba vacío.
-- No se ha realizado un despliegue a InfinityFree con estos archivos.
-- No contiene contraseñas, tokens ni credenciales de base de datos.
-- La API Laravel V2 está en otra rama/repositorio y su activación se controla por separado.
-- Para aplicar a una interfaz futura, importar el CSS y utilizar variables semánticas como `var(--action-primary)`, `var(--surface)`, `var(--text-primary)`.
+## Archivos principales
+- `index.html` — shell accesible y cuadros de diálogo.
+- `assets/css/app.css` — sistema visual violeta responsive.
+- `assets/js/app.js` — lógica interactiva local, sin dependencias de pago.
+- `assets/img/logo-hd-transparente.webp` — logo circular H&D sobre fondo exterior transparente, derivado del archivo de Ruta H&D V1.
+- `tests/frontend-violeta.spec.mjs` — pruebas de extremo a extremo con Playwright.
 
-## Archivos
-- `index.html`: vista inicial de estilo violeta.
-- `assets/css/theme-violet.css`: sistema de diseño reutilizable.
+## Publicación
+GitHub Actions despliega el frontend estático por FTPS. Se transfieren solo HTML, CSS, JS y logo, no carpetas de desarrollo ni datos sensibles. La carpeta Laravel `/htdocs/api-v2` permanece separada y protegida.
 
-## Logotipo oficial (Ruta H&D V1)
-Se conserva el archivo JPEG original descargado de `https://pedidos-hd-cunco.neonlarch29.chatgpt.site/img/logo-hd.jpg`, identificado en la página V1 como `img.brand-logo` con `alt="H&D"`. La copia local está en `assets/img/logo-hd-oficial-v1.jpg`, sin alteraciones de píxeles ni recoloreado.
+**No subir un `.env` o credenciales de la base en este repositorio.**
