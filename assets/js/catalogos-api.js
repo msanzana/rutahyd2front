@@ -33,6 +33,25 @@
   }
 
   function signOut() { bearer = null; }
+  async function login(email, password) {
+    if (!endpoint) throw new Error('Configura primero el servidor.');
+    if (typeof email !== 'string' || !email.includes('@') || !password)
+      throw new Error('Se requiere correo y contraseña.');
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 15000);
+    let response;
+    try {
+      response = await fetch(endpoint + '/sesion', {
+        method:'POST', headers:{'Content-Type':'application/json',Accept:'application/json'},
+        body:JSON.stringify({correo_electronico:email,contrasena:password}),
+        credentials:'omit', cache:'no-store', signal:controller.signal
+      });
+    } finally { clearTimeout(timer); }
+    if (!response.ok) throw new Error('No se pudo iniciar sesión (HTTP ' + response.status + ')');
+    const data = await response.json();
+    authenticate(data.token);
+    return data.usuario;
+  }
 
   async function send(path, method = 'GET', body) {
     if (!endpoint || !bearer) throw new Error('La API requiere configuración y sesión autenticada.');
@@ -73,7 +92,7 @@
     return String(value);
   }
   const api = Object.freeze({
-    configure, authenticate, signOut,
+    configure, authenticate, login, signOut,
     list: (catalogo) => send('/catalogos/' + key(catalogo)),
     create: (catalogo, datos) => send('/catalogos/' + key(catalogo), 'POST', datos),
     update: (catalogo, identificador, datos) =>
