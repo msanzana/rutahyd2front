@@ -1,0 +1,74 @@
+name: Identificar logo original Ruta H&D V1
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - '.github/workflows/inspeccionar-logo-v1.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspeccionar:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Instalar Playwright Chromium
+        run: |
+          npm install --no-audit --no-fund
+          npx playwright install --with-deps chromium
+      - name: Inspeccionar portada pública V1 y recursos visuales sin credenciales
+        env:
+          LEGACY_URL: https://pedidos-hd-cunco.neonlarch29.chatgpt.site/
+        run: |
+          mkdir -p artifacts/v1-logo
+          cat > /tmp/inspect-v1.mjs <<'JS'
+          import { chromium } from '@playwright/test';
+          import fs from 'node:fs';
+          import path from 'node:path';
+          const url = process.env.LEGACY_URL;
+          let browser;
+          const record = { url, accessedAt: new Date().toISOString(), issues: [], images: [], relevantText: [], externalStyles: [], pageTitle: null };
+          try {
+            browser = await chromium.launch({headless:true});
+            const context = await browser.newContext({viewport:{width:1300,height:900},ignoreHTTPSErrors:false});
+            const page = await context.newPage();
+            const response = await page.goto(url,{waitUntil:'domcontentloaded',timeout:45000});
+            record.httpStatus=response?.status() ?? null;
+            await page.waitForTimeout(2000);
+            record.finalURL=page.url();
+            record.pageTitle=await page.title();
+            const dom=await page.evaluate(() => {
+              const selected=['img','svg','link[rel~="icon"]','link[rel="apple-touch-icon"]','meta[property="og:image"]','[class*="logo"]','[id*="logo"]'];
+              return [...new Set(selected.flatMap(s=>Array.from(document.querySelectorAll(s))))].slice(0,50).map(el=>({
+                 tag:el.tagName,src:el.currentSrc||el.src||el.getAttribute('href')||el.getAttribute('content'),
+                 alt:el.alt||null,id:el.id||null,className:typeof el.className==='string'?el.className.slice(0,120):'',
+                 text:el.textContent?.trim()?.slice(0,130),
+                 outer:el.outerHTML.slice(0,500)
+              }));
+            });
+            record.images=dom;
+            record.relevantText=(await page.locator('body').innerText().catch(()=>'' )).slice(0,500);
+            await page.screenshot({path:'artifacts/v1-logo/portada-v1.png',fullPage:false});
+            fs.writeFileSync('artifacts/v1-logo/elementos-visuales-v1.json',JSON.stringify(record,null,2));
+            console.log('HTTP:',record.httpStatus,'URL final:',record.finalURL,'Titulo:',record.pageTitle);
+            for (const el of dom) console.log('ASSET:',JSON.stringify({tag:el.tag,src:el.src,alt:el.alt,id:el.id,className:el.className,text:el.text}).slice(0,500));
+          } catch(e) {
+            record.issues.push(String(e).slice(0,600));
+            fs.writeFileSync('artifacts/v1-logo/elementos-visuales-v1.json',JSON.stringify(record,null,2));
+            console.log('SITIO_NO_ACCESIBLE:',String(e).slice(0,800));
+          } finally { await browser?.close().catch(()=>{}); }
+          JS
+          cp /tmp/inspect-v1.mjs ./inspeccionar-v1.mjs
+          node inspeccionar-v1.mjs
+          rm inspeccionar-v1.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: logo-v1-inspeccion-publica
+          path: artifacts/v1-logo/
+          if-no-files-found: warn
+          retention-days: 3
