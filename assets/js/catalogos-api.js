@@ -97,6 +97,10 @@
   }
   const api = Object.freeze({
     configure, authenticate, login, signOut,
+    profile: () => send('/perfil'),
+    roleCatalogPermissions: () => send('/perfiles/catalogos'),
+    saveRoleCatalogPermissions: (roleId, modulos) =>
+      send('/perfiles/' + id(roleId) + '/catalogos','PUT',{modulos}),
     list: (catalogo) => send('/catalogos/' + key(catalogo)),
     create: (catalogo, datos) => send('/catalogos/' + key(catalogo), 'POST', datos),
     update: (catalogo, identificador, datos) =>
