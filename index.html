@@ -72,17 +72,21 @@
             <button type="button" class="nav-expand" id="toggleAdminSubnav" aria-label="Expandir submódulos de Administración" aria-controls="adminSubnav" aria-expanded="false" hidden><svg class="icon small"><use href="#i-chevron"/></svg></button>
           </div>
           <div id="adminSubnav" class="product-subnav" role="menu" aria-label="Submódulos de Administración" hidden>
-            <div class="sidebar-heading">CLASIFICACIONES</div>
+            <div class="subnav-heading" role="presentation">Rubro → Departamento → Familia → Línea</div>
             <button type="button" data-admin-catalog="rubros" class="nav-sublink" role="menuitem"><span>Rubros</span></button>
             <button type="button" data-admin-catalog="departamentos" class="nav-sublink" role="menuitem"><span>Departamentos</span></button>
             <button type="button" data-admin-catalog="familias" class="nav-sublink" role="menuitem"><span>Familias</span></button>
             <button type="button" data-admin-catalog="lineas" class="nav-sublink" role="menuitem"><span>Líneas</span></button>
+            <div class="subnav-heading" role="presentation">Marca → Modelo</div>
             <button type="button" data-admin-catalog="marcas" class="nav-sublink" role="menuitem"><span>Marcas</span></button>
             <button type="button" data-admin-catalog="modelos" class="nav-sublink" role="menuitem"><span>Modelos</span></button>
+            <div class="subnav-heading" role="presentation">Unidades, envasado y tributación</div>
             <button type="button" data-admin-catalog="tipos_unidad" class="nav-sublink" role="menuitem"><span>Tipos de unidad</span></button>
             <button type="button" data-admin-catalog="gramajes" class="nav-sublink" role="menuitem"><span>Gramos / Gramajes</span></button>
             <button type="button" data-admin-catalog="tipos_envasado" class="nav-sublink" role="menuitem"><span>Tipos de envasado</span></button>
             <button type="button" data-admin-catalog="condiciones_tributarias" class="nav-sublink" role="menuitem"><span>Condición tributaria</span></button>
+            <div class="subnav-heading" role="presentation">Seguridad y accesos</div>
+            <button type="button" data-nav="usuarios" class="nav-sublink" id="navUsuarios" role="menuitem" hidden><span>Usuarios</span></button>
             <button type="button" data-nav="perfiles" class="nav-sublink" id="navPerfiles" role="menuitem" hidden><span>Perfiles y permisos</span></button>
           </div>
         </div>
@@ -176,6 +180,8 @@
   <script src="assets/js/perfiles.js" defer></script>
   <script src="assets/js/catalogos.js" defer></script>
   <script src="assets/js/productos-remotos.js" defer></script>
+  <script src="assets/js/usuarios.js" defer></script>
+  <script src="assets/js/recuperacion.js" defer></script>
   <script src="assets/js/app.js" defer></script>
 </body>
 </html>
