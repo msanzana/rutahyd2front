@@ -57,7 +57,7 @@ test('menú oficial y CRUD real de productos con todas las clasificaciones',asyn
     xs=>xs.map(x=>x.dataset.nav||x.querySelector('[data-nav]')?.dataset.nav)
   );
   expect(top).toEqual(['inicio','pedidos','clientes','productos','inventario','informes','administracion']);
-  await page.locator('#toggleAdminSubnav').click();
+  if(await page.locator('#adminSubnav').isHidden())await page.locator('#toggleAdminSubnav').click();
   await expect(page.locator('[data-admin-catalog="rubros"]')).toBeVisible();
   await page.locator('[data-admin-catalog="marcas"]').click();
   await expect(page.locator('#workspaceTitle')).toContainText('Marcas');
