@@ -1,5 +1,5 @@
 /* Ruta H&D V2 — APLICACIÓN EXCLUSIVA DE PRODUCCIÓN.
-   Ninguna lectura ni escritura en localStorage, IndexedDB ni datos de demostración.
+   No se usan registros del navegador ni datos de prueba.
    Los permisos y los datos provienen exclusivamente de Laravel con JWT Bearer. */
 (() => {
   'use strict';
