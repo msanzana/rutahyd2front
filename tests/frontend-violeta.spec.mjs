@@ -181,7 +181,7 @@ test('es adaptable a pantallas móviles, sin desplazamiento horizontal', async (
   await expect(page.locator('#menuToggle')).toBeVisible();
   await page.locator('#menuToggle').click();
   await page.locator('.sidebar [data-nav="compras"]').click();
-  await expect(page.getByRole('heading',{name:'Órdenes de compra',exact:true})).toBeVisible();
+  await expect(page.locator('#workspaceTitle')).toHaveText('Órdenes de compra');
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2)).toBeTruthy();
   await page.screenshot({path:'artifacts/rutahd2-panel-movil.png',fullPage:true});
 });
