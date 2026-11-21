@@ -180,7 +180,7 @@
     const authorized=allowedCatalogs();
     const showParent=!access()?.authenticated() || access().has('productos.gestionar') || authorized.length>0;
     $('#productsNavGroup').hidden=!showParent;
-    const adminVisible=Boolean(!access()?.authenticated()||access()?.isAdmin());
+    const adminVisible=Boolean(!access()?.authenticated()||access()?.isAdmin()||authorized.length>0);
     $('#navPerfiles').hidden=!access()?.authenticated()||!access()?.isAdmin();
     $('#toggleAdminSubnav').hidden=!adminVisible;
     if(!adminVisible)setAdminExpanded(false);
@@ -197,12 +197,12 @@
     $('#toggleProductSubnav').setAttribute('aria-label',expanded?'Contraer submódulos de Productos':'Expandir submódulos de Productos');
   }
   function setAdminExpanded(expanded) {
-    const expand=Boolean(expanded&&(!access()?.authenticated()||access()?.isAdmin()));
+    const expand=Boolean(expanded&&(!access()?.authenticated()||access()?.isAdmin()||allowedCatalogs().length>0));
     $('#adminSubnav').hidden=!expand;
     $('#toggleAdminSubnav').setAttribute('aria-expanded',expand?'true':'false');
     $('#toggleAdminSubnav').setAttribute('aria-label',expand?'Contraer submódulos de Administración':'Expandir submódulos de Administración');
   }
-  function navigate(section) {
+  function navigate(section, fromGroup='auto') {
     if(section==='productos' && !canNavigate(section) && allowedCatalogs().length) section='catalogos.'+allowedCatalogs()[0];
     const current = canNavigate(section) ? section : 'inicio';
     view = current;
@@ -213,8 +213,21 @@
     const key=catalogKey(current);
     $('#breadcrumbCurrent').textContent = key ? 'Productos / '+catalogos.CONFIG[key].title : SECTION_NAMES[current];
     updateProductMenu();
-    if(key||current==='productos')setProductExpanded(true);
-    if(current==='administracion'||current==='perfiles')setAdminExpanded(true);
+    // La clasificación pertenece a una sola rama visible, según desde dónde se abrió.
+    // Nunca desplegar Productos y Administración simultáneamente por navegar.
+    if(key && fromGroup==='administracion'){
+      setProductExpanded(false);
+      setAdminExpanded(true);
+    } else if(key || current==='productos'){
+      setAdminExpanded(false);
+      setProductExpanded(true);
+    } else if(current==='administracion'||current==='perfiles'){
+      setProductExpanded(false);
+      setAdminExpanded(true);
+    } else {
+      setProductExpanded(false);
+      setAdminExpanded(false);
+    }
     $$('[data-admin-catalog]').forEach(button=>{
       const selected='catalogos.'+button.dataset.adminCatalog===current;
       button.classList.toggle('active',selected);
@@ -657,23 +670,31 @@
   document.addEventListener('click',(e)=>{
     if(e.target.closest('#toggleProductSubnav')){
       e.preventDefault();
-      setProductExpanded($('#productSubnav').hidden);
+      const open=$('#productSubnav').hidden;
+      setProductExpanded(open);
+      if(open)setAdminExpanded(false);
       return;
     }
     if(e.target.closest('#toggleAdminSubnav')){
       e.preventDefault();
-      setAdminExpanded($('#adminSubnav').hidden);
+      const open=$('#adminSubnav').hidden;
+      setAdminExpanded(open);
+      if(open)setProductExpanded(false);
       return;
     }
     const adminCatalog=e.target.closest('[data-admin-catalog]');
     if(adminCatalog){
       e.preventDefault();
-      navigate('catalogos.'+adminCatalog.dataset.adminCatalog);
-      setAdminExpanded(true);
+      navigate('catalogos.'+adminCatalog.dataset.adminCatalog,'administracion');
       return;
     }
     const nav=e.target.closest('[data-nav]');
-    if(nav){e.preventDefault();navigate(nav.dataset.nav);return;}
+    if(nav){
+      e.preventDefault();
+      const origin=nav.closest('#adminNavGroup')?'administracion':'productos';
+      navigate(nav.dataset.nav,origin);
+      return;
+    }
     if(e.target.closest('[data-close-sidebar]')) {
       $('#appShell').classList.remove('sidebar-open');return;
     }
