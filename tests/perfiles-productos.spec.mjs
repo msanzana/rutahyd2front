@@ -57,7 +57,7 @@ test('Productos anida diez subítems y navega sin duplicarlos en Administración
   const padres=await page.locator('.sidebar .nav > .nav-link, .sidebar .nav > .nav-group')
     .evaluateAll(items=>items.map(el=>el.dataset.nav||el.querySelector('.nav-link')?.dataset.nav));
   expect(padres).toEqual([
-    'inicio','pedidos','clientes','productos','inventario','informes','administracion'
+    'administracion','compras','ventas','proveedores','clientes','productos','bodega','cuentas_corrientes'
   ]);
   const all=page.locator('[data-catalog-key]');
   await expect(all).toHaveCount(10);
