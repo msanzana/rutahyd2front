@@ -10,7 +10,7 @@
     'rubros','departamentos','familias','lineas','marcas','modelos',
     'tipos_unidad','gramajes','tipos_envasado','condiciones_tributarias'
   ]);
-  const RESOURCES = new Set(['clientes','productos','ventas','notas_venta','bodegas','movimientos_inventario','proveedores']);
+  const RESOURCES = new Set(['clientes','productos','ventas','notas_venta','bodegas','movimientos_inventario','proveedores','ordenes_compra']);
   const FIELDS = [
     'rubroId','departamentoId','familiaId','lineaId','marcaId','modeloId',
     'tipoUnidadId','gramajeId','tipoEnvasadoId','condicionTributariaId'
