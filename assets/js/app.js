@@ -215,13 +215,13 @@
     updateProductMenu();
     if(key||current==='productos')setProductExpanded(true);
     if(current==='administracion'||current==='perfiles')setAdminExpanded(true);
-    $('[data-admin-catalog]').forEach(button=>{
+    $$('[data-admin-catalog]').forEach(button=>{
       const selected='catalogos.'+button.dataset.adminCatalog===current;
       button.classList.toggle('active',selected);
       if(selected)button.setAttribute('aria-current','page');
       else button.removeAttribute('aria-current');
     });
-    $('[data-nav].nav-sublink').forEach(button=>{
+    $$('[data-nav].nav-sublink').forEach(button=>{
       const selected=button.dataset.nav===current;
       button.classList.toggle('active',selected);
       if(selected)button.setAttribute('aria-current','page');
