@@ -109,7 +109,7 @@ test('recuperación segura permite volver al login sin una sesión falsa',async(
   await page.route('**/api/v1/estado',r=>json(r,{servicio:'Ruta H&D2 API',estado:'no_habilitada'},503));
   await page.goto('/#inicio');
   await page.locator('#loginRecover').click();
-  const recovery=page.getByRole('dialog',{name:'Recuperar cuenta'});
+  const recovery=page.locator('dialog').filter({hasText:'Recuperar cuenta'});
   await expect(recovery).toBeVisible();
   await recovery.getByRole('button',{name:'Cancelar'}).click();
   await expect(page.locator('#loginDialog')).toBeVisible();
