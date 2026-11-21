@@ -198,6 +198,9 @@
       });
     });
     root.appendChild(form);
+    root.appendChild(button('¿Olvidaste tu contraseña?',()=>{
+      window.RutaHDRecuperacion?.mostrarSolicitud();
+    },'button ghost'));
   }
   function dialog(title,formBody,onSubmit,deleteMode=false){
     const dialog=el('dialog','modal catalog-dialog'),form=el('form');

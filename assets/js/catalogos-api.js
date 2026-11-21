@@ -127,6 +127,22 @@
     return response.status === 204 ? null : response.json();
   }
 
+  async function publico(path, payload) {
+    if (!endpoint) configure(window.location.origin);
+    if(!['/recuperacion/solicitar','/recuperacion/restablecer'].includes(path))
+      throw new Error('Ruta no autorizada');
+    const controller=new AbortController(), timer=setTimeout(()=>controller.abort(),15000);
+    try{
+      const response=await fetch(endpoint+path,{
+        method:'POST',headers:{Accept:'application/json','Content-Type':'application/json'},
+        body:JSON.stringify(payload),credentials:'same-origin',cache:'no-store',signal:controller.signal
+      });
+      if(!response.ok){const err=new Error('HTTP '+response.status);err.status=response.status;throw err;}
+      if(!(response.headers.get('Content-Type')||'').includes('application/json'))throw new Error('No se recibió JSON');
+      return response.json();
+    }finally{clearTimeout(timer);}
+  }
+
   function key(catalogo) {
     if (!VALID.has(catalogo)) throw new Error('Catálogo desconocido.');
     return encodeURIComponent(catalogo);
@@ -140,6 +156,14 @@
   const api = Object.freeze({
     configure, authenticate, login, logout, signOut, status,
     profile: () => send('/perfil'),
+    requestRecovery: correo_electronico =>
+      publico('/recuperacion/solicitar',{correo_electronico}),
+    resetPassword: (token,contrasena,contrasena_confirmation) =>
+      publico('/recuperacion/restablecer',{token,contrasena,contrasena_confirmation}),
+    usersAll: () => send('/usuarios'),
+    createUser: datos => send('/usuarios','POST',datos),
+    updateUser: (userId,datos) => send('/usuarios/'+id(userId),'PUT',datos),
+    deleteUser: userId => send('/usuarios/'+id(userId),'DELETE'),
     roleCatalogPermissions: () => send('/perfiles/catalogos'),
     usersForProfiles: () => send('/perfiles/usuarios'),
     assignUserRole: (userId,roleId) =>
