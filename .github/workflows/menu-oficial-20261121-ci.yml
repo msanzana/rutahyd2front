@@ -1,0 +1,41 @@
+name: Verificar menú oficial, login inicial y recursos Laravel
+on:
+  push:
+    branches: [feature/menu-oficial-ocho-login-inicial-20261121]
+  pull_request:
+    branches: [feature/catalogos-api-adapter-v2-20261120]
+permissions:
+  contents: read
+jobs:
+  frontend:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validar archivos y ocho padres exactos
+        run: |
+          for f in assets/js/*.js; do node --check "$f"; done
+          node --check tests/menu-oficial-login-v2.spec.mjs
+          test "$(grep -o 'data-admin-catalog=' index.html | wc -l)" -eq 10
+          test "$(grep -o 'data-catalog-key=' index.html | wc -l)" -eq 10
+          grep -Fq 'assets/css/menu-oficial.css' index.html
+          grep -Fq 'assets/js/modulos-oficiales.js' index.html
+          grep -Fq 'id="loginDemo"' index.html
+      - name: Instalar dependencias y Chromium
+        run: |
+          npm install --no-audit --no-fund
+          npx playwright install --with-deps chromium
+      - name: Probar frontend con API simulada sin credenciales reales
+        run: npm test
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fallos-menu-oficial
+          path: |
+            test-results/
+            playwright-report/
+          if-no-files-found: ignore
+          retention-days: 7

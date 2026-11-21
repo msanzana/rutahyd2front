@@ -113,6 +113,14 @@
     if(kind)b.dataset.catalog=kind;if(id!==undefined&&id!==null)b.dataset.id=String(id);
     return b;
   }
+  function canEdit(key){
+    return window.RutaHDAccesos?.canManageCatalog(key) ?? true;
+  }
+  function ensureEdit(key){
+    if(canEdit(key))return true;
+    notify('warning','Acceso restringido','Este perfil solo puede consultar el módulo '+CONFIG[key].title+'.');
+    return false;
+  }
   function selectCatalog(key){
     selected=CONFIG[key]?key:'rubros';
     render();
@@ -145,6 +153,7 @@
     const head=el('div','catalog-header'),title=el('div');
     add(title,el('h3','',cfg.title),el('p','',cfg.parent?'Selecciona primero el '+CONFIG[cfg.parent].singular.toLocaleLowerCase('es-CL')+' al crear un registro.':'Puedes crear, editar y eliminar registros no utilizados.'));
     const newBtn=makeButton('Nuevo '+cfg.singular.toLocaleLowerCase('es-CL'),'new',selected,null,'button primary');
+    newBtn.disabled=!canEdit(selected);
     add(head,title,newBtn);target.appendChild(head);
     const items=catalog(selected);
     if(!items.length){target.appendChild(el('div','catalog-empty','No hay registros en este catálogo. Usa «Nuevo» para comenzar.'));return;}
@@ -163,6 +172,7 @@
       const buttons=el('td','catalog-actions');
       add(buttons,makeButton('Editar','edit',selected,rec.id,'catalog-small-button'),
         makeButton('Eliminar','delete',selected,rec.id,'catalog-small-button danger-text'));
+      buttons.querySelectorAll('button').forEach(b=>b.disabled=!canEdit(selected));
       row.appendChild(buttons);body.appendChild(row);
     });
     table.appendChild(body);scroll.appendChild(table);target.appendChild(scroll);
@@ -193,7 +203,7 @@
     }
   }
   function openForm(key,id){
-    if(!CONFIG[key])return;
+    if(!CONFIG[key]||!ensureEdit(key))return;
     const cfg=CONFIG[key],record=id===null?null:catalog(key).find(r=>String(r.id)===String(id));
     if(id!==null&&!record)return;
     editing={key,id:record?.id??null};
@@ -218,7 +228,7 @@
     const p=$('#catalogFormError');p.textContent=message;p.hidden=false;
   }
   function saveForm(e){
-    e.preventDefault();if(!editing)return;
+    e.preventDefault();if(!editing||!ensureEdit(editing.key))return;
     const {key,id}=editing,cfg=CONFIG[key];
     let name=$('#catalogName').value.trim();
     const parentId=cfg.parent?$('#catalogParent').value:null;
@@ -250,6 +260,7 @@
     return productRecords().some(p=>references.some(k=>String(p[k])===String(id)));
   }
   function askDelete(key,id){
+    if(!ensureEdit(key))return;
     const rec=catalog(key).find(r=>String(r.id)===String(id));if(!rec)return;
     if(isReferenced(key,id)){notify('warning','Registro en uso','No puedes eliminarlo: está asociado a un producto o a un catálogo subordinado.');return;}
     pending={key,id};
@@ -259,6 +270,7 @@
   function remove(){
     if(!pending)return;
     const {key,id}=pending;
+    if(!ensureEdit(key))return;
     if(isReferenced(key,id)){notify('error','No se puede eliminar','El registro se encuentra referenciado.');$('#catalogDeleteDialog').close();return;}
     data[key]=catalog(key).filter(r=>String(r.id)!==String(id));
     if(save()){

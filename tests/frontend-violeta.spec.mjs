@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 async function addCatalog(page,key,name,parent=false){
-  await page.locator('.catalog-tab[data-catalog="'+key+'"]').click();
+  await page.locator('[data-nav="catalogos.'+key+'"]').click();
   await page.locator('[data-catalog-action="new"][data-catalog="'+key+'"]').click();
   await page.locator('#catalogName').fill(name);
   if(parent)await page.locator('#catalogParent').selectOption({index:1});
@@ -11,7 +11,6 @@ async function addCatalog(page,key,name,parent=false){
 }
 
 async function setupTaxonomy(page){
-  await page.locator('.nav-link[data-nav="administracion"]').click();
   await addCatalog(page,'rubros','Alimentos');
   await addCatalog(page,'departamentos','Abarrotes',true);
   await addCatalog(page,'familias','Conservas',true);
@@ -74,7 +73,7 @@ test('crea, edita y elimina cliente con confirmación', async ({page}) => {
 test('configura catálogos jerárquicos y clasifica producto con impuestos', async ({page}) => {
   await page.goto('/#productos');
   await page.locator('#newButton').click();
-  await expect(page.getByRole('heading',{name:'Administración',exact:true})).toBeVisible();
+  await expect(page.locator('#workspaceTitle')).toHaveText('Rubros');
   await expect(page.locator('.toast.warning').first()).toContainText('Completa los catálogos');
   await setupTaxonomy(page);
   await page.locator('.nav-link[data-nav="productos"]').click();
@@ -109,7 +108,7 @@ test('configura catálogos jerárquicos y clasifica producto con impuestos', asy
 });
 
 test('CRUD de rubros y protección ante catálogos referenciados', async ({page}) => {
-  await page.goto('/#administracion');
+  await page.goto('/#catalogos.rubros');
   await addCatalog(page,'rubros','Ferretería');
   await page.locator('.catalog-small-button[data-catalog-action="edit"]').click();
   await page.locator('#catalogName').fill('Ferretería general');
@@ -124,31 +123,30 @@ test('CRUD de rubros y protección ante catálogos referenciados', async ({page}
   await expect(page.locator('.catalog-empty')).toBeVisible();
 
   await setupTaxonomy(page);
-  await page.locator('.catalog-tab[data-catalog="rubros"]').click();
+  await page.locator('[data-nav="catalogos.rubros"]').click();
   await page.locator('.catalog-small-button[data-catalog-action="delete"]').click();
   await expect(page.locator('.toast.warning').first()).toContainText('Registro en uso');
   await expect(page.locator('.catalog-table')).toContainText('Alimentos');
 });
 
 test('dependencias de familia y modelo filtradas por su padre', async ({page}) => {
-  await page.goto('/#administracion');
+  await page.goto('/#catalogos.rubros');
   await addCatalog(page,'rubros','Primer rubro');
   await addCatalog(page,'rubros','Segundo rubro');
   await addCatalog(page,'departamentos','Depto primero',true);
-  await page.locator('.catalog-tab[data-catalog="departamentos"]').click();
+  await page.locator('[data-nav="catalogos.departamentos"]').click();
   await page.locator('[data-catalog-action="new"][data-catalog="departamentos"]').click();
   await page.locator('#catalogName').fill('Depto segundo');
   await page.locator('#catalogParent').selectOption({index:2});
   await page.locator('#catalogForm [type="submit"]').click();
-  await page.locator('.catalog-tab[data-catalog="marcas"]').click();
+  await page.locator('[data-nav="catalogos.marcas"]').click();
   await addCatalog(page,'marcas','Marca Uno');
   await addCatalog(page,'marcas','Marca Dos');
   await addCatalog(page,'modelos','Modelo Uno',true);
-  await page.locator('.catalog-tab[data-catalog="rubros"]').click();
+  await page.locator('[data-nav="catalogos.rubros"]').click();
   await expect(page.locator('.catalog-table')).toContainText('Primer rubro');
   await page.reload();
-  await page.locator('.nav-link[data-nav="administracion"]').click();
-  await page.locator('.catalog-tab[data-catalog="departamentos"]').click();
+  await page.locator('[data-nav="catalogos.departamentos"]').click();
   await expect(page.locator('.catalog-table')).toContainText('Depto primero');
   await expect(page.locator('.catalog-table')).toContainText('Depto segundo');
 });
@@ -159,7 +157,7 @@ test('genera informes y CSV a partir de datos reales del navegador', async ({pag
   await page.locator('#field-nombre').fill('Distribuidora Ejemplo');
   await page.locator('#field-rut').fill('12.345.678-9');
   await page.locator('#recordForm [type="submit"]').click();
-  await page.locator('[data-nav="informes"].nav-link').click();
+  await page.goto('/#informes');
   await expect(page.getByRole('heading',{name:'Informes'})).toBeVisible();
   const downloadEvent=page.waitForEvent('download');
   await page.locator('[data-action="export"][data-kind="clientes"]').click();
@@ -174,7 +172,7 @@ test('muestra detalles, avisos e información de uso', async ({page}) => {
   await expect(page.locator('#infoDialog')).toBeVisible();
   await page.locator('#infoClose').click();
   await page.locator('[data-action="about"]').click();
-  await expect(page.locator('#infoDescription')).toContainText('no está activado');
+  await expect(page.locator('#infoDescription')).toContainText('API esté bloqueada');
 });
 
 test('es adaptable a pantallas móviles, sin desplazamiento horizontal', async ({page}) => {
@@ -182,8 +180,8 @@ test('es adaptable a pantallas móviles, sin desplazamiento horizontal', async (
   await page.goto('/');
   await expect(page.locator('#menuToggle')).toBeVisible();
   await page.locator('#menuToggle').click();
-  await page.locator('.sidebar [data-nav="pedidos"]').click();
-  await expect(page.getByRole('heading',{name:'Pedidos',exact:true})).toBeVisible();
+  await page.locator('.sidebar [data-nav="compras"]').click();
+  await expect(page.locator('#workspaceTitle')).toHaveText('Órdenes de compra');
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2)).toBeTruthy();
   await page.screenshot({path:'artifacts/rutahd2-panel-movil.png',fullPage:true});
 });
@@ -191,7 +189,7 @@ test('es adaptable a pantallas móviles, sin desplazamiento horizontal', async (
 test('captura dashboard profesional en escritorio', async ({page}) => {
   await page.setViewportSize({width:1440,height:900});
   await page.goto('/');
-  await expect(page.locator('.module-card')).toHaveCount(6);
+  await expect(page.locator('#officialModuleGrid .module-card')).toHaveCount(8);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2)).toBeTruthy();
   await page.screenshot({path:'artifacts/rutahd2-panel-escritorio.png',fullPage:true});
 });

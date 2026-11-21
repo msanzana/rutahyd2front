@@ -1,0 +1,32 @@
+name: Validar integración de catálogos sin publicación
+on:
+  push:
+    branches:
+      - feature/catalogos-api-adapter-v2-20261120
+  pull_request:
+    branches:
+      - main
+permissions:
+  contents: read
+jobs:
+  frontend:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validar sintaxis
+        run: |
+          node --check assets/js/catalogos-api.js
+          node --check assets/js/admin-remoto.js
+          node --check assets/js/app.js
+          node --check assets/js/catalogos.js
+          node --check tests/catalogos-remotos.spec.mjs
+      - name: Instalar pruebas Chromium
+        run: |
+          npm install --no-audit --no-fund
+          npx playwright install --with-deps chromium
+      - name: Pruebas locales y API simulada sin acceso a InfinityFree
+        run: npm test

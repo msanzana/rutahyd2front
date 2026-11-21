@@ -5,9 +5,14 @@
 
   const KEY = 'rutahd2-demo-local-v1';
   const SECTION_NAMES = {
-    inicio: 'Inicio', pedidos: 'Pedidos', clientes: 'Clientes', productos: 'Productos',
-    inventario: 'Inventario', informes: 'Informes', administracion: 'Administración'
+    inicio:'Inicio', administracion:'Administración', compras:'Compras', ventas:'Ventas',
+    proveedores:'Proveedores', clientes:'Clientes', productos:'Productos',
+    bodega:'Bodega', cuentas_corrientes:'Cuentas corrientes',
+    perfiles:'Perfiles y permisos', usuarios:'Usuarios',
+    // Rutas históricas internas: no son padres del menú oficial.
+    pedidos:'Pedidos', inventario:'Inventario', informes:'Informes'
   };
+  const REMOTE_OFFICIAL = new Set(['compras','ventas','proveedores','clientes','bodega','cuentas_corrientes']);
   const DEFAULT_DATA = () => ({ pedidos: [], clientes: [], productos: [], activity: [] });
   const db = loadData();
   const catalogos = window.RutaCatalogos;
@@ -160,23 +165,96 @@
     $('#infoDialog').showModal();
   }
 
-  function navigate(section) {
-    const current = SECTION_NAMES[section] ? section : 'inicio';
+  const catalogKey = section => section?.startsWith('catalogos.') ? section.slice('catalogos.'.length) : null;
+  const access = () => window.RutaHDAccesos;
+  const allowedCatalogs = () => catalogos?.ORDER?.filter(key=>access()?.canViewCatalog(key)) || [];
+  const canNavigate = section => {
+    const key=catalogKey(section);
+    if(key)return catalogos?.CONFIG[key] && access()?.canViewCatalog(key);
+    if(section==='perfiles'||section==='usuarios')return Boolean(access()?.authenticated()&&access()?.isAdmin());
+    if(section==='productos' && access()?.authenticated())
+      return access().has('productos.gestionar');
+    return Boolean(SECTION_NAMES[section]);
+  };
+  function updateProductMenu() {
+    catalogos?.ORDER?.forEach(key=>{
+      document.querySelectorAll('[data-catalog-key="'+key+'"],[data-admin-catalog="'+key+'"]').forEach(b=>{
+        b.hidden=!access()?.canViewCatalog(key);
+      });
+    });
+    const authorized=allowedCatalogs();
+    const showParent=!access()?.authenticated() || access().has('productos.gestionar') || authorized.length>0;
+    $('#productsNavGroup').hidden=!showParent;
+    const adminVisible=Boolean(!access()?.authenticated()||access()?.isAdmin()||authorized.length>0);
+    $('#navPerfiles').hidden=!access()?.authenticated()||!access()?.isAdmin();
+    $('#navUsuarios').hidden=!access()?.authenticated()||!access()?.isAdmin();
+    $('#toggleAdminSubnav').hidden=!adminVisible;
+    if(!adminVisible)setAdminExpanded(false);
+    const list=$('#productSubnav [data-nav="productos"]');
+    if(list)list.hidden=Boolean(access()?.authenticated()&&!access().has('productos.gestionar'));
+    if(!authorized.length && access()?.authenticated() && !access().has('productos.gestionar')) {
+      $('#productSubnav').hidden=true;
+      $('#toggleProductSubnav').setAttribute('aria-expanded','false');
+    }
+  }
+  function setProductExpanded(expanded) {
+    $('#productSubnav').hidden=!expanded;
+    $('#toggleProductSubnav').setAttribute('aria-expanded',expanded?'true':'false');
+    $('#toggleProductSubnav').setAttribute('aria-label',expanded?'Contraer submódulos de Productos':'Expandir submódulos de Productos');
+  }
+  function setAdminExpanded(expanded) {
+    const expand=Boolean(expanded&&(!access()?.authenticated()||access()?.isAdmin()||allowedCatalogs().length>0));
+    $('#adminSubnav').hidden=!expand;
+    $('#toggleAdminSubnav').setAttribute('aria-expanded',expand?'true':'false');
+    $('#toggleAdminSubnav').setAttribute('aria-label',expand?'Contraer submódulos de Administración':'Expandir submódulos de Administración');
+  }
+  function navigate(section, fromGroup='auto') {
+    if(section==='productos' && !canNavigate(section) && allowedCatalogs().length) section='catalogos.'+allowedCatalogs()[0];
+    const current = canNavigate(section) ? section : 'inicio';
     view = current;
     query = '';
     $('#globalSearch').value = '';
     $('#homeView').hidden = current !== 'inicio';
     $('#workspaceView').hidden = current === 'inicio';
-    $('#breadcrumbCurrent').textContent = SECTION_NAMES[current];
+    const key=catalogKey(current);
+    $('#breadcrumbCurrent').textContent = key ? 'Productos / '+catalogos.CONFIG[key].title : SECTION_NAMES[current];
+    updateProductMenu();
+    // La clasificación pertenece a una sola rama visible, según desde dónde se abrió.
+    // Nunca desplegar Productos y Administración simultáneamente por navegar.
+    if(key && fromGroup==='administracion'){
+      setProductExpanded(false);
+      setAdminExpanded(true);
+    } else if(key || current==='productos'){
+      setAdminExpanded(false);
+      setProductExpanded(true);
+    } else if(current==='administracion'||current==='perfiles'||current==='usuarios'){
+      setProductExpanded(false);
+      setAdminExpanded(true);
+    } else {
+      setProductExpanded(false);
+      setAdminExpanded(false);
+    }
+    $$('[data-admin-catalog]').forEach(button=>{
+      const selected='catalogos.'+button.dataset.adminCatalog===current;
+      button.classList.toggle('active',selected);
+      if(selected)button.setAttribute('aria-current','page');
+      else button.removeAttribute('aria-current');
+    });
+    $$('[data-nav].nav-sublink').forEach(button=>{
+      const selected=button.dataset.nav===current;
+      button.classList.toggle('active',selected);
+      if(selected)button.setAttribute('aria-current','page');
+      else button.removeAttribute('aria-current');
+    });
     $$('[data-nav].nav-link').forEach(button => {
-      const selected = button.dataset.nav === current;
+      const selected = button.dataset.nav === current || (button.dataset.nav==='productos' && Boolean(key)) || (button.dataset.nav==='administracion' && ['perfiles','usuarios'].includes(current));
       button.classList.toggle('active',selected);
       if (selected) button.setAttribute('aria-current','page'); else button.removeAttribute('aria-current');
     });
     $('#appShell').classList.remove('sidebar-open');
     if (current === 'inicio') renderHome(); else renderWorkspace();
     if (location.hash.substring(1) !== current) history.replaceState(null,'','#'+current);
-    document.title = 'Ruta H&D2 · '+SECTION_NAMES[current];
+    document.title = 'Ruta H&D2 · '+(key ? catalogos.CONFIG[key].title : SECTION_NAMES[current]);
     window.scrollTo({top:0,behavior:'instant'});
   }
 
@@ -236,10 +314,74 @@
   }
 
   function renderWorkspace() {
+    // La demo de Clientes se permite solo en entorno local de pruebas o tras elegir
+    // expresamente explorar la demostración; nunca se fusiona con MySQL.
+    const modoDemo=!access()?.authenticated() && (
+      document.body.dataset.modo==='demostracion' ||
+      ['localhost','127.0.0.1'].includes(window.location.hostname));
+    if(REMOTE_OFFICIAL.has(view) && !(view==='clientes' && modoDemo)){
+      const labels={compras:'Órdenes de compra',ventas:'Ventas',proveedores:'Proveedores',
+        clientes:'Clientes',bodega:'Bodega',cuentas_corrientes:'Cuentas corrientes'};
+      $('#workspaceEyebrow').textContent='MENÚ OFICIAL / OPERACIONES';
+      $('#workspaceTitle').textContent=labels[view];
+      $('#workspaceDescription').textContent='Consulta de datos desde Laravel/MySQL con permisos. No se mezclan registros locales.';
+      $('#newButton').hidden=true;
+      $('#exportButton').hidden=true;
+      $('#workspaceContent').replaceChildren();
+      window.RutaHDOficial?.mount($('#workspaceContent'),view);
+      return;
+    }
+    const key=catalogKey(view);
+    if(key && catalogos?.CONFIG[key]) {
+      const cfg=catalogos.CONFIG[key];
+      $('#workspaceEyebrow').textContent='PRODUCTOS / CLASIFICACIONES';
+      $('#workspaceTitle').textContent=cfg.title;
+      $('#workspaceDescription').textContent='Mantenimiento independiente de '+cfg.title.toLocaleLowerCase('es-CL')+'. Los datos de prueba son locales; para MySQL utiliza una sesión autorizada.';
+      $('#newButton').hidden=true;
+      $('#exportButton').hidden=true;
+      $('#workspaceContent').replaceChildren();
+      if(access()?.authenticated()) {
+        // La sesión real nunca debe mezclar datos MySQL con la demo local.
+        window.RutaHDRemoto?.mount($('#workspaceContent'),key);
+      } else {
+        catalogos.mount(()=>db.productos);
+        $('#catalogAdmin')?.classList.add('catalog-menu-view');
+        catalogos.selectCatalog(key);
+        window.RutaHDRemoto?.mount($('#workspaceContent'),key);
+      }
+      return;
+    }
+    if(view==='productos' && access()?.authenticated()){
+      $('#workspaceEyebrow').textContent='PRODUCTOS / BASE REAL';
+      $('#workspaceTitle').textContent='Productos';
+      $('#workspaceDescription').textContent='CRUD autenticado de productos y presentaciones; stock en Inventario.';
+      $('#newButton').hidden=true;
+      $('#exportButton').hidden=true;
+      window.RutaHDProductosRemotos?.mount($('#workspaceContent'));
+      return;
+    }
+    if(view==='usuarios'){
+      $('#workspaceEyebrow').textContent='ADMINISTRACIÓN / USUARIOS';
+      $('#workspaceTitle').textContent='Usuarios';
+      $('#workspaceDescription').textContent='Altas, cambios, perfiles y bajas lógicas de usuarios reales.';
+      $('#newButton').hidden=true;
+      $('#exportButton').hidden=true;
+      window.RutaHDUsuarios?.mount($('#workspaceContent'));
+      return;
+    }
+    if(view==='perfiles'){
+      $('#workspaceEyebrow').textContent='ADMINISTRACIÓN / ACCESOS';
+      $('#workspaceTitle').textContent='Perfiles y permisos';
+      $('#workspaceDescription').textContent='Controla qué submódulos de Productos puede ver o gestionar cada perfil.';
+      $('#newButton').hidden=true;$('#exportButton').hidden=true;
+      $('#workspaceContent').replaceChildren();
+      window.RutaHDPerfiles?.mount($('#workspaceContent'));
+      return;
+    }
     const kinds = {
       inventario:{title:'Inventario',description:'Supervisa existencias y edita el stock de los productos de prueba.',eyebrow:'CONTROL DE EXISTENCIAS',singular:'producto'},
       informes:{title:'Informes',description:'Consulta indicadores y exporta reportes de tus registros locales.',eyebrow:'REPORTES OPERATIVOS'},
-      administracion:{title:'Administración',description:'Maestros de clasificación, marcas, presentaciones, gramajes y condición tributaria.',eyebrow:'CATÁLOGOS Y CONFIGURACIÓN'}
+      administracion:{title:'Administración',description:'Maestros Rubro → Departamento → Familia → Línea, Marca → Modelo y atributos tributarios.',eyebrow:'CATÁLOGOS Y CONFIGURACIÓN'}
     };
     const cfg=definitions[view] || kinds[view];
     $('#workspaceEyebrow').textContent = cfg.eyebrow || 'GESTIÓN COMERCIAL';
@@ -249,7 +391,12 @@
     $('#exportButton').hidden = view === 'administracion';
     $('#newButtonText').textContent='Nuevo '+(cfg.singular || 'registro');
     if (view==='informes') renderReports();
-    else if (view==='administracion') { renderAdmin(); catalogos?.mount(()=>db.productos); }
+    else if (view==='administracion') {
+      $('#workspaceContent').replaceChildren();
+      // Cuando hay sesión real se muestran exclusivamente datos de Laravel.
+      if(!access()?.authenticated()) renderAdmin();
+      window.RutaHDRemoto?.mount($('#workspaceContent'));
+    }
     else renderTable(view === 'inventario' ? 'productos' : view);
   }
 
@@ -375,8 +522,8 @@
   function openForm(kind,id) {
     if (!definitions[kind]) return;
     if (kind==='productos' && id===null && !catalogos.canCreateProduct()) {
-      toast('warning','Completa los catálogos','Debes configurar rubro, departamento, familia, línea, marca, modelo, unidad, gramos y envasado en Administración.');
-      navigate('administracion');return;
+      toast('warning','Completa los catálogos','Debes configurar los diez catálogos desde los submódulos de Productos.');
+      navigate('catalogos.rubros');return;
     }
     if (kind==='pedidos' && !db.clientes.length) {
       toast('warning','Primero agrega un cliente','Para crear un pedido es necesario seleccionar un cliente registrado.');
@@ -558,8 +705,33 @@
   if(catalogos) catalogos.onChange=()=>{if(view==='administracion')catalogos.mount(()=>db.productos);};
 
   document.addEventListener('click',(e)=>{
+    if(e.target.closest('#toggleProductSubnav')){
+      e.preventDefault();
+      const open=$('#productSubnav').hidden;
+      setProductExpanded(open);
+      if(open)setAdminExpanded(false);
+      return;
+    }
+    if(e.target.closest('#toggleAdminSubnav')){
+      e.preventDefault();
+      const open=$('#adminSubnav').hidden;
+      setAdminExpanded(open);
+      if(open)setProductExpanded(false);
+      return;
+    }
+    const adminCatalog=e.target.closest('[data-admin-catalog]');
+    if(adminCatalog){
+      e.preventDefault();
+      navigate('catalogos.'+adminCatalog.dataset.adminCatalog,'administracion');
+      return;
+    }
     const nav=e.target.closest('[data-nav]');
-    if(nav){e.preventDefault();navigate(nav.dataset.nav);return;}
+    if(nav){
+      e.preventDefault();
+      const origin=nav.closest('#adminNavGroup')?'administracion':'productos';
+      navigate(nav.dataset.nav,origin);
+      return;
+    }
     if(e.target.closest('[data-close-sidebar]')) {
       $('#appShell').classList.remove('sidebar-open');return;
     }
@@ -567,6 +739,7 @@
     if(!action)return;
     const {kind,id}=action.dataset;
     switch(action.dataset.action) {
+      case 'login':window.RutaHDLogin?.show();break;
       case 'create':openForm(kind|| (view==='inventario'?'productos':view),null);break;
       case 'edit':openForm(kind,id);break;
       case 'delete':askDelete(kind,id);break;
@@ -575,7 +748,7 @@
       case 'reset':askReset();break;
       case 'reports':navigate('informes');break;
       case 'help':showInfo('Ayuda de Ruta H&D2','Desde la barra lateral puedes navegar entre módulos. Usa el botón Nuevo para agregar registros, los íconos de cada fila para ver, editar o eliminar y la sección Informes para exportar CSV. Atajo de búsqueda: Ctrl + K. Los datos no salen de tu navegador.');break;
-      case 'about':showInfo('Demostración local · Ruta H&D2','El backend Laravel V2 fue transferido a un entorno protegido en InfinityFree, pero no está activado ni conectado a producción. Esta interfaz opera en modo local mediante almacenamiento del navegador; nunca envía datos comerciales a la base de datos real.');break;
+      case 'about':showInfo('Conexión del sistema · Ruta H&D2','El frontend consulta el estado real de Laravel y está preparado para utilizar los recursos autenticados. Mientras la API esté bloqueada (HTTP 503), las vistas de datos reales permanecen indisponibles. Los registros locales de demostración nunca se sincronizan automáticamente con MariaDB.');break;
     }
   });
 
@@ -603,7 +776,17 @@
     if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='k'){e.preventDefault();$('#globalSearch').focus();}
     if(e.key==='Escape') $('#appShell').classList.remove('sidebar-open');
   });
+  document.addEventListener('rutahd:permisos-actualizados',()=>{
+    updateProductMenu();
+    if((view==='administracion'||view==='perfiles'||view==='usuarios')&&access()?.isAdmin())setAdminExpanded(true);
+    if(!canNavigate(view)){navigate('inicio');return;}
+    if(view!=='inicio')renderWorkspace();
+    const perfil=access()?.usuario();
+    const role=$('.profile-label small');
+    if(role)role.textContent=perfil?'Perfil: '+perfil.rol:'Vista de demostración';
+  });
   window.addEventListener('hashchange',()=>navigate(location.hash.slice(1)||'inicio'));
+  updateProductMenu();
   navigate(location.hash.slice(1)||'inicio');
   toast('info','Bienvenido a Ruta H&D2','Estás usando un entorno de demostración local.',3500);
 })();

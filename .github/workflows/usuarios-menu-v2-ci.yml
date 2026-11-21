@@ -1,0 +1,35 @@
+name: Verificar usuarios, recuperación y menú sin producción
+on:
+  push:
+    branches: [feature/usuarios-recuperacion-menu-20261121]
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  frontend:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Sintaxis JS y composición de menú
+        run: |
+          node --check assets/js/accesos.js
+          node --check assets/js/app.js
+          node --check assets/js/catalogos-api.js
+          node --check assets/js/admin-remoto.js
+          node --check assets/js/productos-remotos.js
+          node --check assets/js/usuarios.js
+          node --check assets/js/recuperacion.js
+          test "$(grep -o 'data-admin-catalog=' index.html | wc -l)" -eq 10
+          test "$(grep -o 'data-catalog-key=' index.html | wc -l)" -eq 10
+          grep -Fq 'id="navUsuarios"' index.html
+      - name: Instalar Chromium para pruebas aisladas
+        run: |
+          npm install --no-audit --no-fund
+          npx playwright install --with-deps chromium
+      - name: Pruebas automáticas sin credenciales reales
+        run: npm test

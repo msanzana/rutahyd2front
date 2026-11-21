@@ -1,0 +1,143 @@
+/* Ruta H&D2 — UI de producción: únicamente Laravel/MySQL, sin modo demostración */
+:root{--prod-ink:#2b183a;--prod-muted:#736783;--prod-border:#e5dcef}
+body{background:#f8f6fc;color:var(--prod-ink)}
+body:not(.is-authenticated) .app-shell{visibility:hidden;pointer-events:none}
+body:not(.is-authenticated) #loginDialog{visibility:visible}
+.sidebar{background:linear-gradient(165deg,#281342 0%,#381657 55%,#502076 100%);border-right:1px solid rgba(255,255,255,.08)}
+.sidebar .brand{padding-bottom:18px}
+.sidebar-heading{letter-spacing:.16em}
+.sidebar .nav-link{transition:background .18s ease,transform .18s ease}
+.sidebar .nav-link:hover{transform:translateX(2px)}
+.sidebar .nav-link.active{background:linear-gradient(100deg,#7944bf 0%,#8b4dd1 100%)}
+.sidebar .nav-sublink{font-weight:550;padding:9px 10px}
+#productSubnav .nav-sublink,#adminSubnav .nav-sublink{margin:0;padding:9px 10px}
+.sidebar-footer{font-weight:600;line-height:1.5}
+.topbar{background:#fff;border-bottom:1px solid #eae2f0}
+.api-state{font-size:11px;border-radius:999px;padding:8px 12px}
+.api-state[data-state="ok"]{background:#e9f7ed;color:#156740}
+.api-state[data-state="blocked"]{background:#fff4e3;color:#865209}
+.workspace-header{gap:20px}
+.workspace-header h1{font-size:clamp(26px,2.7vw,34px);line-height:1.1;letter-spacing:-.035em}
+.workspace-header p{font-size:13px;line-height:1.6;max-width:740px}
+.surface-panel{background:#fff;border:1px solid var(--prod-border);border-radius:18px;box-shadow:0 10px 28px rgba(37,17,65,.04)}
+.module-card{border-color:#e5dcee;background:#fff;box-shadow:0 9px 22px rgba(37,17,65,.045)}
+.module-card:hover{border-color:#ad87dd}
+.module-card strong{color:#37214b}
+.module-card small{line-height:1.5}
+.module-grid{gap:15px}
+.production-empty{max-width:850px;margin:20px auto}
+.production-empty h2{font-size:20px;line-height:1.25;margin:0 0 9px}
+.production-empty p{font-size:14px;color:var(--prod-muted);line-height:1.65}
+.catalog-table-scroll,.permissions-table-scroll{max-width:100%;overflow-x:auto}
+.catalog-table{width:100%;max-width:100%}
+.catalog-table th{font-size:12px;white-space:normal}
+.catalog-table td{line-height:1.5;overflow-wrap:anywhere}
+.workspace-actions{flex-wrap:wrap}
+.workspace-actions button{white-space:normal}
+#loginDialog{
+  max-width:none;max-height:none;inset:0;margin:0;border:none;border-radius:0;
+  height:100dvh;width:100vw;padding:clamp(16px,3.8vw,50px);
+  background:radial-gradient(circle at 8% 12%,#643491 0%,transparent 30%),
+    linear-gradient(120deg,#1c0b33 0%,#32134d 43%,#623492 100%);
+  overflow:auto
+}
+#loginDialog[open]{display:flex;align-items:center;justify-content:center}
+#loginDialog::backdrop{background:#160721}
+#loginDialog .login-form{
+  display:grid;grid-template-columns:minmax(280px,.88fr) minmax(370px,1fr);
+  grid-template-rows:auto 1fr;align-items:stretch;
+  width:min(940px,100%);max-width:100%;margin:auto;
+  background:#fff;border-radius:24px;overflow:hidden;
+  box-shadow:0 28px 100px rgba(16,7,31,.4)
+}
+#loginDialog .login-form::before{
+  content:"Una gestión clara.\A Una empresa conectada.";
+  white-space:pre-wrap;
+  grid-column:1;grid-row:1 / span 2;
+  display:flex;align-items:flex-end;
+  padding:54px 35px 70px;line-height:1.12;
+  font-size:clamp(29px,3vw,40px);font-weight:850;letter-spacing:-.045em;
+  color:#fff;text-shadow:0 2px 16px rgba(28,9,49,.2);
+  background:radial-gradient(circle at 83% 12%,rgba(245,209,255,.21) 0,transparent 36%),
+    radial-gradient(circle at 12% 78%,rgba(231,189,255,.12) 0,transparent 43%),
+    linear-gradient(135deg,#351455 0%,#7541af 64%,#995ac4 100%)
+}
+#loginDialog .modal-heading{grid-column:2;grid-row:1;padding:30px 38px 2px;border:none;align-items:center;background:#fff}
+#loginDialog .modal-heading .overline{color:#8150b2;font-size:10px;font-weight:850;letter-spacing:.15em}
+#loginDialog .modal-heading h2{font-size:27px;letter-spacing:-.05em;color:#2c1541;line-height:1.1;margin:8px 0 0}
+#loginDialog .login-body{grid-column:2;grid-row:2;padding:14px 38px 35px;gap:15px;display:grid;align-content:start}
+#loginDialog .login-identity{
+  display:flex;align-items:center;gap:14px;padding:12px 14px;border:1px solid #eee5f6;
+  background:#faf7fe;border-radius:14px
+}
+#loginDialog .login-identity img{height:64px;width:64px;object-fit:contain}
+#loginDialog .login-identity strong{font-size:18px;line-height:1.25}
+#loginDialog .login-identity span{font-size:12px}
+#loginDialog .login-description{font-size:12px;color:#766c81;line-height:1.6;margin:0}
+#loginDialog .login-server-status{padding:11px 13px;border-radius:12px;line-height:1.5;font-size:11px}
+#loginDialog .field{display:grid;gap:5px;min-width:0}
+#loginDialog .field span{font-size:12px;font-weight:740;color:#442b54}
+#loginDialog .field input{background:#fcfbfe;border:1px solid #dcd2e6;border-radius:11px;min-height:45px;padding:11px 14px;width:100%}
+#loginDialog .field input:focus{outline:2px solid #b28be8;outline-offset:1px}
+#loginDialog .login-actions{display:flex;gap:8px;align-items:stretch;flex-wrap:wrap}
+#loginDialog .login-actions button{flex:1 1 140px;min-height:42px}
+#loginDialog .login-recover{font-size:12px;font-weight:700;text-decoration:none}
+#loginDialog .login-recover:hover{text-decoration:underline}
+#loginDialog .login-form .form-error{margin:0;color:#a11c38;font-size:12px;line-height:1.5}
+#loginDialog .login-form .button:disabled{opacity:.54;cursor:not-allowed}
+#loginDialog [id="loginClose"],#loginDialog .demo-enter,#loginDialog .login-demo-note{display:none!important}
+@media(max-width:960px){
+  #loginDialog .login-form{grid-template-columns:minmax(245px,.78fr) minmax(320px,1fr)}
+  #loginDialog .modal-heading{padding:25px 27px 2px}
+  #loginDialog .login-body{padding:14px 27px 28px}
+  #loginDialog .login-form::before{padding:35px 24px 48px}
+}
+@media(max-width:720px){
+  #loginDialog{padding:14px}
+  #loginDialog .login-form{grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto}
+  #loginDialog .login-form::before{display:none}
+  #loginDialog .modal-heading{grid-column:1;grid-row:1;padding:25px 24px 5px}
+  #loginDialog .login-body{grid-column:1;grid-row:2;padding:16px 24px 25px;gap:12px}
+}
+@media(max-width:430px){
+  #loginDialog{padding:8px}
+  #loginDialog .login-form{border-radius:16px}
+  #loginDialog .login-body{padding:12px 17px 22px}
+  #loginDialog .modal-heading{padding:20px 17px 2px}
+  #loginDialog .login-identity img{width:52px;height:52px}
+  #loginDialog .login-actions button{flex-basis:100%}
+}
+@media(max-height:670px){#loginDialog[open]{align-items:flex-start}}
+
+
+/* Sobrescribe explícitamente el formulario compacto heredado del antiguo tema. */
+body[data-login-start="true"] #loginDialog[open]{
+  background:radial-gradient(circle at 10% 14%,#643491 0%,transparent 32%),
+    linear-gradient(120deg,#1c0b33 0%,#32134d 43%,#623492 100%);
+  padding:clamp(12px,3.5vw,48px);
+}
+body[data-login-start="true"] #loginDialog[open] .login-form{
+  display:grid;
+  grid-template-columns:minmax(270px,.88fr) minmax(365px,1fr);
+  grid-template-rows:auto 1fr;
+  width:min(960px,100%);
+  max-width:100%;
+  min-height:510px;
+  border-radius:24px;
+  box-shadow:0 30px 96px rgba(16,7,31,.35);
+}
+body[data-login-start="true"] #loginDialog[open] .modal-heading{grid-column:2;grid-row:1}
+body[data-login-start="true"] #loginDialog[open] .login-body{grid-column:2;grid-row:2}
+body[data-login-start="true"] #loginDialog[open] .login-form::before{
+  grid-column:1;grid-row:1 / span 2;
+}
+@media(max-width:760px){
+  body[data-login-start="true"] #loginDialog[open] .login-form{
+    grid-template-columns:minmax(0,1fr);
+    grid-template-rows:auto 1fr;
+    width:min(500px,100%);min-height:0;border-radius:18px;
+  }
+  body[data-login-start="true"] #loginDialog[open] .login-form::before{display:none}
+  body[data-login-start="true"] #loginDialog[open] .modal-heading{grid-column:1;grid-row:1}
+  body[data-login-start="true"] #loginDialog[open] .login-body{grid-column:1;grid-row:2}
+}
