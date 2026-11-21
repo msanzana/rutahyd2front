@@ -1,65 +1,39 @@
-# Ruta H&D2 — Frontend violeta
+# Ruta H&D V2 — Frontend exclusivo de producción
 
-**Sitio de comercializadora H&D**, versión visual funcional de demostración.
+Frontend oficial de Comercializadora H&D: **https://rutahyd2.free.nf/**
 
-## Interfaz implementada
-- Pantalla de inicio corporativa con paleta violeta, logotipo circular H&D, indicadores locales, módulos y actividad.
-- Menú responsive: inicio, pedidos, clientes, productos, inventario, informes y administración.
-- CRUD de demostración: formularios con validación, altas, vistas de detalle, ediciones y eliminaciones con confirmación.
-- Avisos (toast) de éxito, error, advertencia e información.
-- Inventario derivado del catálogo, alertas de stock bajo, búsqueda y exportación CSV de pedidos/clientes/productos.
-- Informes con gráfica de pedidos según los datos realmente creados en el navegador.
-- Sin cifras inventadas de producción. El almacenamiento se realiza **exclusivamente en localStorage**. No se debe ingresar información personal real en esta demo.
+## Arquitectura vigente (21-11-2026)
 
-## Integración del backend
-**El backend Laravel V2 NO está activado aún.** Los archivos se transfirieron en staging protegido mediante FTPS, pero falta `.env` privado, conexión real MySQL, autenticación, tabla `tokens_acceso`, alta de administrador y prueba HTTPS. Esta interfaz **no invoca** todavía API real ni escribe en MySQL.
+- La portada carga `assets/js/login-produccion.js`, `assets/js/app-produccion.js`, `assets/js/catalogos-api.js` y los adaptadores remotos de módulos.
+- **No existe modo demostrativo en la interfaz publicada.** Los archivos históricos `app.js` y `catalogos.js` quedan como legado no cargado; nunca deben reintroducirse en el HTML productivo ni publicarse como alternativa de uso.
+- El navegador no conserva JWT, contraseñas ni registros operativos en `localStorage`: la sesión Bearer solo vive en memoria. Las cookies técnicas de InfinityFree se limitan al mismo origen.
+- Menú oficial y orden: **Administración, Compras, Ventas, Proveedores, Clientes, Productos, Bodega, Cuentas corrientes**. Inicio se abre desde el logo.
+- Catálogos de Productos y Administración: Rubros → Departamentos → Familias → Líneas; Marcas → Modelos; Tipos de unidad, Gramajes, Tipos de envasado y Condiciones tributarias.
+- Producto, catálogos, usuarios y permisos utilizan contratos API JWT. Los módulos Compras, Ventas, Proveedores, Clientes y Bodega consultan la API en modo lectura. Cuentas corrientes aún carece de contrato de backend y muestra una advertencia, nunca saldos inventados.
 
-La conexión final debe implementar login autenticado y un adaptador seguro para los recursos del backend; nunca publicar secretos, tokens ni rutas internas sin controles.
+## Conexión real y estado
 
-## Desarrollo
-Abrir `index.html` directamente o ejecutar un servidor estático para la demostración:
-```bash
-python3 -m http.server 4173
-```
-Para ejecutar pruebas con Chromium:
+Frontend: `GET /api/v1/estado` → `POST /api/v1/sesion` → Bearer JWT → recursos y CRUD autorizados por Laravel → MariaDB.
+
+**No confundir conexión implementada con login activado.** La auditoría de 21-11-2026 confirma que Laravel interno se conecta a la base productiva (46 tablas, 5 roles, 1 administrador activo), pero que el gateway público seguía en **HTTP 503 / no_habilitada**, sin marcador privado de activación. No se enviarán credenciales si ese estado no cambia. La auditoría de ese momento también detectó que la configuración SMTP no estaba activa en el `.env` examinado, aunque el titular ha informado que puede recibir mensajes desde el backend. Esta diferencia requiere verificación antes de activar el gateway.
+
+Auditoría de backend: https://github.com/msanzana/rutahyd2/actions/runs/44959577317
+
+## Producción y validaciones
+
 ```bash
 npm install
 npx playwright install chromium
-npm test
+npx playwright test tests/produccion-sin-demo.spec.mjs
 ```
-El workflow `.github/workflows/verificar-tema.yml` ejecuta pruebas de navegación, CRUD y responsividad.
 
-## Archivos principales
-- `index.html` — shell accesible y cuadros de diálogo.
-- `assets/css/app.css` — sistema visual violeta responsive.
-- `assets/js/app.js` — lógica interactiva local, sin dependencias de pago.
-- `assets/img/prueba-rutahd2.webp` — logo circular H&D sobre fondo exterior transparente, derivado del archivo de Ruta H&D V1.
-- `tests/frontend-violeta.spec.mjs` — pruebas de extremo a extremo con Playwright.
+- El workflow `.github/workflows/produccion-sin-demo-v2-ci.yml` ahora **valida la rama `main`**; comprueba login obligatorio, menú oficial, aislamiento de datos y ausencia de entradas a la demo.
+- La antigua suite de demostración `.github/workflows/verificar-tema.yml` se conserva solo para ejecución manual, fuera del flujo automático de `main`.
+- El despliegue productivo se gestiona desde `msanzana/rutahyd2`, workflow `publicar-produccion-sin-demo-20261121.yml`: toma este repositorio `main`, respalda y verifica la publicación FTPS, protege el backend y conserva el PNG oficial de `/hd-branding`.
+- La apertura del gateway, el alta/validación de credenciales y las pruebas JWT reales son un paso operativo **separado**. Nunca marcar como terminado el login productivo basándose solo en CI con APIs simuladas.
 
-## Publicación
-GitHub Actions despliega el frontend estático por FTPS. Se transfieren solo HTML, CSS, JS y logo, no carpetas de desarrollo ni datos sensibles. La carpeta Laravel `/htdocs/api-v2` permanece separada y protegida.
+## Regla de base de datos
 
-**No subir un `.env` o credenciales de la base en este repositorio.**
+Cualquier cambio de **estructura** se prepara y entrega como script SQL **DDL**, no como migración Laravel ni automatización Firecrawl. La ejecución y su resultado se documentan por separado. No subir `.env`, claves, hashes de usuarios, contraseñas ni tokens.
 
-
-## Integración JWT V2 — actualización de noviembre 2026
-La versión actual conserva los siete padres originales: Inicio, Pedidos, Clientes, Productos, Inventario, Informes y Administración. Debajo de Productos están las diez clasificaciones; debajo de Administración está Perfiles y permisos.
-
-La interfaz de catálogos admite **dos modos separados**:
-- **Demostración local**, sin cuenta real y con datos de `localStorage`. No equivale a información de la empresa ni autoriza uso de MySQL.
-- **Catálogos autenticados**, usando `assets/js/catalogos-api.js`: inicio de sesión Laravel en `/api/v1/sesion`, JWT HS256 tipo Bearer, token solo en memoria, permisos de lectura/escritura por rol y revocación con `DELETE /api/v1/sesion`. Cada acción autenticada se valida en backend.
-
-**No se deben confundir:** los demás CRUD del prototipo (Pedidos/Clientes/Inventario/Informes) aún no están integrados al backend productivo. El backend Laravel está protegido y el gateway `/api` devuelve estado no habilitado hasta instalar las migraciones y la configuración privada correctas.
-
-Prueba de integración completa con navegador, Laravel y MySQL temporal: [GitHub Actions](https://github.com/msanzana/rutahyd2front/actions/runs/44749026047). No se accedió a MySQL de producción ni se usaron contraseñas de usuarios reales.
-
-**Nunca publicar usuario/contraseña reales, hash ni secreto JWT en este repositorio.** Para preparar la instalación consultar `docs/JWT_ADMIN_PRODUCCION.md` del backend.
-
-
-## Estado productivo comprobado — 21 noviembre 2026
-
-El backend Laravel en InfinityFree tiene configuración privada y conexión PDO validada desde PHP del alojamiento a la base española con 45 tablas. El gateway sigue deliberadamente bloqueado con HTTP 503 hasta el alta segura de administrador y habilitación.
-
-La Administración incluye verificación de API, CRUD autenticado de diez catálogos y consultas paginadas de solo lectura a clientes, productos, ventas, notas de venta, bodegas, movimientos de inventario y proveedores. Los demás CRUD históricos del frontend continúan siendo demostraciones con localStorage; no se sincronizan.
-
-El cliente usa credentials:same-origin para permitir las cookies técnicas anti-bot del mismo dominio sin persistir jamás JWT en cookies ni localStorage; JWT solo via Authorization: Bearer. Navegador público comprobado con siete módulos padres y «API protegida (HTTP 503)» hasta la activación.
+Diario oficial: https://github.com/msanzana/rutahyd2/blob/main/docs/DIARIO_CONTINUIDAD_2026-11-21.md
