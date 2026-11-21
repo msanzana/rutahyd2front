@@ -173,14 +173,15 @@
   };
   function updateProductMenu() {
     catalogos?.ORDER?.forEach(key=>{
-      const b=document.querySelector('[data-catalog-key="'+key+'"]');
-      if(b)b.hidden=!access()?.canViewCatalog(key);
+      document.querySelectorAll('[data-catalog-key="'+key+'"]').forEach(b=>{
+        b.hidden=!access()?.canViewCatalog(key);
+      });
     });
     const authorized=allowedCatalogs();
     const showParent=!access()?.authenticated() || access().has('productos.gestionar') || authorized.length>0;
     $('#productsNavGroup').hidden=!showParent;
-    const adminVisible=Boolean(access()?.authenticated()&&access()?.isAdmin());
-    $('#navPerfiles').hidden=!adminVisible;
+    const adminVisible=Boolean(!access()?.authenticated()||access()?.isAdmin());
+    $('#navPerfiles').hidden=!access()?.authenticated()||!access()?.isAdmin();
     $('#toggleAdminSubnav').hidden=!adminVisible;
     if(!adminVisible)setAdminExpanded(false);
     const list=$('#productSubnav [data-nav="productos"]');
@@ -196,7 +197,7 @@
     $('#toggleProductSubnav').setAttribute('aria-label',expanded?'Contraer submódulos de Productos':'Expandir submódulos de Productos');
   }
   function setAdminExpanded(expanded) {
-    const expand=Boolean(expanded&&access()?.authenticated()&&access()?.isAdmin());
+    const expand=Boolean(expanded&&(!access()?.authenticated()||access()?.isAdmin()));
     $('#adminSubnav').hidden=!expand;
     $('#toggleAdminSubnav').setAttribute('aria-expanded',expand?'true':'false');
     $('#toggleAdminSubnav').setAttribute('aria-label',expand?'Contraer submódulos de Administración':'Expandir submódulos de Administración');
@@ -213,7 +214,7 @@
     $('#breadcrumbCurrent').textContent = key ? 'Productos / '+catalogos.CONFIG[key].title : SECTION_NAMES[current];
     updateProductMenu();
     if(key||current==='productos')setProductExpanded(true);
-    if((current==='administracion'||current==='perfiles')&&access()?.isAdmin())setAdminExpanded(true);
+    if(current==='administracion'||current==='perfiles')setAdminExpanded(true);
     $$('[data-nav].nav-sublink').forEach(button=>{
       const selected=button.dataset.nav===current;
       button.classList.toggle('active',selected);
@@ -308,6 +309,15 @@
       }
       return;
     }
+    if(view==='productos' && access()?.authenticated()){
+      $('#workspaceEyebrow').textContent='PRODUCTOS / BASE REAL';
+      $('#workspaceTitle').textContent='Productos';
+      $('#workspaceDescription').textContent='CRUD autenticado de productos y presentaciones; stock en Inventario.';
+      $('#newButton').hidden=true;
+      $('#exportButton').hidden=true;
+      window.RutaHDProductosRemotos?.mount($('#workspaceContent'));
+      return;
+    }
     if(view==='perfiles'){
       $('#workspaceEyebrow').textContent='ADMINISTRACIÓN / ACCESOS';
       $('#workspaceTitle').textContent='Perfiles y permisos';
@@ -320,7 +330,7 @@
     const kinds = {
       inventario:{title:'Inventario',description:'Supervisa existencias y edita el stock de los productos de prueba.',eyebrow:'CONTROL DE EXISTENCIAS',singular:'producto'},
       informes:{title:'Informes',description:'Consulta indicadores y exporta reportes de tus registros locales.',eyebrow:'REPORTES OPERATIVOS'},
-      administracion:{title:'Administración',description:'Maestros de clasificación, marcas, presentaciones, gramajes y condición tributaria.',eyebrow:'CATÁLOGOS Y CONFIGURACIÓN'}
+      administracion:{title:'Administración',description:'Maestros Rubro → Departamento → Familia → Línea, Marca → Modelo y atributos tributarios.',eyebrow:'CATÁLOGOS Y CONFIGURACIÓN'}
     };
     const cfg=definitions[view] || kinds[view];
     $('#workspaceEyebrow').textContent = cfg.eyebrow || 'GESTIÓN COMERCIAL';
