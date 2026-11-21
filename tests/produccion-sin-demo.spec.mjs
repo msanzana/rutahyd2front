@@ -14,7 +14,7 @@ test('producción exige login y nunca ofrece demostración ni localStorage',asyn
   await expect(page.locator('#appShell')).toBeHidden();
   const modules=page.locator('.sidebar .nav > .nav-link,.sidebar .nav > .nav-group');
   await expect(modules).toHaveCount(8);
-  const names=await modules.locator(':scope > .nav-link span,:scope > .nav-parent > .nav-link span').allTextContents();
+  const names=await page.locator('.sidebar .nav > .nav-link > span,.sidebar .nav > .nav-group > .nav-parent > .nav-link > span').allTextContents();
   expect(names).toEqual(OFFICIAL);
   const sources=await page.locator('script[src]').evaluateAll(nodes=>nodes.map(n=>n.src));
   expect(sources.join(' ')).not.toContain('catalogos.js');
