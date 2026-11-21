@@ -173,7 +173,7 @@
   };
   function updateProductMenu() {
     catalogos?.ORDER?.forEach(key=>{
-      document.querySelectorAll('[data-catalog-key="'+key+'"]').forEach(b=>{
+      document.querySelectorAll('[data-catalog-key="'+key+'"],[data-admin-catalog="'+key+'"]').forEach(b=>{
         b.hidden=!access()?.canViewCatalog(key);
       });
     });
@@ -215,7 +215,13 @@
     updateProductMenu();
     if(key||current==='productos')setProductExpanded(true);
     if(current==='administracion'||current==='perfiles')setAdminExpanded(true);
-    $$('[data-nav].nav-sublink').forEach(button=>{
+    $('[data-admin-catalog]').forEach(button=>{
+      const selected='catalogos.'+button.dataset.adminCatalog===current;
+      button.classList.toggle('active',selected);
+      if(selected)button.setAttribute('aria-current','page');
+      else button.removeAttribute('aria-current');
+    });
+    $('[data-nav].nav-sublink').forEach(button=>{
       const selected=button.dataset.nav===current;
       button.classList.toggle('active',selected);
       if(selected)button.setAttribute('aria-current','page');
