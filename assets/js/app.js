@@ -665,6 +665,13 @@
       setAdminExpanded($('#adminSubnav').hidden);
       return;
     }
+    const adminCatalog=e.target.closest('[data-admin-catalog]');
+    if(adminCatalog){
+      e.preventDefault();
+      navigate('catalogos.'+adminCatalog.dataset.adminCatalog);
+      setAdminExpanded(true);
+      return;
+    }
     const nav=e.target.closest('[data-nav]');
     if(nav){e.preventDefault();navigate(nav.dataset.nav);return;}
     if(e.target.closest('[data-close-sidebar]')) {
