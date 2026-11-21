@@ -92,7 +92,10 @@
     container.style.marginBottom='20px';
     root=container;
     parent.prepend(container);
-    render();
+    // El login principal de la cabecera comparte la misma sesión JWT en memoria.
+    // Cargar los catálogos reales al entrar, sin exigir un segundo login.
+    if(access()?.authenticated()) guarded(refresh);
+    else { authorized=false; render(); }
   }
   function render(){
     if(!root)return;

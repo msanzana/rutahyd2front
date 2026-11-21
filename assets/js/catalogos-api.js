@@ -62,7 +62,11 @@
         credentials:'same-origin', cache:'no-store', signal:controller.signal
       });
     } finally { clearTimeout(timer); }
-    if (!response.ok) throw new Error('No se pudo iniciar sesión (HTTP ' + response.status + ')');
+    if (!response.ok) {
+      const error = new Error('No se pudo iniciar sesión (HTTP ' + response.status + ')');
+      error.status = response.status;
+      throw error;
+    }
     if (!(response.headers.get('Content-Type') || '').includes('application/json')) {
       throw new Error('La dirección no respondió como API JSON. Laravel aún puede estar deshabilitado.');
     }

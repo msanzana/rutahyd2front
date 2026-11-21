@@ -1,0 +1,121 @@
+/* Ruta H&D V2 · correcciones responsivas sin jerarquías visuales adicionales.
+   Solo hay ítems principales y subítems de primer nivel. */
+:root{--ui-border:rgba(217,196,240,.4)}
+html,body{min-width:0;max-width:100%;overflow-x:clip}
+.app-shell{grid-template-columns:260px minmax(0,1fr);min-width:0}
+.sidebar{height:100dvh;min-height:0;overflow:hidden;padding:18px 13px 14px}
+.sidebar .brand{gap:9px;min-width:0;padding:4px 6px 16px;flex:0 0 auto}
+.sidebar .brand-logo{width:54px;height:54px;flex:0 0 54px}
+.sidebar .brand span{min-width:0;overflow-wrap:anywhere}
+.sidebar .brand strong{font-size:18px;letter-spacing:-.3px;white-space:normal;line-height:1.25}
+.sidebar .brand small{white-space:normal;line-height:1.35}
+.sidebar .sidebar-heading{flex:0 0 auto;margin:17px 9px 8px}
+.sidebar .nav{flex:1 1 auto;min-height:0;overflow-x:hidden;overflow-y:auto;scrollbar-width:thin;padding:0 2px 8px 0;overscroll-behavior:contain}
+.nav-group,.nav-parent{min-width:0;max-width:100%}
+.sidebar .nav-link{min-width:0;min-height:43px;padding:9px 11px;gap:10px}
+.sidebar .nav-link span{min-width:0;overflow-wrap:anywhere}
+.sidebar .nav-expand{flex:0 0 34px}
+#productSubnav,#adminSubnav{
+  margin:3px 0 10px 11px;
+  padding:4px 0 4px 9px;
+  border-left:1px solid var(--ui-border);
+  min-width:0;
+  width:calc(100% - 11px);
+}
+/* No sangrar por rubro / departamento / familia / línea: TODO es subítem. */
+#productSubnav .nav-sublink,
+#adminSubnav .nav-sublink,
+#productSubnav .nav-sublink.nav-depth-1,
+#productSubnav .nav-sublink.nav-depth-2,
+#productSubnav .nav-sublink.nav-depth-3{
+  display:block;
+  text-align:left;
+  width:100%;
+  min-height:36px;
+  padding:8px 9px;
+  margin:0;
+  font-size:12px;
+  line-height:1.45;
+  font-weight:550;
+  white-space:normal;
+  overflow-wrap:anywhere;
+  text-overflow:clip;
+}
+#productSubnav .nav-sublink span,
+#adminSubnav .nav-sublink span{white-space:normal;overflow-wrap:anywhere}
+.sidebar-footer{flex:0 0 auto;margin-top:12px;padding:10px 12px;overflow-wrap:anywhere}
+.main-area,.page,.workspace,.workspace-content,.home,.surface-panel,
+.table-panel,.catalog-main,.catalog-table-scroll,.table-scroll{min-width:0;max-width:100%}
+.topbar{height:auto;min-height:76px;flex-wrap:wrap;row-gap:9px;padding:12px clamp(14px,2vw,32px)}
+.topbar-left,.topbar-right{min-width:0;gap:10px}
+.topbar-left{flex:1 1 150px}
+.topbar-right{flex:0 1 auto;justify-content:flex-end;flex-wrap:wrap}
+.breadcrumbs{min-width:0;white-space:normal;overflow-wrap:anywhere}
+.breadcrumbs strong{min-width:0;overflow-wrap:anywhere}
+.topbar .search{min-width:150px;width:clamp(155px,19vw,280px);max-width:100%}
+.topbar .profile{min-width:0;padding-left:8px}
+.topbar .profile-label{min-width:0}
+.topbar .profile-label b{white-space:normal;overflow-wrap:anywhere}
+.api-state{display:inline-flex;align-items:center;gap:5px;max-width:180px;padding:7px 9px;border:1px solid #e2d8f0;border-radius:8px;background:#f7f1fe;color:#573a7a;line-height:1.25;font-size:11px;font-weight:700;white-space:normal;overflow-wrap:anywhere}
+.api-state[data-state="ok"]{background:#ebf8ee;color:#16673f;border-color:#badcc9}
+.api-state[data-state="blocked"]{background:#fff7e6;color:#86540e;border-color:#efdbb3}
+.auth-trigger{flex:0 0 auto;min-height:37px;padding:8px 11px}
+.page{padding-top:22px;overflow-wrap:break-word}
+.environment-notice{align-items:flex-start;flex-wrap:wrap}
+.environment-notice > span{min-width:180px;overflow-wrap:anywhere}
+.workspace-header,.panel-heading,.table-panel-top,.catalog-header{min-width:0;flex-wrap:wrap}
+.workspace-header > :first-child,.panel-heading > :first-child{min-width:0;max-width:100%;overflow-wrap:anywhere}
+.workspace-actions{max-width:100%;flex-wrap:wrap}
+.workspace-actions .button,.button{max-width:100%;white-space:normal;text-align:center}
+.hero-content{min-width:0}
+.hero h1,.hero p{overflow-wrap:anywhere}
+.stat-card>div{min-width:0;overflow-wrap:anywhere}
+.stat-card small,.stat-label{overflow-wrap:anywhere}
+.data-table,.catalog-table{table-layout:auto}
+.data-table td,.data-table th,.catalog-table td,.catalog-table th{overflow-wrap:anywhere}
+.field,.field input,.field select,.field textarea{min-width:0;max-width:100%}
+.modal,.catalog-dialog{max-width:calc(100vw - 24px)}
+.login-modal{width:min(480px,calc(100vw - 24px))}
+.login-modal .login-form{display:block}
+.login-body{padding:22px 25px 25px;display:grid;gap:13px}
+.login-description{margin:0;color:var(--muted);font-size:13px;line-height:1.5}
+.login-server-status{padding:10px 12px;border:1px solid var(--line);border-radius:9px;background:#f9f7fd;color:#65477c;font-size:12px;line-height:1.4;overflow-wrap:anywhere}
+.login-server-status[data-state="blocked"]{background:#fff7e9;border-color:#eed6a7;color:#86540e}
+.login-server-status[data-state="ok"]{background:#edf9f1;border-color:#c0e1cc;color:#166b42}
+.login-modal .field>span{font-size:12px;font-weight:700}
+.login-actions{display:flex;gap:10px;flex-wrap:wrap}
+.login-actions .button{flex:1 1 145px}
+.login-recover{padding:6px 0;justify-self:start;background:transparent;border:0;color:var(--v700);text-decoration:underline;font-weight:700;font-size:12px}
+.login-modal .form-error{margin:0}
+@media(max-width:1180px){
+  .topbar .profile-label{display:none}
+  .topbar .search{width:clamp(145px,22vw,220px)}
+}
+@media(max-width:900px){
+  .app-shell{display:block}
+  .sidebar{height:100dvh;min-height:0;width:min(300px,90vw)}
+  .topbar{min-height:65px}
+}
+@media(max-width:640px){
+  .topbar{padding:10px 13px;gap:8px}
+  .topbar-left{flex:1 1 100%;min-height:29px}
+  .topbar-right{flex:1 1 100%;width:100%;justify-content:space-between;gap:7px}
+  .topbar .search{flex:1 1 110px;width:auto;min-width:90px}
+  .topbar .profile{display:none}
+  .topbar .notification-button{display:none}
+  /* Avisos por debajo de las dos filas móviles de la cabecera. */
+  .toast-region{top:132px;left:10px;right:10px;max-width:calc(100vw - 20px)}
+  .api-state{max-width:108px;font-size:10px;padding:7px}
+  .auth-trigger{font-size:11px;padding:8px 9px}
+  .environment-notice .text-action{white-space:normal}
+  .workspace-header h1{font-size:clamp(22px,6vw,28px)}
+  .page{padding:15px 13px 8px}
+  .login-body{padding:18px}
+  .modal-heading{gap:10px}
+}
+@media(max-width:380px){
+ .topbar .search{flex-basis:95px}
+ .api-state{max-width:92px}
+ .auth-trigger{padding:8px}
+ .login-actions{flex-direction:column}
+}

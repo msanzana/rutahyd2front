@@ -7,6 +7,7 @@
   <meta name="description" content="Ruta H&D2 — plataforma de gestión comercial y operativa.">
   <title>Ruta H&D2 · Gestión Comercial</title>
   <link rel="stylesheet" href="assets/css/app.css">
+  <link rel="stylesheet" href="assets/css/correcciones-ui.css?v=20261121-1">
 </head>
 <body>
   <svg class="svg-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -49,15 +50,12 @@
           </div>
           <div id="productSubnav" class="product-subnav" role="menu" aria-label="Submódulos de Productos" hidden>
             <button type="button" data-nav="productos" class="nav-sublink" role="menuitem"><span>Listado de productos</span></button>
-            <div class="subnav-heading" role="presentation">Rubro → Departamento → Familia → Línea</div>
             <button type="button" data-nav="catalogos.rubros" data-catalog-key="rubros" class="nav-sublink" role="menuitem"><span>Rubros</span></button>
-            <button type="button" data-nav="catalogos.departamentos" data-catalog-key="departamentos" class="nav-sublink nav-depth-1" role="menuitem"><span>Departamentos</span></button>
-            <button type="button" data-nav="catalogos.familias" data-catalog-key="familias" class="nav-sublink nav-depth-2" role="menuitem"><span>Familias</span></button>
-            <button type="button" data-nav="catalogos.lineas" data-catalog-key="lineas" class="nav-sublink nav-depth-3" role="menuitem"><span>Líneas</span></button>
-            <div class="subnav-heading" role="presentation">Marca → Modelo</div>
+            <button type="button" data-nav="catalogos.departamentos" data-catalog-key="departamentos" class="nav-sublink" role="menuitem"><span>Departamentos</span></button>
+            <button type="button" data-nav="catalogos.familias" data-catalog-key="familias" class="nav-sublink" role="menuitem"><span>Familias</span></button>
+            <button type="button" data-nav="catalogos.lineas" data-catalog-key="lineas" class="nav-sublink" role="menuitem"><span>Líneas</span></button>
             <button type="button" data-nav="catalogos.marcas" data-catalog-key="marcas" class="nav-sublink" role="menuitem"><span>Marcas</span></button>
-            <button type="button" data-nav="catalogos.modelos" data-catalog-key="modelos" class="nav-sublink nav-depth-1" role="menuitem"><span>Modelos</span></button>
-            <div class="subnav-heading" role="presentation">Unidades, envase y tributación</div>
+            <button type="button" data-nav="catalogos.modelos" data-catalog-key="modelos" class="nav-sublink" role="menuitem"><span>Modelos</span></button>
             <button type="button" data-nav="catalogos.tipos_unidad" data-catalog-key="tipos_unidad" class="nav-sublink" role="menuitem"><span>Tipos de unidad</span></button>
             <button type="button" data-nav="catalogos.gramajes" data-catalog-key="gramajes" class="nav-sublink" role="menuitem"><span>Gramajes</span></button>
             <button type="button" data-nav="catalogos.tipos_envasado" data-catalog-key="tipos_envasado" class="nav-sublink" role="menuitem"><span>Tipos de envasado</span></button>
@@ -72,20 +70,16 @@
             <button type="button" class="nav-expand" id="toggleAdminSubnav" aria-label="Expandir submódulos de Administración" aria-controls="adminSubnav" aria-expanded="false" hidden><svg class="icon small"><use href="#i-chevron"/></svg></button>
           </div>
           <div id="adminSubnav" class="product-subnav" role="menu" aria-label="Submódulos de Administración" hidden>
-            <div class="subnav-heading" role="presentation">Rubro → Departamento → Familia → Línea</div>
             <button type="button" data-admin-catalog="rubros" class="nav-sublink" role="menuitem"><span>Rubros</span></button>
             <button type="button" data-admin-catalog="departamentos" class="nav-sublink" role="menuitem"><span>Departamentos</span></button>
             <button type="button" data-admin-catalog="familias" class="nav-sublink" role="menuitem"><span>Familias</span></button>
             <button type="button" data-admin-catalog="lineas" class="nav-sublink" role="menuitem"><span>Líneas</span></button>
-            <div class="subnav-heading" role="presentation">Marca → Modelo</div>
             <button type="button" data-admin-catalog="marcas" class="nav-sublink" role="menuitem"><span>Marcas</span></button>
             <button type="button" data-admin-catalog="modelos" class="nav-sublink" role="menuitem"><span>Modelos</span></button>
-            <div class="subnav-heading" role="presentation">Unidades, envasado y tributación</div>
             <button type="button" data-admin-catalog="tipos_unidad" class="nav-sublink" role="menuitem"><span>Tipos de unidad</span></button>
             <button type="button" data-admin-catalog="gramajes" class="nav-sublink" role="menuitem"><span>Gramos / Gramajes</span></button>
             <button type="button" data-admin-catalog="tipos_envasado" class="nav-sublink" role="menuitem"><span>Tipos de envasado</span></button>
             <button type="button" data-admin-catalog="condiciones_tributarias" class="nav-sublink" role="menuitem"><span>Condición tributaria</span></button>
-            <div class="subnav-heading" role="presentation">Seguridad y accesos</div>
             <button type="button" data-nav="usuarios" class="nav-sublink" id="navUsuarios" role="menuitem" hidden><span>Usuarios</span></button>
             <button type="button" data-nav="perfiles" class="nav-sublink" id="navPerfiles" role="menuitem" hidden><span>Perfiles y permisos</span></button>
           </div>
@@ -106,6 +100,8 @@
         <div class="topbar-right">
           <label class="search" for="globalSearch"><svg class="icon"><use href="#i-search"/></svg><input id="globalSearch" type="search" autocomplete="off" placeholder="Buscar registros..."><kbd>Ctrl K</kbd></label>
           <button type="button" class="icon-button notification-button" id="notificationButton" aria-label="Información sobre el entorno"><svg class="icon"><use href="#i-bell"/></svg><span class="notification-dot"></span></button>
+          <span class="api-state" id="apiStatus" role="status" aria-live="polite">Comprobando API…</span>
+          <button type="button" class="button primary auth-trigger" id="authButton" aria-haspopup="dialog" aria-controls="loginDialog">Iniciar sesión</button>
           <div class="profile"><span class="avatar">HD</span><span class="profile-label"><b>Comercializadora H&amp;D</b><small>Vista de demostración</small></span></div>
         </div>
       </header>
@@ -182,6 +178,21 @@
   <script src="assets/js/productos-remotos.js" defer></script>
   <script src="assets/js/usuarios.js" defer></script>
   <script src="assets/js/recuperacion.js" defer></script>
+  <dialog id="loginDialog" class="modal login-modal" aria-labelledby="loginDialogTitle">
+    <form id="loginForm" class="login-form" novalidate>
+      <div class="modal-heading"><div><span class="overline">RUTA H&amp;D2 · ACCESO SEGURO</span><h2 id="loginDialogTitle">Iniciar sesión</h2></div><button type="button" class="icon-button" id="loginClose" aria-label="Cerrar inicio de sesión"><svg class="icon"><use href="#i-close"/></svg></button></div>
+      <div class="login-body">
+        <p class="login-description">Accede con tu cuenta autorizada. La aplicación comprueba la conexión Laravel antes de enviar tus credenciales.</p>
+        <div class="login-server-status" id="loginServerStatus" role="status" aria-live="polite">Verificando disponibilidad del servidor…</div>
+        <label class="field"><span>Correo electrónico</span><input type="email" id="loginEmail" autocomplete="username" maxlength="190" placeholder="usuario@empresa.cl" required></label>
+        <label class="field"><span>Contraseña</span><input type="password" id="loginPassword" autocomplete="current-password" required></label>
+        <p class="form-error" id="loginError" role="alert" hidden></p>
+        <div class="login-actions"><button type="submit" class="button primary" id="loginSubmit" disabled>Ingresar</button><button type="button" class="button ghost" id="loginRetry">Comprobar conexión</button></div>
+        <button type="button" class="login-recover" id="loginRecover">¿Olvidaste tu contraseña?</button>
+      </div>
+    </form>
+  </dialog>
+  <script src="assets/js/login-ui.js" defer></script>
   <script src="assets/js/app.js" defer></script>
 </body>
 </html>
