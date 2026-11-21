@@ -5,9 +5,14 @@
 
   const KEY = 'rutahd2-demo-local-v1';
   const SECTION_NAMES = {
-    inicio: 'Inicio', pedidos: 'Pedidos', clientes: 'Clientes', productos: 'Productos',
-    inventario: 'Inventario', informes: 'Informes', administracion: 'Administración', perfiles: 'Perfiles y permisos', usuarios: 'Usuarios'
+    inicio:'Inicio', administracion:'Administración', compras:'Compras', ventas:'Ventas',
+    proveedores:'Proveedores', clientes:'Clientes', productos:'Productos',
+    bodega:'Bodega', cuentas_corrientes:'Cuentas corrientes',
+    perfiles:'Perfiles y permisos', usuarios:'Usuarios',
+    // Rutas históricas internas: no son padres del menú oficial.
+    pedidos:'Pedidos', inventario:'Inventario', informes:'Informes'
   };
+  const REMOTE_OFFICIAL = new Set(['compras','ventas','proveedores','clientes','bodega','cuentas_corrientes']);
   const DEFAULT_DATA = () => ({ pedidos: [], clientes: [], productos: [], activity: [] });
   const db = loadData();
   const catalogos = window.RutaCatalogos;
@@ -242,7 +247,7 @@
       else button.removeAttribute('aria-current');
     });
     $$('[data-nav].nav-link').forEach(button => {
-      const selected = button.dataset.nav === current || (button.dataset.nav==='productos' && Boolean(key)) || (button.dataset.nav==='administracion' && current==='perfiles');
+      const selected = button.dataset.nav === current || (button.dataset.nav==='productos' && Boolean(key)) || (button.dataset.nav==='administracion' && ['perfiles','usuarios'].includes(current));
       button.classList.toggle('active',selected);
       if (selected) button.setAttribute('aria-current','page'); else button.removeAttribute('aria-current');
     });
@@ -309,6 +314,18 @@
   }
 
   function renderWorkspace() {
+    if(REMOTE_OFFICIAL.has(view)){
+      const labels={compras:'Órdenes de compra',ventas:'Ventas',proveedores:'Proveedores',
+        clientes:'Clientes',bodega:'Bodega',cuentas_corrientes:'Cuentas corrientes'};
+      $('#workspaceEyebrow').textContent='MENÚ OFICIAL / OPERACIONES';
+      $('#workspaceTitle').textContent=labels[view];
+      $('#workspaceDescription').textContent='Consulta de datos desde Laravel/MySQL con permisos. No se mezclan registros locales.';
+      $('#newButton').hidden=true;
+      $('#exportButton').hidden=true;
+      $('#workspaceContent').replaceChildren();
+      window.RutaHDOficial?.mount($('#workspaceContent'),view);
+      return;
+    }
     const key=catalogKey(view);
     if(key && catalogos?.CONFIG[key]) {
       const cfg=catalogos.CONFIG[key];
@@ -369,7 +386,12 @@
     $('#exportButton').hidden = view === 'administracion';
     $('#newButtonText').textContent='Nuevo '+(cfg.singular || 'registro');
     if (view==='informes') renderReports();
-    else if (view==='administracion') { renderAdmin(); window.RutaHDRemoto?.mount($('#workspaceContent')); }
+    else if (view==='administracion') {
+      $('#workspaceContent').replaceChildren();
+      // Cuando hay sesión real se muestran exclusivamente datos de Laravel.
+      if(!access()?.authenticated()) renderAdmin();
+      window.RutaHDRemoto?.mount($('#workspaceContent'));
+    }
     else renderTable(view === 'inventario' ? 'productos' : view);
   }
 
@@ -712,6 +734,7 @@
     if(!action)return;
     const {kind,id}=action.dataset;
     switch(action.dataset.action) {
+      case 'login':window.RutaHDLogin?.show();break;
       case 'create':openForm(kind|| (view==='inventario'?'productos':view),null);break;
       case 'edit':openForm(kind,id);break;
       case 'delete':askDelete(kind,id);break;
@@ -720,7 +743,7 @@
       case 'reset':askReset();break;
       case 'reports':navigate('informes');break;
       case 'help':showInfo('Ayuda de Ruta H&D2','Desde la barra lateral puedes navegar entre módulos. Usa el botón Nuevo para agregar registros, los íconos de cada fila para ver, editar o eliminar y la sección Informes para exportar CSV. Atajo de búsqueda: Ctrl + K. Los datos no salen de tu navegador.');break;
-      case 'about':showInfo('Demostración local · Ruta H&D2','El backend Laravel V2 fue transferido a un entorno protegido en InfinityFree, pero no está activado ni conectado a producción. Esta interfaz opera en modo local mediante almacenamiento del navegador; nunca envía datos comerciales a la base de datos real.');break;
+      case 'about':showInfo('Conexión del sistema · Ruta H&D2','El frontend consulta el estado real de Laravel y está preparado para utilizar los recursos autenticados. Mientras la API esté bloqueada (HTTP 503), las vistas de datos reales permanecen indisponibles. Los registros locales de demostración nunca se sincronizan automáticamente con MariaDB.');break;
     }
   });
 
