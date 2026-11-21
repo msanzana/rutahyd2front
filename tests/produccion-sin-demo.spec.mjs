@@ -103,3 +103,15 @@ test('login productivo usa dos columnas profesionales en escritorio',async({page
   expect(metrics.columns).toBe(2);
   expect(metrics.intro).not.toBe('none');
 });
+
+
+test('recuperación segura permite volver al login sin una sesión falsa',async({page})=>{
+  await page.route('**/api/v1/estado',r=>json(r,{servicio:'Ruta H&D2 API',estado:'no_habilitada'},503));
+  await page.goto('/#inicio');
+  await page.locator('#loginRecover').click();
+  const recovery=page.locator('dialog').filter({hasText:'Recuperar cuenta'});
+  await expect(recovery).toBeVisible();
+  await recovery.getByRole('button',{name:'Cancelar'}).click();
+  await expect(page.locator('#loginDialog')).toBeVisible();
+  await expect(page.locator('#loginSubmit')).toBeDisabled();
+});

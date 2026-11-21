@@ -100,6 +100,10 @@
     document.body.dataset.loginStart='false';
     window.RutaHDRecuperacion?.mostrarSolicitud();
   });
+  document.addEventListener('rutahd:recuperacion-finalizada',()=>{
+    recovering=false;
+    if(!signed())show();
+  });
   document.addEventListener('rutahd:permisos-actualizados',()=>{
     if(signed())loggedIn();
     else {
