@@ -69,6 +69,33 @@
     return data.usuario;
   }
 
+  // Comprobación anónima del gateway antes de solicitar credenciales.
+  async function status() {
+    if (!endpoint) throw new Error('Configura primero el servidor.');
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 10000);
+    try {
+      const response = await fetch(endpoint + '/estado', {
+        method: 'GET', headers: {Accept:'application/json'},
+        credentials:'omit', cache:'no-store', signal:controller.signal
+      });
+      const contentType = response.headers.get('Content-Type') || '';
+      if (!contentType.includes('application/json')) {
+        throw new Error('La URL no corresponde a la API de Ruta H&D.');
+      }
+      const body = await response.json();
+      if (!body || body.servicio !== 'Ruta H&D2 API' ||
+          !['disponible','no_habilitada'].includes(body.estado)) {
+        throw new Error('El servidor no devolvió el estado de Ruta H&D.');
+      }
+      return Object.freeze({
+        disponible: response.status === 200 && body.estado === 'disponible',
+        http: response.status,
+        estado: body.estado
+      });
+    } finally { clearTimeout(timer); }
+  }
+
   async function send(path, method = 'GET', body) {
     if (!endpoint || !bearer) throw new Error('La API requiere configuración y sesión autenticada.');
     const controller = new AbortController();
@@ -108,7 +135,7 @@
     return String(value);
   }
   const api = Object.freeze({
-    configure, authenticate, login, logout, signOut,
+    configure, authenticate, login, logout, signOut, status,
     profile: () => send('/perfil'),
     roleCatalogPermissions: () => send('/perfiles/catalogos'),
     usersForProfiles: () => send('/perfiles/usuarios'),
