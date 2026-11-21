@@ -1,0 +1,43 @@
+name: Validar aplicación definitiva sin demostración
+on:
+  push:
+    branches: [feature/produccion-sin-demo-login-v2-20261121]
+permissions:
+  contents: read
+jobs:
+  production:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verificar scripts y aislamiento local
+        run: |
+          for f in assets/js/*.js; do node --check "$f"; done
+          node --check tests/produccion-sin-demo.spec.mjs
+          grep -Fq 'app-produccion.js' index.html
+          grep -Fq 'login-produccion.js' index.html
+          grep -Fq 'produccion.css' index.html
+          ! grep -Fq 'assets/js/catalogos.js" defer' index.html
+          ! grep -Fq 'assets/js/app.js" defer' index.html
+          ! grep -Fq 'Explorar interfaz de demostración' index.html
+          ! grep -Fq 'loginDemo' index.html
+          ! grep -Fq 'localStorage' assets/js/app-produccion.js
+      - name: Instalar Playwright Chromium
+        run: |
+          npm install --no-audit --no-fund
+          npx playwright install --with-deps chromium
+      - name: Pruebas de producción con API simulada y sin credenciales reales
+        run: npx playwright test tests/produccion-sin-demo.spec.mjs
+      - name: Guardar diagnóstico si falla
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: diagnostico-produccion
+          path: |
+            test-results/
+            playwright-report/
+          if-no-files-found: ignore
+          retention-days: 7

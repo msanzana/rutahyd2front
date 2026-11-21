@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="assets/css/app.css">
   <link rel="stylesheet" href="assets/css/correcciones-ui.css?v=20261121-1">
   <link rel="stylesheet" href="assets/css/menu-oficial.css?v=20261121-2">
+  <link rel="stylesheet" href="assets/css/produccion.css?v=20261121-1">
 </head>
 <body>
   <svg class="svg-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -89,7 +90,7 @@
       </nav>
       <div class="sidebar-footer">
         <span class="sidebar-status-dot"></span> Ruta H&amp;D2 · Gestión
-        <small>Conexión Laravel: consulta el estado en la cabecera.</small>
+        <small>Servidor Laravel · Acceso JWT protegido</small>
       </div>
     </aside>
     <div class="sidebar-scrim" data-close-sidebar></div>
@@ -104,29 +105,20 @@
           <button type="button" class="icon-button notification-button" id="notificationButton" aria-label="Información sobre el entorno"><svg class="icon"><use href="#i-bell"/></svg><span class="notification-dot"></span></button>
           <span class="api-state" id="apiStatus" role="status" aria-live="polite">Comprobando API…</span>
           <button type="button" class="button primary auth-trigger" id="authButton" aria-haspopup="dialog" aria-controls="loginDialog">Iniciar sesión</button>
-          <div class="profile"><span class="avatar">HD</span><span class="profile-label"><b>Comercializadora H&amp;D</b><small>Vista de demostración</small></span></div>
+          <div class="profile"><span class="avatar">HD</span><span class="profile-label"><b>Comercializadora H&amp;D</b><small>Sin sesión</small></span></div>
         </div>
       </header>
       <main class="page">
-        <div class="environment-notice"><svg class="icon"><use href="#i-info"/></svg><span><strong>Estado de conexión:</strong> Laravel se consulta automáticamente. Para operar con datos reales se requiere una sesión autorizada; el modo demostración no accede a MariaDB.</span><button type="button" data-action="about" class="text-action">Más información</button></div>
+        <div class="environment-notice"><svg class="icon"><use href="#i-info"/></svg><span><strong>Sistema productivo:</strong> todos los registros provienen del servidor. Debes ingresar con tu cuenta autorizada.</span><button type="button" data-action="about" class="text-action">Más información</button></div>
         <section class="home" id="homeView">
           <div class="hero">
             <div class="hero-content">
               <span class="eyebrow">PLATAFORMA COMERCIAL Y OPERATIVA</span>
               <h1>Tu operación, en un solo lugar.</h1>
               <p>Administra compras, ventas, clientes, proveedores, productos, bodega y cuentas corrientes desde un único entorno.</p>
-              <div class="hero-actions"><button type="button" class="button light" id="heroLogin" data-action="login"><svg class="icon"><use href="#i-users"/></svg> Acceso al sistema</button><button type="button" class="button outline-light" data-nav="productos">Ver Productos <svg class="icon"><use href="#i-chevron"/></svg></button></div>
+              <div class="hero-actions"><button type="button" class="button light" id="heroLogin" data-action="login"><svg class="icon"><use href="#i-users"/></svg> Iniciar sesión</button><button type="button" class="button outline-light" data-nav="productos">Abrir Productos <svg class="icon"><use href="#i-chevron"/></svg></button></div>
             </div>
             <div class="hero-logo-wrap"><img src="assets/img/prueba-rutahd2.webp" alt="H&D, confianza y calidad" class="hero-logo"></div>
-          </div>
-          <div class="legacy-dashboard" hidden aria-hidden="true">
-          <div class="home-heading"><div><span class="overline">VISIÓN GENERAL</span><h2>Resumen operativo</h2></div><span class="caption">Información de los registros de prueba</span></div>
-          <div class="stats-grid">
-            <article class="stat-card"><span class="stat-icon purple"><svg class="icon"><use href="#i-orders"/></svg></span><div><span class="stat-label">Pedidos</span><strong id="statOrders">0</strong><small>Total registrados</small></div></article>
-            <article class="stat-card"><span class="stat-icon lavender"><svg class="icon"><use href="#i-users"/></svg></span><div><span class="stat-label">Clientes</span><strong id="statClients">0</strong><small>En este navegador</small></div></article>
-            <article class="stat-card"><span class="stat-icon blue"><svg class="icon"><use href="#i-box"/></svg></span><div><span class="stat-label">Productos</span><strong id="statProducts">0</strong><small>En catálogo local</small></div></article>
-            <article class="stat-card"><span class="stat-icon orange"><svg class="icon"><use href="#i-warning"/></svg></span><div><span class="stat-label">Stock bajo</span><strong id="statLowStock">0</strong><small>Según stock mínimo</small></div></article>
-          </div>
           </div>
           <div class="home-heading modules-heading"><div><span class="overline">ACCESOS PRINCIPALES</span><h2>Módulos oficiales de Ruta H&amp;D</h2></div></div>
           <div class="module-grid" id="officialModuleGrid">
@@ -139,19 +131,9 @@
             <button class="module-card" data-nav="bodega"><span class="module-icon"><svg class="icon"><use href="#i-stock"/></svg></span><strong>Bodega</strong><small>Almacenes y existencias</small><svg class="icon arrow"><use href="#i-chevron"/></svg></button>
             <button class="module-card" data-nav="cuentas_corrientes"><span class="module-icon"><svg class="icon"><use href="#i-orders"/></svg></span><strong>Cuentas corrientes</strong><small>Movimientos y saldos</small><svg class="icon arrow"><use href="#i-chevron"/></svg></button>
           </div>
-          <div class="overview-grid legacy-dashboard" hidden aria-hidden="true">
-            <section class="surface-panel">
-              <div class="panel-heading"><div><span class="overline">TENDENCIA</span><h3>Pedidos en los últimos 7 días</h3></div><span class="pill neutral">Datos locales</span></div>
-              <div id="homeChart" class="chart-area" aria-label="Gráfico de pedidos"></div>
-            </section>
-            <section class="surface-panel">
-              <div class="panel-heading"><div><span class="overline">MOVIMIENTO</span><h3>Actividad reciente</h3></div></div>
-              <div id="activityList" class="activity-list"><div class="empty-activity">Aún no hay actividad registrada.</div></div>
-            </section>
-          </div>
         </section>
         <section id="workspaceView" class="workspace" hidden>
-          <div class="workspace-header"><div><span class="overline" id="workspaceEyebrow">GESTIÓN DE DATOS</span><h1 id="workspaceTitle">Clientes</h1><p id="workspaceDescription">Administra los registros de prueba.</p></div><div class="workspace-actions"><button id="exportButton" type="button" class="button ghost"><svg class="icon"><use href="#i-download"/></svg> Exportar CSV</button><button id="newButton" type="button" class="button primary"><svg class="icon"><use href="#i-plus"/></svg><span id="newButtonText">Nuevo</span></button></div></div>
+          <div class="workspace-header"><div><span class="overline" id="workspaceEyebrow">GESTIÓN DE DATOS</span><h1 id="workspaceTitle">Clientes</h1><p id="workspaceDescription">Información del servidor autenticado.</p></div><div class="workspace-actions"><button id="exportButton" type="button" class="button ghost"><svg class="icon"><use href="#i-download"/></svg> Exportar CSV</button><button id="newButton" type="button" class="button primary"><svg class="icon"><use href="#i-plus"/></svg><span id="newButtonText">Nuevo</span></button></div></div>
           <div class="workspace-content" id="workspaceContent"></div>
         </section>
         <footer class="page-footer"><span>© Ruta H&amp;D2 · Comercializadora H&amp;D</span><span>Interfaz Ruta H&amp;D V2 · Espectro violeta</span></footer>
@@ -167,12 +149,12 @@
   </dialog>
   <dialog id="confirmDialog" class="modal confirm-modal" aria-labelledby="confirmTitle">
     <div class="confirm-symbol"><svg class="icon"><use href="#i-warning"/></svg></div>
-    <h2 id="confirmTitle">¿Eliminar este registro?</h2><p id="confirmDescription">Esta acción no se puede deshacer en este navegador.</p>
+    <h2 id="confirmTitle">¿Confirmar operación?</h2><p id="confirmDescription">Se comprobarán tus permisos en el servidor.</p>
     <div class="modal-footer centered"><button type="button" class="button ghost" id="confirmCancel">Cancelar</button><button type="button" class="button danger" id="confirmAccept"><svg class="icon"><use href="#i-trash"/></svg> Eliminar</button></div>
   </dialog>
   <dialog id="infoDialog" class="modal confirm-modal" aria-labelledby="infoTitle">
-    <div class="info-symbol"><svg class="icon"><use href="#i-info"/></svg></div><h2 id="infoTitle">Sobre esta demostración</h2>
-    <p id="infoDescription">Los datos se almacenan únicamente en el navegador; no se sincronizan con InfinityFree.</p>
+    <div class="info-symbol"><svg class="icon"><use href="#i-info"/></svg></div><h2 id="infoTitle">Información de conexión</h2>
+    <p id="infoDescription">La información se consulta y modifica exclusivamente mediante Laravel y MariaDB.</p>
     <div class="modal-footer centered"><button type="button" class="button primary" id="infoClose">Entendido</button></div>
   </dialog>
   <div id="toastRegion" class="toast-region" role="status" aria-live="polite" aria-atomic="false"></div>
@@ -180,13 +162,12 @@
   <script src="assets/js/catalogos-api.js" defer></script>
   <script src="assets/js/admin-remoto.js" defer></script>
   <script src="assets/js/perfiles.js" defer></script>
-  <script src="assets/js/catalogos.js" defer></script>
   <script src="assets/js/productos-remotos.js" defer></script>
   <script src="assets/js/usuarios.js" defer></script>
   <script src="assets/js/recuperacion.js" defer></script>
   <dialog id="loginDialog" class="modal login-modal" aria-labelledby="loginDialogTitle">
     <form id="loginForm" class="login-form" novalidate>
-      <div class="modal-heading"><div><span class="overline">RUTA H&amp;D2 · ACCESO SEGURO</span><h2 id="loginDialogTitle">Iniciar sesión</h2></div><button type="button" class="icon-button" id="loginClose" aria-label="Cerrar inicio de sesión"><svg class="icon"><use href="#i-close"/></svg></button></div>
+      <div class="modal-heading"><div><span class="overline">RUTA H&amp;D2 · ACCESO SEGURO</span><h2 id="loginDialogTitle">Iniciar sesión</h2></div></div>
       <div class="login-body">
         <div class="login-identity"><img src="assets/img/prueba-rutahd2.webp" alt="Logotipo H&amp;D"><div><strong>Ruta H&amp;D V2</strong><span>Gestión comercial y operativa</span></div></div>
         <p class="login-description">Accede con tu cuenta autorizada. La aplicación comprueba la conexión Laravel antes de enviar tus credenciales.</p>
@@ -196,13 +177,13 @@
         <p class="form-error" id="loginError" role="alert" hidden></p>
         <div class="login-actions"><button type="submit" class="button primary" id="loginSubmit" disabled>Ingresar</button><button type="button" class="button ghost" id="loginRetry">Comprobar conexión</button></div>
         <button type="button" class="login-recover" id="loginRecover">¿Olvidaste tu contraseña?</button>
-        <button type="button" class="button ghost demo-enter" id="loginDemo">Explorar interfaz de demostración</button>
-        <p class="login-demo-note">La demostración usa datos locales, no corresponde a una sesión ni a una conexión con la base de datos.</p>
+        
+        
       </div>
     </form>
   </dialog>
-  <script src="assets/js/login-ui.js" defer></script>
   <script src="assets/js/modulos-oficiales.js" defer></script>
-  <script src="assets/js/app.js" defer></script>
+  <script src="assets/js/login-produccion.js" defer></script>
+  <script src="assets/js/app-produccion.js" defer></script>
 </body>
 </html>
