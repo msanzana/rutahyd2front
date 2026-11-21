@@ -1,0 +1,44 @@
+name: Validar menú plano, login y diseño adaptable
+on:
+  push:
+    branches: [feature/ui-menu-plano-login-20261121]
+  pull_request:
+    branches: [feature/catalogos-api-adapter-v2-20261120]
+permissions:
+  contents: read
+jobs:
+  ui:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validar JavaScript y estructura
+        run: |
+          for file in assets/js/*.js; do node --check "$file"; done
+          node --check tests/login-layout-v2.spec.mjs
+          node --check tests/menu-jerarquia-y-api.spec.mjs
+          test "$(grep -o 'data-admin-catalog=' index.html | wc -l)" -eq 10
+          test "$(grep -o 'data-catalog-key=' index.html | wc -l)" -eq 10
+          test "$(grep -o 'subnav-heading' index.html | wc -l)" -eq 0
+          test "$(grep -o 'nav-depth-' index.html | wc -l)" -eq 0
+          grep -Fq 'id="loginDialog"' index.html
+          grep -Fq 'assets/css/correcciones-ui.css' index.html
+      - name: Instalar Playwright y Chromium
+        run: |
+          npm install --no-audit --no-fund
+          npx playwright install --with-deps chromium
+      - name: Probar UX y CRUD con backend simulado
+        run: npm test
+      - name: Guardar resultados cuando haya errores
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fallos-ui-login-v2
+          path: |
+            test-results/
+            playwright-report/
+          if-no-files-found: ignore
+          retention-days: 7
