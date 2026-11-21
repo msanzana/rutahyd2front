@@ -49,12 +49,15 @@
           </div>
           <div id="productSubnav" class="product-subnav" role="menu" aria-label="Submódulos de Productos" hidden>
             <button type="button" data-nav="productos" class="nav-sublink" role="menuitem"><span>Listado de productos</span></button>
+            <div class="subnav-heading" role="presentation">Rubro → Departamento → Familia → Línea</div>
             <button type="button" data-nav="catalogos.rubros" data-catalog-key="rubros" class="nav-sublink" role="menuitem"><span>Rubros</span></button>
-            <button type="button" data-nav="catalogos.departamentos" data-catalog-key="departamentos" class="nav-sublink" role="menuitem"><span>Departamentos</span></button>
-            <button type="button" data-nav="catalogos.familias" data-catalog-key="familias" class="nav-sublink" role="menuitem"><span>Familias</span></button>
-            <button type="button" data-nav="catalogos.lineas" data-catalog-key="lineas" class="nav-sublink" role="menuitem"><span>Líneas</span></button>
+            <button type="button" data-nav="catalogos.departamentos" data-catalog-key="departamentos" class="nav-sublink nav-depth-1" role="menuitem"><span>Departamentos</span></button>
+            <button type="button" data-nav="catalogos.familias" data-catalog-key="familias" class="nav-sublink nav-depth-2" role="menuitem"><span>Familias</span></button>
+            <button type="button" data-nav="catalogos.lineas" data-catalog-key="lineas" class="nav-sublink nav-depth-3" role="menuitem"><span>Líneas</span></button>
+            <div class="subnav-heading" role="presentation">Marca → Modelo</div>
             <button type="button" data-nav="catalogos.marcas" data-catalog-key="marcas" class="nav-sublink" role="menuitem"><span>Marcas</span></button>
-            <button type="button" data-nav="catalogos.modelos" data-catalog-key="modelos" class="nav-sublink" role="menuitem"><span>Modelos</span></button>
+            <button type="button" data-nav="catalogos.modelos" data-catalog-key="modelos" class="nav-sublink nav-depth-1" role="menuitem"><span>Modelos</span></button>
+            <div class="subnav-heading" role="presentation">Unidades, envase y tributación</div>
             <button type="button" data-nav="catalogos.tipos_unidad" data-catalog-key="tipos_unidad" class="nav-sublink" role="menuitem"><span>Tipos de unidad</span></button>
             <button type="button" data-nav="catalogos.gramajes" data-catalog-key="gramajes" class="nav-sublink" role="menuitem"><span>Gramajes</span></button>
             <button type="button" data-nav="catalogos.tipos_envasado" data-catalog-key="tipos_envasado" class="nav-sublink" role="menuitem"><span>Tipos de envasado</span></button>
