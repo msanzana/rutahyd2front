@@ -50,6 +50,7 @@
   };
   const errorText=e=>{
     if(e?.status===401)return 'Sesión vencida: vuelve a iniciar sesión.';
+    if(e?.status===503)return 'Laravel aún no está habilitado: faltan configurar sus secretos privados y la cuenta administradora.';
     if(e?.status===403)return 'El perfil no tiene permiso para operar este submódulo.';
     if(e?.status===404)return 'El recurso no existe o aún no se ha desplegado.';
     if(e?.status===409)return 'Conflicto: registro duplicado o con referencias.';
@@ -157,6 +158,16 @@
     const email=field('Correo del administrador','email','administracion@example.cl');
     const password=field('Contraseña','password','');
     form.appendChild(el('p','catalog-footnote','No uses el formulario mientras la API esté bloqueada o no tenga autenticación verificada.'));
+    const check=button('Verificar API Laravel',()=>guarded(async()=>{
+      API().configure(url.value.trim());
+      const estado=await API().status();
+      if(!estado.disponible) {
+        status('API protegida (HTTP '+estado.http+'). No intentes iniciar sesión hasta que se habilite Laravel.',true);
+      } else {
+        status('API Laravel disponible. Puedes iniciar sesión con tu cuenta autorizada.');
+      }
+    }));
+    form.appendChild(check);
     const submit=el('button','button primary','Conectar a API');submit.type='submit';form.appendChild(submit);
     form.addEventListener('submit',event=>{
       event.preventDefault();
