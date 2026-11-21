@@ -157,7 +157,7 @@ test('genera informes y CSV a partir de datos reales del navegador', async ({pag
   await page.locator('#field-nombre').fill('Distribuidora Ejemplo');
   await page.locator('#field-rut').fill('12.345.678-9');
   await page.locator('#recordForm [type="submit"]').click();
-  await page.locator('[data-nav="informes"].nav-link').click();
+  await page.goto('/#informes');
   await expect(page.getByRole('heading',{name:'Informes'})).toBeVisible();
   const downloadEvent=page.waitForEvent('download');
   await page.locator('[data-action="export"][data-kind="clientes"]').click();
@@ -172,7 +172,7 @@ test('muestra detalles, avisos e información de uso', async ({page}) => {
   await expect(page.locator('#infoDialog')).toBeVisible();
   await page.locator('#infoClose').click();
   await page.locator('[data-action="about"]').click();
-  await expect(page.locator('#infoDescription')).toContainText('no está activado');
+  await expect(page.locator('#infoDescription')).toContainText('API esté bloqueada');
 });
 
 test('es adaptable a pantallas móviles, sin desplazamiento horizontal', async ({page}) => {
@@ -180,8 +180,8 @@ test('es adaptable a pantallas móviles, sin desplazamiento horizontal', async (
   await page.goto('/');
   await expect(page.locator('#menuToggle')).toBeVisible();
   await page.locator('#menuToggle').click();
-  await page.locator('.sidebar [data-nav="pedidos"]').click();
-  await expect(page.getByRole('heading',{name:'Pedidos',exact:true})).toBeVisible();
+  await page.locator('.sidebar [data-nav="compras"]').click();
+  await expect(page.getByRole('heading',{name:'Órdenes de compra',exact:true})).toBeVisible();
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2)).toBeTruthy();
   await page.screenshot({path:'artifacts/rutahd2-panel-movil.png',fullPage:true});
 });
@@ -189,7 +189,7 @@ test('es adaptable a pantallas móviles, sin desplazamiento horizontal', async (
 test('captura dashboard profesional en escritorio', async ({page}) => {
   await page.setViewportSize({width:1440,height:900});
   await page.goto('/');
-  await expect(page.locator('.module-card')).toHaveCount(6);
+  await expect(page.locator('#officialModuleGrid .module-card')).toHaveCount(8);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2)).toBeTruthy();
   await page.screenshot({path:'artifacts/rutahd2-panel-escritorio.png',fullPage:true});
 });
