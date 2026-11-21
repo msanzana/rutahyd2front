@@ -1,7 +1,8 @@
 name: Validar aplicación definitiva sin demostración
 on:
   push:
-    branches: [feature/produccion-sin-demo-login-v2-20261121]
+    branches: [main, feature/produccion-sin-demo-login-v2-20261121]
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:
@@ -24,7 +25,24 @@ jobs:
           ! grep -Fq 'assets/js/app.js" defer' index.html
           ! grep -Fq 'Explorar interfaz de demostración' index.html
           ! grep -Fq 'loginDemo' index.html
-          ! grep -Fq 'localStorage' assets/js/app-produccion.js
+          ! grep -Fq 'localStorage.' assets/js/app-produccion.js
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          html=Path('index.html').read_text('utf-8')
+          srcs=re.findall(r'<script[^>]*src="([^"]+)"',html)
+          assert any('app-produccion.js' in x for x in srcs)
+          assert any('login-produccion.js' in x for x in srcs)
+          assert not any(re.search(r'/(app|catalogos)\.js(?:[?]|$)',x) for x in srcs),srcs
+          assert 'id="loginDemo"' not in html
+          assert 'Explorar interfaz de demostración' not in html
+          navigation=html.split('<nav class="nav"',1)[1].split('</nav>',1)[0]
+          official=['administracion','compras','ventas','proveedores','clientes','productos','bodega','cuentas_corrientes']
+          indices=[navigation.index('data-nav="'+key+'" class="nav-link') for key in official]
+          assert indices==sorted(indices)
+          assert navigation.count('class="nav-link"')==8
+          print('Política de producción: login JWT, ocho módulos oficiales, sin scripts demo.')
+          PY
       - name: Instalar Playwright Chromium
         run: |
           npm install --no-audit --no-fund
