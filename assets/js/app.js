@@ -314,7 +314,12 @@
   }
 
   function renderWorkspace() {
-    if(REMOTE_OFFICIAL.has(view)){
+    // La demo de Clientes se permite solo en entorno local de pruebas o tras elegir
+    // expresamente explorar la demostración; nunca se fusiona con MySQL.
+    const modoDemo=!access()?.authenticated() && (
+      document.body.dataset.modo==='demostracion' ||
+      ['localhost','127.0.0.1'].includes(window.location.hostname));
+    if(REMOTE_OFFICIAL.has(view) && !(view==='clientes' && modoDemo)){
       const labels={compras:'Órdenes de compra',ventas:'Ventas',proveedores:'Proveedores',
         clientes:'Clientes',bodega:'Bodega',cuentas_corrientes:'Cuentas corrientes'};
       $('#workspaceEyebrow').textContent='MENÚ OFICIAL / OPERACIONES';
