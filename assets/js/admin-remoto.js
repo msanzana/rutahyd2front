@@ -17,6 +17,16 @@
     condiciones_tributarias:['Condiciones tributarias',null]
   };
   const KEYS=Object.keys(CONFIG);
+  // Consultas remotas de solo lectura; jamás se mezclan con localStorage.
+  const REMOTE_RESOURCES={
+    clientes:{titulo:'Clientes reales',permiso:'clientes.gestionar',campos:[['id','ID'],['nombre','Nombre'],['activo','Activo']]},
+    productos:{titulo:'Productos reales',permiso:'productos.gestionar',campos:[['id','ID'],['sku','SKU'],['nombre','Producto'],['activo','Activo']]},
+    ventas:{titulo:'Ventas reales',permiso:'ventas.ver',campos:[['id','ID'],['total','Total'],['estado','Estado']]},
+    notas_venta:{titulo:'Notas de venta',permiso:'ventas.ver',campos:[['id','ID'],['estado','Estado']]},
+    bodegas:{titulo:'Bodegas',permiso:'inventario.ver',campos:[['id','ID'],['nombre','Bodega'],['activo','Activo']]},
+    movimientos_inventario:{titulo:'Movimientos de inventario',permiso:'inventario.ver',campos:[['id','ID'],['tipo','Tipo'],['cantidad','Cantidad']]},
+    proveedores:{titulo:'Proveedores',permiso:'compras.gestionar',campos:[['id','ID'],['nombre','Proveedor'],['activo','Activo']]}
+  };
   const PRODUCTS=[
     ['rubroId','rubros',null],
     ['departamentoId','departamentos','rubroId'],
@@ -145,6 +155,7 @@
     });
     table.appendChild(rows);list.appendChild(table);root.appendChild(list);
     if(!restrictedKey && access()?.has('productos.gestionar'))renderProductAssignment();
+    if(!restrictedKey)renderReadOnlyResources();
   }
   function renderLogin(){
     const form=el('form','form-grid');
@@ -247,6 +258,58 @@
       await API().remove(key,rec.id);await refresh();status('Registro eliminado del servidor.');
     },true);
   }
+  function renderReadOnlyResources(){
+    const permitted=Object.entries(REMOTE_RESOURCES).filter(([,config])=>access()?.has(config.permiso));
+    if(!permitted.length)return;
+    const panel=el('section','catalog-main');
+    panel.appendChild(el('h3','','Consultas reales del servidor'));
+    panel.appendChild(el('p','catalog-footnote','Lecturas paginadas desde MySQL autenticado. Los registros de demostración permanecen separados y no se sincronizan.'));
+    const bar=el('div','workspace-actions');
+    bar.style.flexWrap='wrap';
+    const selection=el('select');
+    selection.setAttribute('aria-label','Recurso real de MySQL');
+    permitted.forEach(([key,config])=>{
+      const option=el('option','',config.titulo);option.value=key;selection.appendChild(option);
+    });
+    const results=el('div','catalog-table-scroll');
+    const pagination=el('p','catalog-footnote','');
+    let pageNumber=1,lastPage=1;
+    const load=async()=>{
+      const key=selection.value,definition=REMOTE_RESOURCES[key];
+      if(!definition||!access()?.has(definition.permiso))throw new Error('Acceso no permitido');
+      const response=await API().resources(key,pageNumber);
+      if(!Array.isArray(response?.data) || !Number.isFinite(Number(response.last_page))) {
+        throw new Error('Respuesta paginada inválida');
+      }
+      lastPage=Math.max(1,Number(response.last_page));
+      const table=el('table','catalog-table'),head=el('thead'),headRow=el('tr');
+      definition.campos.forEach(([,label])=>headRow.appendChild(el('th','',label)));
+      head.appendChild(headRow);table.appendChild(head);
+      const body=el('tbody');
+      response.data.forEach(record=>{
+        const row=el('tr');
+        definition.campos.forEach(([field])=>{
+          const value=record?.[field];
+          row.appendChild(el('td','',value===null||value===undefined?'—':String(value)));
+        });
+        body.appendChild(row);
+      });
+      table.appendChild(body);
+      results.replaceChildren(table);
+      pagination.textContent='Página '+pageNumber+' de '+lastPage+' · Registros: '+Number(response.total||0);
+      prev.disabled=pageNumber<=1;next.disabled=pageNumber>=lastPage;
+      status('Datos consultados desde Laravel/MySQL. Solo lectura; no se modificó ningún registro.');
+    };
+    const consult=button('Consultar MySQL',()=>guarded(load));
+    const prev=button('Anterior',()=>guarded(async()=>{if(pageNumber>1){pageNumber--;await load();}}));
+    const next=button('Siguiente',()=>guarded(async()=>{if(pageNumber<lastPage){pageNumber++;await load();}}));
+    prev.disabled=true;next.disabled=true;
+    selection.addEventListener('change',()=>{pageNumber=1;lastPage=1;prev.disabled=true;next.disabled=true;results.replaceChildren();pagination.textContent='';});
+    add(bar,selection,consult,prev,next);
+    add(panel,bar,results,pagination);
+    root.appendChild(panel);
+  }
+
   function renderProductAssignment(){
     const panel=el('section','catalog-main');
     panel.appendChild(el('h3','','Clasificar un producto existente'));
