@@ -86,3 +86,20 @@ for(const width of [390,1440]){
   expect(isInside).toBe(true);
  });
 }
+
+
+test('login productivo usa dos columnas profesionales en escritorio',async({page})=>{
+  await page.setViewportSize({width:1440,height:900});
+  await page.route('**/api/v1/estado',r=>json(r,{servicio:'Ruta H&D2 API',estado:'no_habilitada'},503));
+  await page.goto('/#inicio');
+  await expect(page.locator('#loginDialog')).toBeVisible();
+  const metrics=await page.evaluate(()=>{
+    const form=document.querySelector('#loginDialog .login-form');
+    const style=getComputedStyle(form),rect=form.getBoundingClientRect();
+    return {width:rect.width,columns:style.gridTemplateColumns.split(' ').length,
+      intro:getComputedStyle(form,'::before').display};
+  });
+  expect(metrics.width).toBeGreaterThan(760);
+  expect(metrics.columns).toBe(2);
+  expect(metrics.intro).not.toBe('none');
+});
