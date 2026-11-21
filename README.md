@@ -54,3 +54,12 @@ La interfaz de catálogos admite **dos modos separados**:
 Prueba de integración completa con navegador, Laravel y MySQL temporal: [GitHub Actions](https://github.com/msanzana/rutahyd2front/actions/runs/44749026047). No se accedió a MySQL de producción ni se usaron contraseñas de usuarios reales.
 
 **Nunca publicar usuario/contraseña reales, hash ni secreto JWT en este repositorio.** Para preparar la instalación consultar `docs/JWT_ADMIN_PRODUCCION.md` del backend.
+
+
+## Estado productivo comprobado — 21 noviembre 2026
+
+El backend Laravel en InfinityFree tiene configuración privada y conexión PDO validada desde PHP del alojamiento a la base española con 45 tablas. El gateway sigue deliberadamente bloqueado con HTTP 503 hasta el alta segura de administrador y habilitación.
+
+La Administración incluye verificación de API, CRUD autenticado de diez catálogos y consultas paginadas de solo lectura a clientes, productos, ventas, notas de venta, bodegas, movimientos de inventario y proveedores. Los demás CRUD históricos del frontend continúan siendo demostraciones con localStorage; no se sincronizan.
+
+El cliente usa credentials:same-origin para permitir las cookies técnicas anti-bot del mismo dominio sin persistir jamás JWT en cookies ni localStorage; JWT solo via Authorization: Bearer. Navegador público comprobado con siete módulos padres y «API protegida (HTTP 503)» hasta la activación.
