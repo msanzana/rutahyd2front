@@ -56,7 +56,7 @@ test('menú oficial y CRUD real de productos con todas las clasificaciones',asyn
   const top=await page.locator('.sidebar .nav > [data-nav],.sidebar .nav > .nav-group').evaluateAll(
     xs=>xs.map(x=>x.dataset.nav||x.querySelector('[data-nav]')?.dataset.nav)
   );
-  expect(top).toEqual(['inicio','pedidos','clientes','productos','inventario','informes','administracion']);
+  expect(top).toEqual(['administracion','compras','ventas','proveedores','clientes','productos','bodega','cuentas_corrientes']);
   if(await page.locator('#adminSubnav').isHidden())await page.locator('#toggleAdminSubnav').click();
   await expect(page.locator('[data-admin-catalog="rubros"]')).toBeVisible();
   await page.locator('[data-admin-catalog="marcas"]').click();
