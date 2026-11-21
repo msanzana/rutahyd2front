@@ -20,7 +20,7 @@
     tipos_envasado:{title:'Tipos de envasado'},
     condiciones_tributarias:{title:'Condiciones tributarias'}
   };
-  let root=null,roles=[],selectedId=null,busy=false;
+  let root=null,roles=[],selectedId=null,busy=false,assignBusy=false;
   function status(message,error=false) {
     const target=root&&$('#rolesStatus',root);
     if(target){target.textContent=message;target.setAttribute('role',error?'alert':'status');}
@@ -91,14 +91,14 @@
           const save=el('button','button ghost','Asignar');
           save.type='button';
           save.addEventListener('click',async()=>{
-            if(busy)return;
-            busy=true;
+            if(assignBusy)return;
+            assignBusy=true;
             try{
               await api().assignUserRole(user.id,choice.value);
               status('Nuevo perfil asignado a '+user.nombre+'.');
               await renderUsers();
             }catch(e){status('No se pudo asignar el perfil (HTTP '+(e.status||'conexión')+').',true);}
-            finally{busy=false;}
+            finally{assignBusy=false;}
           });
           group.appendChild(choice);group.appendChild(save);
         }
