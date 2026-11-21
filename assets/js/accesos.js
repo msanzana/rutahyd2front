@@ -1,6 +1,5 @@
-/* Control de visibilidad de menú por perfil autenticado.
- * El backend es siempre la autoridad de permisos; modo demo no representa
- * autorización de producción. No persistimos perfiles ni tokens en storage.
+/* Visibilidad según rol autenticado. Laravel valida siempre los permisos.
+ * Sin JWT no hay acceso y ningún secreto se persiste en el navegador.
  */
 (() => {
   'use strict';
@@ -27,8 +26,8 @@
   const authenticated = () => sesion !== null;
   const isAdmin = () => sesion?.rol === 'administrador';
   function has(code) {
-    // En demostración local no hay datos remotos ni garantías de autorización.
-    if (!sesion) return true;
+    // Sin JWT no existe autorización, ni siquiera de lectura.
+    if (!sesion) return false;
     return isAdmin() || sesion.permisos.has(code);
   }
   function canViewCatalog(key) {
