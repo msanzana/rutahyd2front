@@ -1,6 +1,6 @@
 import {test,expect} from '@playwright/test';
 
-test('Productos conserva sus diez subítems agrupados sin duplicar aperturas',async({page})=>{
+test('Productos tiene diez subítems planos sin sangrías ni duplicar aperturas',async({page})=>{
   await page.goto('/#inicio');
   const prod=page.locator('#productSubnav');
   const admin=page.locator('#adminSubnav');
@@ -9,13 +9,13 @@ test('Productos conserva sus diez subítems agrupados sin duplicar aperturas',as
   await page.locator('#toggleProductSubnav').click();
   await expect(prod).toBeVisible();
   await expect(admin).toBeHidden();
-  await expect(prod.locator('.subnav-heading')).toHaveText([
-    'Rubro → Departamento → Familia → Línea',
-    'Marca → Modelo',
-    'Unidades, envase y tributación'
-  ]);
+  await expect(prod.locator('.subnav-heading')).toHaveCount(0);
   await expect(prod.locator('[data-catalog-key]')).toHaveCount(10);
-  await expect(prod.locator('[data-nav="catalogos.lineas"]')).toHaveClass(/nav-depth-3/);
+  await expect(prod.locator('.nav-sublink')).toHaveCount(11);
+  const indents=await prod.locator('.nav-sublink').evaluateAll(nodes=>
+    nodes.map(node=>getComputedStyle(node).paddingLeft));
+  expect(new Set(indents).size).toBe(1);
+  await expect(prod.locator('[class*="nav-depth-"]')).toHaveCount(0);
   await page.locator('#toggleAdminSubnav').click();
   await expect(prod).toBeHidden();
   await expect(admin).toBeVisible();
