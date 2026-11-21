@@ -47,7 +47,10 @@ function show(mode='solicitar',token=null){
   }finally{send.disabled=false;}
  });
  dlg.append(form);document.body.append(dlg);
- dlg.addEventListener('close',()=>dlg.remove(),{once:true});dlg.showModal();
+ dlg.addEventListener('close',()=>{
+  dlg.remove();
+  document.dispatchEvent(new Event('rutahd:recuperacion-finalizada'));
+},{once:true});dlg.showModal();
 }
 window.RutaHDRecuperacion=Object.freeze({mostrarSolicitud:()=>show('solicitar')});
 document.addEventListener('DOMContentLoaded',()=>{if(pending)show('restablecer',pending);});
