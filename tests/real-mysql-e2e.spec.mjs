@@ -23,11 +23,11 @@ async function session(page,email,password){
 test('navegador real conecta frontend, Laravel, MySQL y respeta los padres del menú',async({page})=>{
   await session(page,'integracion@ejemplo.invalid','ClaveCI!soloParaPruebas-2026');
 
-  // Los siete padres V2 deben conservar su posición relativa.
+  // Los ocho padres oficiales deben conservar el orden exacto de la imagen.
   const padres=await page.locator('.sidebar .nav > [data-nav],.sidebar .nav > .nav-group')
     .evaluateAll(items=>items.map(item=>item.dataset.nav || item.querySelector('[data-nav]')?.dataset.nav));
   expect(padres.filter(Boolean)).toEqual([
-    'inicio','pedidos','clientes','productos','inventario','informes','administracion'
+    'administracion','compras','ventas','proveedores','clientes','productos','bodega','cuentas_corrientes'
   ]);
 
   await page.locator('#toggleProductSubnav').click();
@@ -87,6 +87,6 @@ test('navegador real conecta frontend, Laravel, MySQL y respeta los padres del m
     }catch(e){return e.status;}
   });
   expect(status).toBe(403);
-  await expect(page.locator('.sidebar .nav-link[data-nav="pedidos"]')).toBeVisible();
-  await expect(page.locator('.sidebar .nav-link[data-nav="inventario"]')).toBeVisible();
+  await expect(page.locator('.sidebar .nav-link[data-nav="compras"]')).toBeVisible();
+  await expect(page.locator('.sidebar .nav-link[data-nav="bodega"]')).toBeVisible();
 });
