@@ -1,0 +1,80 @@
+/* Ruta H&D V2 — Menú principal oficial de ocho módulos y pantalla de acceso.
+   Se aplica después de app.css y correcciones-ui.css. */
+.sidebar .nav > .nav-link,
+.sidebar .nav > .nav-group{flex:0 0 auto}
+.sidebar .nav{gap:6px}
+.sidebar .nav-link{line-height:1.36;white-space:normal;overflow-wrap:anywhere}
+.sidebar [data-nav="cuentas_corrientes"].nav-link{min-height:53px}
+.sidebar .brand{cursor:pointer}
+.module-grid .module-card{min-height:130px}
+.module-card strong,.module-card small{max-width:100%;overflow-wrap:anywhere}
+#officialModuleGrid{grid-template-columns:repeat(4,minmax(0,1fr))}
+#officialModuleGrid .module-card{padding-right:28px}
+.official-module .panel-heading{align-items:baseline;flex-wrap:wrap}
+.official-module h2{margin:0;line-height:1.25}
+.official-source{
+  display:inline-block;background:#f2ebfc;color:#624086;border:1px solid #e1cff8;
+  border-radius:999px;font-size:11px;font-weight:720;padding:5px 10px
+}
+.official-module .catalog-footnote{overflow-wrap:anywhere;line-height:1.55}
+.official-module .catalog-table-scroll{overflow:auto;max-width:100%}
+.official-module .catalog-table{min-width:540px}
+.official-module .catalog-table td{overflow-wrap:anywhere;max-width:280px}
+.official-module .workspace-actions{margin-top:12px}
+/* Pantalla inicial visible por defecto fuera del entorno local de pruebas. */
+body[data-login-start="true"]{overflow:hidden}
+body[data-login-start="true"] #loginDialog[open]{
+  position:fixed;inset:0;margin:0;
+  display:flex;align-items:center;justify-content:center;
+  padding:clamp(16px,3vw,48px);
+  border:0;border-radius:0;max-width:none;max-height:none;
+  width:100vw;height:100dvh;
+  background:linear-gradient(135deg,#190a36 0%,#381259 44%,#7133ae 100%);
+  overflow:auto;box-shadow:none
+}
+body[data-login-start="true"] #loginDialog[open]::backdrop{background:#140625}
+body[data-login-start="true"] #loginDialog[open] .login-form{
+  background:#fff;border-radius:20px;width:min(485px,100%);max-width:100%;
+  margin:auto;box-shadow:0 22px 90px rgba(16,5,30,.28);overflow:hidden
+}
+#loginDialog .login-identity{
+  display:flex;align-items:center;gap:14px;padding:13px 15px;
+  background:linear-gradient(135deg,#faf7ff,#f3eafa);
+  border-radius:12px;min-width:0
+}
+#loginDialog .login-identity img{width:62px;height:62px;object-fit:contain;flex:0 0 62px}
+#loginDialog .login-identity div{display:flex;flex-direction:column;min-width:0}
+#loginDialog .login-identity strong{font-size:19px;letter-spacing:-.4px;color:#3d165e}
+#loginDialog .login-identity span{font-size:12px;color:#726382}
+#loginDialog .login-body{gap:12px}
+#loginDialog .login-recover{justify-self:start}
+#loginDialog .demo-enter{
+  width:100%;white-space:normal;min-height:43px;
+  border-color:#d8cae6;background:#fdfbff
+}
+#loginDialog .login-demo-note{margin:0;color:#746888;font-size:11px;text-align:center;line-height:1.4}
+#loginDialog .login-server-status{font-size:12px;line-height:1.45}
+#loginDialog .modal-heading h2{line-height:1.25}
+#loginDialog .login-actions{margin-top:3px}
+#loginDialog .field > span{line-height:1.3}
+#loginDialog .field input{width:100%}
+@media(max-width:1200px){
+  #officialModuleGrid{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:760px){
+  #officialModuleGrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #officialModuleGrid .module-card{min-height:123px}
+}
+@media(max-width:480px){
+  #officialModuleGrid{grid-template-columns:minmax(0,1fr)}
+  #officialModuleGrid .module-card{min-height:88px}
+  body[data-login-start="true"] #loginDialog[open]{padding:10px}
+  body[data-login-start="true"] #loginDialog[open] .login-form{border-radius:15px}
+  #loginDialog .login-body{padding:15px;gap:10px}
+  #loginDialog .modal-heading{padding:15px}
+  #loginDialog .login-identity img{width:52px;height:52px;flex-basis:52px}
+}
+@media(max-height:620px){
+  body[data-login-start="true"] #loginDialog[open]{align-items:flex-start}
+  body[data-login-start="true"] #loginDialog[open] .login-form{margin:auto}
+}
