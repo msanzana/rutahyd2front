@@ -6,7 +6,7 @@
   const KEY = 'rutahd2-demo-local-v1';
   const SECTION_NAMES = {
     inicio: 'Inicio', pedidos: 'Pedidos', clientes: 'Clientes', productos: 'Productos',
-    inventario: 'Inventario', informes: 'Informes', administracion: 'Administración', perfiles: 'Perfiles y permisos'
+    inventario: 'Inventario', informes: 'Informes', administracion: 'Administración', perfiles: 'Perfiles y permisos', usuarios: 'Usuarios'
   };
   const DEFAULT_DATA = () => ({ pedidos: [], clientes: [], productos: [], activity: [] });
   const db = loadData();
@@ -166,7 +166,7 @@
   const canNavigate = section => {
     const key=catalogKey(section);
     if(key)return catalogos?.CONFIG[key] && access()?.canViewCatalog(key);
-    if(section==='perfiles')return Boolean(access()?.authenticated()&&access()?.isAdmin());
+    if(section==='perfiles'||section==='usuarios')return Boolean(access()?.authenticated()&&access()?.isAdmin());
     if(section==='productos' && access()?.authenticated())
       return access().has('productos.gestionar');
     return Boolean(SECTION_NAMES[section]);
@@ -182,6 +182,7 @@
     $('#productsNavGroup').hidden=!showParent;
     const adminVisible=Boolean(!access()?.authenticated()||access()?.isAdmin()||authorized.length>0);
     $('#navPerfiles').hidden=!access()?.authenticated()||!access()?.isAdmin();
+    $('#navUsuarios').hidden=!access()?.authenticated()||!access()?.isAdmin();
     $('#toggleAdminSubnav').hidden=!adminVisible;
     if(!adminVisible)setAdminExpanded(false);
     const list=$('#productSubnav [data-nav="productos"]');
@@ -221,7 +222,7 @@
     } else if(key || current==='productos'){
       setAdminExpanded(false);
       setProductExpanded(true);
-    } else if(current==='administracion'||current==='perfiles'){
+    } else if(current==='administracion'||current==='perfiles'||current==='usuarios'){
       setProductExpanded(false);
       setAdminExpanded(true);
     } else {
@@ -335,6 +336,15 @@
       $('#newButton').hidden=true;
       $('#exportButton').hidden=true;
       window.RutaHDProductosRemotos?.mount($('#workspaceContent'));
+      return;
+    }
+    if(view==='usuarios'){
+      $('#workspaceEyebrow').textContent='ADMINISTRACIÓN / USUARIOS';
+      $('#workspaceTitle').textContent='Usuarios';
+      $('#workspaceDescription').textContent='Altas, cambios, perfiles y bajas lógicas de usuarios reales.';
+      $('#newButton').hidden=true;
+      $('#exportButton').hidden=true;
+      window.RutaHDUsuarios?.mount($('#workspaceContent'));
       return;
     }
     if(view==='perfiles'){
@@ -740,7 +750,7 @@
   });
   document.addEventListener('rutahd:permisos-actualizados',()=>{
     updateProductMenu();
-    if((view==='administracion'||view==='perfiles')&&access()?.isAdmin())setAdminExpanded(true);
+    if((view==='administracion'||view==='perfiles'||view==='usuarios')&&access()?.isAdmin())setAdminExpanded(true);
     if(!canNavigate(view)){navigate('inicio');return;}
     if(view!=='inicio')renderWorkspace();
     const perfil=access()?.usuario();
