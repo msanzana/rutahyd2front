@@ -159,6 +159,15 @@
       send('/catalogos/' + key(catalogo) + '/' + id(identificador), 'PUT', datos),
     remove: (catalogo, identificador) =>
       send('/catalogos/' + key(catalogo) + '/' + id(identificador), 'DELETE'),
+    products: (page=1, buscar='') => {
+      if(!Number.isSafeInteger(page)||page<1||page>10000)throw new Error('Página inválida');
+      if(typeof buscar!=='string'||buscar.length>120)throw new Error('Búsqueda inválida');
+      return send('/productos?por_pagina=25&page='+page+'&incluye_inactivos=1&buscar='+encodeURIComponent(buscar));
+    },
+    getProduct: (identificador) => send('/productos/'+id(identificador)),
+    createProduct: datos => send('/productos','POST',datos),
+    updateProduct: (identificador,datos) => send('/productos/'+id(identificador),'PUT',datos),
+    deactivateProduct: identificador => send('/productos/'+id(identificador),'DELETE'),
     getProductClassification: (identificador) =>
       send('/productos/' + id(identificador) + '/clasificacion'),
     classifyProduct: (identificador, datos) => {
