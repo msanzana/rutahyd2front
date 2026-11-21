@@ -103,6 +103,8 @@ html,body{min-width:0;max-width:100%;overflow-x:clip}
   .topbar .search{flex:1 1 110px;width:auto;min-width:90px}
   .topbar .profile{display:none}
   .topbar .notification-button{display:none}
+  /* Avisos por debajo de las dos filas móviles de la cabecera. */
+  .toast-region{top:132px;left:10px;right:10px;max-width:calc(100vw - 20px)}
   .api-state{max-width:108px;font-size:10px;padding:7px}
   .auth-trigger{font-size:11px;padding:8px 9px}
   .environment-notice .text-action{white-space:normal}
