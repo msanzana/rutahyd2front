@@ -115,3 +115,28 @@ test('recuperación segura permite volver al login sin una sesión falsa',async(
   await expect(page.locator('#loginDialog')).toBeVisible();
   await expect(page.locator('#loginSubmit')).toBeDisabled();
 });
+
+
+test('una respuesta 401 en cualquier módulo cierra la sesión global sin usar datos demo',async({page})=>{
+  await page.route('**/api/v1/estado',r=>json(r,{servicio:'Ruta H&D2 API',estado:'disponible'}));
+  await page.route('**/api/v1/sesion',r=>{
+    if(r.request().method()==='POST')return json(r,{token:'aaaa.bbbb.cccc',token_type:'Bearer',
+      usuario:{id:1,nombre:'Administrador CI',rol:'administrador',permisos:['compras.gestionar']}});
+    return r.fulfill({status:204,body:''});
+  });
+  await page.route('**/api/v1/recursos/ordenes_compra**',r=>json(r,{message:'Sesión revocada'},401));
+  await page.goto('/#inicio');
+  await page.locator('#loginEmail').fill('admin@example.invalid');
+  await page.locator('#loginPassword').fill('solo-fixture-no-real');
+  await page.locator('#loginSubmit').click();
+  await expect(page.locator('#appShell')).toBeVisible();
+  await page.locator('.nav-link[data-nav="compras"]').click();
+  await expect(page.locator('#loginDialog')).toBeVisible();
+  await expect(page.locator('#appShell')).toBeHidden();
+  const session=await page.evaluate(()=>({
+    authenticated:window.RutaHDAccesos.authenticated(),
+    storedKeys:Object.keys(localStorage).filter(k=>/jwt|token/i.test(k))
+  }));
+  expect(session.authenticated).toBe(false);
+  expect(session.storedKeys).toEqual([]);
+});
