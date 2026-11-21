@@ -38,32 +38,8 @@
         <img class="brand-logo" src="assets/img/prueba-rutahd2.webp" alt="Logotipo oficial Comercializadora H&D" width="70" height="70">
         <span><strong>Ruta H&amp;D2</strong><small>Gestión Comercial</small></span>
       </a>
-      <div class="sidebar-heading">ESPACIO DE TRABAJO</div>
+      <div class="sidebar-heading">MENÚ PRINCIPAL</div>
       <nav class="nav" aria-label="Menú principal">
-        <button type="button" data-nav="inicio" class="nav-link active"><svg class="icon"><use href="#i-home"/></svg><span>Inicio</span></button>
-        <button type="button" data-nav="pedidos" class="nav-link"><svg class="icon"><use href="#i-orders"/></svg><span>Pedidos</span></button>
-        <button type="button" data-nav="clientes" class="nav-link"><svg class="icon"><use href="#i-users"/></svg><span>Clientes</span></button>
-        <div class="nav-group" id="productsNavGroup">
-          <div class="nav-parent">
-            <button type="button" data-nav="productos" class="nav-link"><svg class="icon"><use href="#i-box"/></svg><span>Productos</span></button>
-            <button type="button" class="nav-expand" id="toggleProductSubnav" aria-label="Expandir submódulos de Productos" aria-controls="productSubnav" aria-expanded="false"><svg class="icon small"><use href="#i-chevron"/></svg></button>
-          </div>
-          <div id="productSubnav" class="product-subnav" role="menu" aria-label="Submódulos de Productos" hidden>
-            <button type="button" data-nav="productos" class="nav-sublink" role="menuitem"><span>Listado de productos</span></button>
-            <button type="button" data-nav="catalogos.rubros" data-catalog-key="rubros" class="nav-sublink" role="menuitem"><span>Rubros</span></button>
-            <button type="button" data-nav="catalogos.departamentos" data-catalog-key="departamentos" class="nav-sublink" role="menuitem"><span>Departamentos</span></button>
-            <button type="button" data-nav="catalogos.familias" data-catalog-key="familias" class="nav-sublink" role="menuitem"><span>Familias</span></button>
-            <button type="button" data-nav="catalogos.lineas" data-catalog-key="lineas" class="nav-sublink" role="menuitem"><span>Líneas</span></button>
-            <button type="button" data-nav="catalogos.marcas" data-catalog-key="marcas" class="nav-sublink" role="menuitem"><span>Marcas</span></button>
-            <button type="button" data-nav="catalogos.modelos" data-catalog-key="modelos" class="nav-sublink" role="menuitem"><span>Modelos</span></button>
-            <button type="button" data-nav="catalogos.tipos_unidad" data-catalog-key="tipos_unidad" class="nav-sublink" role="menuitem"><span>Tipos de unidad</span></button>
-            <button type="button" data-nav="catalogos.gramajes" data-catalog-key="gramajes" class="nav-sublink" role="menuitem"><span>Gramajes</span></button>
-            <button type="button" data-nav="catalogos.tipos_envasado" data-catalog-key="tipos_envasado" class="nav-sublink" role="menuitem"><span>Tipos de envasado</span></button>
-            <button type="button" data-nav="catalogos.condiciones_tributarias" data-catalog-key="condiciones_tributarias" class="nav-sublink" role="menuitem"><span>Condiciones tributarias</span></button>
-          </div>
-        </div>
-        <button type="button" data-nav="inventario" class="nav-link"><svg class="icon"><use href="#i-stock"/></svg><span>Inventario</span></button>
-        <button type="button" data-nav="informes" class="nav-link"><svg class="icon"><use href="#i-chart"/></svg><span>Informes</span></button>
         <div class="nav-group" id="adminNavGroup">
           <div class="nav-parent">
             <button type="button" data-nav="administracion" class="nav-link"><svg class="icon"><use href="#i-settings"/></svg><span>Administración</span></button>
@@ -84,10 +60,35 @@
             <button type="button" data-nav="perfiles" class="nav-sublink" id="navPerfiles" role="menuitem" hidden><span>Perfiles y permisos</span></button>
           </div>
         </div>
+        <button type="button" data-nav="compras" class="nav-link"><svg class="icon"><use href="#i-orders"/></svg><span>Compras</span></button>
+        <button type="button" data-nav="ventas" class="nav-link"><svg class="icon"><use href="#i-chart"/></svg><span>Ventas</span></button>
+        <button type="button" data-nav="proveedores" class="nav-link"><svg class="icon"><use href="#i-users"/></svg><span>Proveedores</span></button>
+        <button type="button" data-nav="clientes" class="nav-link"><svg class="icon"><use href="#i-users"/></svg><span>Clientes</span></button>
+        <div class="nav-group" id="productsNavGroup">
+          <div class="nav-parent">
+            <button type="button" data-nav="productos" class="nav-link"><svg class="icon"><use href="#i-box"/></svg><span>Productos</span></button>
+            <button type="button" class="nav-expand" id="toggleProductSubnav" aria-label="Expandir submódulos de Productos" aria-controls="productSubnav" aria-expanded="false"><svg class="icon small"><use href="#i-chevron"/></svg></button>
+          </div>
+          <div id="productSubnav" class="product-subnav" role="menu" aria-label="Submódulos de Productos" hidden>
+            <button type="button" data-nav="productos" class="nav-sublink" role="menuitem"><span>Listado de productos</span></button>
+            <button type="button" data-nav="catalogos.rubros" data-catalog-key="rubros" class="nav-sublink" role="menuitem"><span>Rubros</span></button>
+            <button type="button" data-nav="catalogos.departamentos" data-catalog-key="departamentos" class="nav-sublink" role="menuitem"><span>Departamentos</span></button>
+            <button type="button" data-nav="catalogos.familias" data-catalog-key="familias" class="nav-sublink" role="menuitem"><span>Familias</span></button>
+            <button type="button" data-nav="catalogos.lineas" data-catalog-key="lineas" class="nav-sublink" role="menuitem"><span>Líneas</span></button>
+            <button type="button" data-nav="catalogos.marcas" data-catalog-key="marcas" class="nav-sublink" role="menuitem"><span>Marcas</span></button>
+            <button type="button" data-nav="catalogos.modelos" data-catalog-key="modelos" class="nav-sublink" role="menuitem"><span>Modelos</span></button>
+            <button type="button" data-nav="catalogos.tipos_unidad" data-catalog-key="tipos_unidad" class="nav-sublink" role="menuitem"><span>Tipos de unidad</span></button>
+            <button type="button" data-nav="catalogos.gramajes" data-catalog-key="gramajes" class="nav-sublink" role="menuitem"><span>Gramajes</span></button>
+            <button type="button" data-nav="catalogos.tipos_envasado" data-catalog-key="tipos_envasado" class="nav-sublink" role="menuitem"><span>Tipos de envasado</span></button>
+            <button type="button" data-nav="catalogos.condiciones_tributarias" data-catalog-key="condiciones_tributarias" class="nav-sublink" role="menuitem"><span>Condiciones tributarias</span></button>
+          </div>
+        </div>
+        <button type="button" data-nav="bodega" class="nav-link"><svg class="icon"><use href="#i-stock"/></svg><span>Bodega</span></button>
+        <button type="button" data-nav="cuentas_corrientes" class="nav-link"><svg class="icon"><use href="#i-orders"/></svg><span>Cuentas corrientes</span></button>
       </nav>
       <div class="sidebar-footer">
-        <span class="sidebar-status-dot"></span> Entorno de demostración
-        <small>Los datos permanecen en este navegador.</small>
+        <span class="sidebar-status-dot"></span> Ruta H&amp;D2 · Gestión
+        <small>Conexión Laravel: consulta el estado en la cabecera.</small>
       </div>
     </aside>
     <div class="sidebar-scrim" data-close-sidebar></div>
@@ -106,17 +107,18 @@
         </div>
       </header>
       <main class="page">
-        <div class="environment-notice"><svg class="icon"><use href="#i-info"/></svg><span><strong>Vista funcional de demostración.</strong> Usa datos ficticios para probar altas, ediciones e informes. Los cambios permanecen en este navegador y no llegan a producción.</span><button type="button" data-action="about" class="text-action">Más información</button></div>
+        <div class="environment-notice"><svg class="icon"><use href="#i-info"/></svg><span><strong>Estado de conexión:</strong> Laravel se consulta automáticamente. Para operar con datos reales se requiere una sesión autorizada; el modo demostración no accede a MariaDB.</span><button type="button" data-action="about" class="text-action">Más información</button></div>
         <section class="home" id="homeView">
           <div class="hero">
             <div class="hero-content">
               <span class="eyebrow">PLATAFORMA COMERCIAL Y OPERATIVA</span>
               <h1>Tu operación, en un solo lugar.</h1>
-              <p>Gestiona clientes, pedidos, productos e inventario desde una interfaz clara, segura y preparada para crecer.</p>
-              <div class="hero-actions"><button type="button" class="button light" data-action="create" data-kind="pedidos"><svg class="icon"><use href="#i-plus"/></svg> Nuevo pedido</button><button type="button" class="button outline-light" data-nav="informes">Ver informes <svg class="icon"><use href="#i-chevron"/></svg></button></div>
+              <p>Administra compras, ventas, clientes, proveedores, productos, bodega y cuentas corrientes desde un único entorno.</p>
+              <div class="hero-actions"><button type="button" class="button light" id="heroLogin" data-action="login"><svg class="icon"><use href="#i-users"/></svg> Acceso al sistema</button><button type="button" class="button outline-light" data-nav="productos">Ver Productos <svg class="icon"><use href="#i-chevron"/></svg></button></div>
             </div>
             <div class="hero-logo-wrap"><img src="assets/img/prueba-rutahd2.webp" alt="H&D, confianza y calidad" class="hero-logo"></div>
           </div>
+          <div class="legacy-dashboard" hidden aria-hidden="true">
           <div class="home-heading"><div><span class="overline">VISIÓN GENERAL</span><h2>Resumen operativo</h2></div><span class="caption">Información de los registros de prueba</span></div>
           <div class="stats-grid">
             <article class="stat-card"><span class="stat-icon purple"><svg class="icon"><use href="#i-orders"/></svg></span><div><span class="stat-label">Pedidos</span><strong id="statOrders">0</strong><small>Total registrados</small></div></article>
@@ -124,16 +126,19 @@
             <article class="stat-card"><span class="stat-icon blue"><svg class="icon"><use href="#i-box"/></svg></span><div><span class="stat-label">Productos</span><strong id="statProducts">0</strong><small>En catálogo local</small></div></article>
             <article class="stat-card"><span class="stat-icon orange"><svg class="icon"><use href="#i-warning"/></svg></span><div><span class="stat-label">Stock bajo</span><strong id="statLowStock">0</strong><small>Según stock mínimo</small></div></article>
           </div>
-          <div class="home-heading modules-heading"><div><span class="overline">ACCESOS PRINCIPALES</span><h2>Módulos de gestión</h2></div></div>
-          <div class="module-grid">
-            <button class="module-card" data-nav="pedidos"><span class="module-icon"><svg class="icon"><use href="#i-orders"/></svg></span><strong>Pedidos</strong><small>Seguimiento comercial</small><svg class="icon arrow"><use href="#i-chevron"/></svg></button>
-            <button class="module-card" data-nav="clientes"><span class="module-icon"><svg class="icon"><use href="#i-users"/></svg></span><strong>Clientes</strong><small>Directorio y contactos</small><svg class="icon arrow"><use href="#i-chevron"/></svg></button>
-            <button class="module-card" data-nav="productos"><span class="module-icon"><svg class="icon"><use href="#i-box"/></svg></span><strong>Productos</strong><small>Catálogo y precios</small><svg class="icon arrow"><use href="#i-chevron"/></svg></button>
-            <button class="module-card" data-nav="inventario"><span class="module-icon"><svg class="icon"><use href="#i-stock"/></svg></span><strong>Inventario</strong><small>Existencias y alertas</small><svg class="icon arrow"><use href="#i-chevron"/></svg></button>
-            <button class="module-card" data-nav="informes"><span class="module-icon"><svg class="icon"><use href="#i-chart"/></svg></span><strong>Informes</strong><small>Análisis y exportación</small><svg class="icon arrow"><use href="#i-chevron"/></svg></button>
-            <button class="module-card" data-nav="administracion"><span class="module-icon"><svg class="icon"><use href="#i-settings"/></svg></span><strong>Administración</strong><small>Configuración del entorno</small><svg class="icon arrow"><use href="#i-chevron"/></svg></button>
           </div>
-          <div class="overview-grid">
+          <div class="home-heading modules-heading"><div><span class="overline">ACCESOS PRINCIPALES</span><h2>Módulos oficiales de Ruta H&amp;D</h2></div></div>
+          <div class="module-grid" id="officialModuleGrid">
+            <button class="module-card" data-nav="administracion"><span class="module-icon"><svg class="icon"><use href="#i-settings"/></svg></span><strong>Administración</strong><small>Usuarios, permisos y clasificaciones</small><svg class="icon arrow"><use href="#i-chevron"/></svg></button>
+            <button class="module-card" data-nav="compras"><span class="module-icon"><svg class="icon"><use href="#i-orders"/></svg></span><strong>Compras</strong><small>Órdenes de compra</small><svg class="icon arrow"><use href="#i-chevron"/></svg></button>
+            <button class="module-card" data-nav="ventas"><span class="module-icon"><svg class="icon"><use href="#i-chart"/></svg></span><strong>Ventas</strong><small>Operaciones comerciales</small><svg class="icon arrow"><use href="#i-chevron"/></svg></button>
+            <button class="module-card" data-nav="proveedores"><span class="module-icon"><svg class="icon"><use href="#i-users"/></svg></span><strong>Proveedores</strong><small>Directorio de proveedores</small><svg class="icon arrow"><use href="#i-chevron"/></svg></button>
+            <button class="module-card" data-nav="clientes"><span class="module-icon"><svg class="icon"><use href="#i-users"/></svg></span><strong>Clientes</strong><small>Directorio de clientes</small><svg class="icon arrow"><use href="#i-chevron"/></svg></button>
+            <button class="module-card" data-nav="productos"><span class="module-icon"><svg class="icon"><use href="#i-box"/></svg></span><strong>Productos</strong><small>Catálogo y clasificaciones</small><svg class="icon arrow"><use href="#i-chevron"/></svg></button>
+            <button class="module-card" data-nav="bodega"><span class="module-icon"><svg class="icon"><use href="#i-stock"/></svg></span><strong>Bodega</strong><small>Almacenes y existencias</small><svg class="icon arrow"><use href="#i-chevron"/></svg></button>
+            <button class="module-card" data-nav="cuentas_corrientes"><span class="module-icon"><svg class="icon"><use href="#i-orders"/></svg></span><strong>Cuentas corrientes</strong><small>Movimientos y saldos</small><svg class="icon arrow"><use href="#i-chevron"/></svg></button>
+          </div>
+          <div class="overview-grid legacy-dashboard" hidden aria-hidden="true">
             <section class="surface-panel">
               <div class="panel-heading"><div><span class="overline">TENDENCIA</span><h3>Pedidos en los últimos 7 días</h3></div><span class="pill neutral">Datos locales</span></div>
               <div id="homeChart" class="chart-area" aria-label="Gráfico de pedidos"></div>
@@ -148,7 +153,7 @@
           <div class="workspace-header"><div><span class="overline" id="workspaceEyebrow">GESTIÓN DE DATOS</span><h1 id="workspaceTitle">Clientes</h1><p id="workspaceDescription">Administra los registros de prueba.</p></div><div class="workspace-actions"><button id="exportButton" type="button" class="button ghost"><svg class="icon"><use href="#i-download"/></svg> Exportar CSV</button><button id="newButton" type="button" class="button primary"><svg class="icon"><use href="#i-plus"/></svg><span id="newButtonText">Nuevo</span></button></div></div>
           <div class="workspace-content" id="workspaceContent"></div>
         </section>
-        <footer class="page-footer"><span>© Ruta H&amp;D2 · Comercializadora H&amp;D</span><span>Interfaz de demostración · Espectro violeta</span></footer>
+        <footer class="page-footer"><span>© Ruta H&amp;D2 · Comercializadora H&amp;D</span><span>Interfaz Ruta H&amp;D V2 · Espectro violeta</span></footer>
       </main>
     </div>
   </div>
@@ -182,6 +187,7 @@
     <form id="loginForm" class="login-form" novalidate>
       <div class="modal-heading"><div><span class="overline">RUTA H&amp;D2 · ACCESO SEGURO</span><h2 id="loginDialogTitle">Iniciar sesión</h2></div><button type="button" class="icon-button" id="loginClose" aria-label="Cerrar inicio de sesión"><svg class="icon"><use href="#i-close"/></svg></button></div>
       <div class="login-body">
+        <div class="login-identity"><img src="assets/img/prueba-rutahd2.webp" alt="Logotipo H&amp;D"><div><strong>Ruta H&amp;D V2</strong><span>Gestión comercial y operativa</span></div></div>
         <p class="login-description">Accede con tu cuenta autorizada. La aplicación comprueba la conexión Laravel antes de enviar tus credenciales.</p>
         <div class="login-server-status" id="loginServerStatus" role="status" aria-live="polite">Verificando disponibilidad del servidor…</div>
         <label class="field"><span>Correo electrónico</span><input type="email" id="loginEmail" autocomplete="username" maxlength="190" placeholder="usuario@empresa.cl" required></label>
@@ -189,6 +195,8 @@
         <p class="form-error" id="loginError" role="alert" hidden></p>
         <div class="login-actions"><button type="submit" class="button primary" id="loginSubmit" disabled>Ingresar</button><button type="button" class="button ghost" id="loginRetry">Comprobar conexión</button></div>
         <button type="button" class="login-recover" id="loginRecover">¿Olvidaste tu contraseña?</button>
+        <button type="button" class="button ghost demo-enter" id="loginDemo">Explorar interfaz de demostración</button>
+        <p class="login-demo-note">La demostración usa datos locales, no corresponde a una sesión ni a una conexión con la base de datos.</p>
       </div>
     </form>
   </dialog>
