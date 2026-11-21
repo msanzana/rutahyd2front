@@ -8,6 +8,7 @@
     'rubros','departamentos','familias','lineas','marcas','modelos',
     'tipos_unidad','gramajes','tipos_envasado','condiciones_tributarias'
   ]);
+  const RESOURCES = new Set(['clientes','productos','ventas','notas_venta','bodegas','movimientos_inventario','proveedores']);
   const FIELDS = [
     'rubroId','departamentoId','familiaId','lineaId','marcaId','modeloId',
     'tipoUnidadId','gramajeId','tipoEnvasadoId','condicionTributariaId'
@@ -143,6 +144,13 @@
       send('/perfiles/usuarios/' + id(userId) + '/rol','PUT',{rol_id:Number(id(roleId))}),
     saveRoleCatalogPermissions: (roleId, modulos) =>
       send('/perfiles/' + id(roleId) + '/catalogos','PUT',{modulos}),
+    resources: (recurso, pagina = 1) => {
+      if (!RESOURCES.has(recurso)) throw new Error('Recurso remoto no permitido.');
+      if (!Number.isSafeInteger(pagina) || pagina < 1 || pagina > 10000) {
+        throw new Error('Página inválida.');
+      }
+      return send('/recursos/' + encodeURIComponent(recurso) + '?por_pagina=25&page=' + pagina);
+    },
     list: (catalogo) => send('/catalogos/' + key(catalogo)),
     create: (catalogo, datos) => send('/catalogos/' + key(catalogo), 'POST', datos),
     update: (catalogo, identificador, datos) =>
