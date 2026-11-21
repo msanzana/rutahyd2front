@@ -1,5 +1,7 @@
 /* Ruta H&D2: cliente API de catálogos con Bearer JWT.
  * Los tokens viven únicamente en memoria; jamás en localStorage.
+ * Mantenemos cookies técnicas del MISMO ORIGEN para el desafío anti-bot de
+ * InfinityFree; nunca usamos cookies como credencial JWT ni enviamos cookies CORS.
  * Sin JWT y API validada, solo funciona el modo demostración.
  */
 (() => {
@@ -57,7 +59,7 @@
       response = await fetch(endpoint + '/sesion', {
         method:'POST', headers:{'Content-Type':'application/json',Accept:'application/json'},
         body:JSON.stringify({correo_electronico:email,contrasena:password}),
-        credentials:'omit', cache:'no-store', signal:controller.signal
+        credentials:'same-origin', cache:'no-store', signal:controller.signal
       });
     } finally { clearTimeout(timer); }
     if (!response.ok) throw new Error('No se pudo iniciar sesión (HTTP ' + response.status + ')');
@@ -78,7 +80,7 @@
     try {
       const response = await fetch(endpoint + '/estado', {
         method: 'GET', headers: {Accept:'application/json'},
-        credentials:'omit', cache:'no-store', signal:controller.signal
+        credentials:'same-origin', cache:'no-store', signal:controller.signal
       });
       const contentType = response.headers.get('Content-Type') || '';
       if (!contentType.includes('application/json')) {
@@ -112,7 +114,7 @@
         },
         ...(body !== undefined ? {body:JSON.stringify(body)} : {}),
         signal:controller.signal,
-        credentials:'omit',
+        credentials:'same-origin',
         cache:'no-store'
       });
     } finally { clearTimeout(timer); }
