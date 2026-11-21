@@ -2,7 +2,7 @@
  * Los tokens viven únicamente en memoria; jamás en localStorage.
  * Mantenemos cookies técnicas del MISMO ORIGEN para el desafío anti-bot de
  * InfinityFree; nunca usamos cookies como credencial JWT ni enviamos cookies CORS.
- * Sin JWT y API validada, solo funciona el modo demostración.
+ * Producción exclusivamente: sin JWT y API validada no se muestra información operativa.
  */
 (() => {
   'use strict';
@@ -125,10 +125,20 @@
     if (!response.ok) {
       const error = new Error('Error HTTP ' + response.status);
       error.status = response.status;
+      // Un 401 revoca la sesión de toda la aplicación (no solo del módulo abierto).
+      // Un 403 conserva la sesión y únicamente deniega la operación solicitada.
+      if (response.status === 401 && path !== '/sesion') {
+        bearer = null;
+        window.RutaHDAccesos?.clear();
+      }
       // No exponer respuestas de error de servidores no verificados ni tokens.
       throw error;
     }
-    return response.status === 204 ? null : response.json();
+    if (response.status === 204) return null;
+    if (!(response.headers.get('Content-Type') || '').includes('application/json')) {
+      throw new Error('La API no devolvió una respuesta JSON válida.');
+    }
+    return response.json();
   }
 
   async function publico(path, payload) {
