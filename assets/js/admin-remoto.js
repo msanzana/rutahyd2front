@@ -1,6 +1,4 @@
-/* Ruta H&D2: administración MySQL voluntaria, independiente de la demo local.
- * Jamás persistir sesión ni sincronizar automáticamente registros de prueba.
- */
+/* Ruta H&D2: catálogos productivos Laravel/MySQL con autorización JWT. */
 (() => {
   'use strict';
   const API=()=>window.RutaHDApiCatalogos;
@@ -102,7 +100,7 @@
     root.replaceChildren();
     const header=el('div','panel-heading');
     add(header,add(el('div'),el('span','overline','CONEXIÓN SEGURA'),el('h3','','Administración MySQL')),
-      el('p','','Separada de los catálogos de demostración.'));
+      el('p','','Los cambios se guardan en MariaDB bajo control de permisos.'));
     root.appendChild(header);
     const message=el('p','catalog-footnote','');message.id='remoteStatus';root.appendChild(message);
     if(!authorized){renderLogin();return;}
@@ -161,49 +159,9 @@
     if(!restrictedKey)renderReadOnlyResources();
   }
   function renderLogin(){
-    const form=el('form','form-grid');
-    const field=(label,type,placeholder)=>{
-      const wrapper=el('label','field'),name=el('span','',label);
-      const input=el('input');input.type=type;input.placeholder=placeholder;input.required=true;
-      wrapper.appendChild(name);wrapper.appendChild(input);form.appendChild(wrapper);return input;
-    };
-    const url=field('URL de la API Laravel','url','https://dominio-seguro.example');
-    url.value=window.location.origin;
-    const email=field('Correo del administrador','email','administracion@example.cl');
-    const password=field('Contraseña','password','');
-    form.appendChild(el('p','catalog-footnote','No uses el formulario mientras la API esté bloqueada o no tenga autenticación verificada.'));
-    const check=button('Verificar API Laravel',()=>guarded(async()=>{
-      API().configure(url.value.trim());
-      const estado=await API().status();
-      if(!estado.disponible) {
-        status('API protegida (HTTP '+estado.http+'). No intentes iniciar sesión hasta que se habilite Laravel.',true);
-      } else {
-        status('API Laravel disponible. Puedes iniciar sesión con tu cuenta autorizada.');
-      }
-    }));
-    form.appendChild(check);
-    const submit=el('button','button primary','Conectar a API');submit.type='submit';form.appendChild(submit);
-    form.addEventListener('submit',event=>{
-      event.preventDefault();
-      const secret=password.value;password.value='';
-      guarded(async()=>{
-        API().configure(url.value.trim());
-        try {
-          const usuario=await API().login(email.value.trim(),secret);
-          access()?.setSession(usuario);
-          await refresh();
-        } catch (error) {
-          API().signOut();
-          authorized=false;
-          access()?.clear();
-          throw error;
-        }
-      });
-    });
-    root.appendChild(form);
-    root.appendChild(button('¿Olvidaste tu contraseña?',()=>{
-      window.RutaHDRecuperacion?.mostrarSolicitud();
-    },'button ghost'));
+    root.appendChild(el('p','catalog-footnote',
+      'Debes iniciar sesión mediante la pantalla principal de acceso para administrar catálogos de MariaDB.'));
+    root.appendChild(button('Iniciar sesión',()=>window.RutaHDLogin?.show(),'button primary'));
   }
   function dialog(title,formBody,onSubmit,deleteMode=false){
     const dialog=el('dialog','modal catalog-dialog'),form=el('form');
