@@ -1,7 +1,6 @@
 name: Comprobar frontend violeta con Chromium
 on:
-  push:
-    branches: [ main ]
+  # Suite histórica con pruebas de demostración: nunca ejecutarla al publicar main productivo.
   workflow_dispatch:
 permissions:
   contents: read
