@@ -4,7 +4,7 @@ test('menú principal preservado y catálogos agrupados con Usuarios',async({pag
   await page.goto('/#inicio');
   const padres=await page.locator('.sidebar .nav > .nav-link, .sidebar .nav > .nav-group')
     .evaluateAll(elements=>elements.map(x=>x.dataset.nav||x.querySelector('.nav-link')?.dataset.nav));
-  expect(padres).toEqual(['inicio','pedidos','clientes','productos','inventario','informes','administracion']);
+  expect(padres).toEqual(['administracion','compras','ventas','proveedores','clientes','productos','bodega','cuentas_corrientes']);
   await expect(page.locator('#productSubnav [data-catalog-key]')).toHaveCount(10);
   await expect(page.locator('#adminSubnav [data-admin-catalog]')).toHaveCount(10);
   await expect(page.locator('#navUsuarios')).toHaveCount(1);
