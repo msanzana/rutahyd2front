@@ -10,6 +10,8 @@
   const close=document.getElementById('loginClose');
   const retry=document.getElementById('loginRetry');
   const recover=document.getElementById('loginRecover');
+  const demo=document.getElementById('loginDemo');
+  const originalRecovery=/^#recuperar\?token=/.test(window.location.hash);
   const label=document.getElementById('apiStatus');
   const status=document.getElementById('loginServerStatus');
   const error=document.getElementById('loginError');
@@ -53,6 +55,7 @@
     open.setAttribute('aria-expanded',dialog.open?'true':'false');
   }
   function showLogin(){
+    document.body.dataset.loginStart='true';
     error.hidden=true;
     error.textContent='';
     password.value='';
@@ -69,6 +72,7 @@
       access()?.clear();
       password.value='';
       await verify();
+      showLogin();
     }finally{
       open.disabled=false;
       updateButton();
@@ -80,12 +84,22 @@
   });
   close.addEventListener('click',()=>dialog.close());
   dialog.addEventListener('close',()=>{
+    document.body.dataset.loginStart='false';
+    if(!access()?.authenticated() && document.body.dataset.modo!=='demostracion'){
+      document.body.dataset.modo='demostracion';
+    }
     password.value='';
     error.textContent='';
     error.hidden=true;
     updateButton();
   });
   retry.addEventListener('click',()=>void verify());
+  demo.addEventListener('click',()=>{
+    document.body.dataset.modo='demostracion';
+    dialog.close();
+    const footer=document.querySelector('.sidebar-footer small');
+    if(footer)footer.textContent='Exploración demostrativa: los registros locales no son datos de MariaDB.';
+  });
   recover.addEventListener('click',()=>{
     dialog.close();
     window.RutaHDRecuperacion?.mostrarSolicitud();
@@ -108,6 +122,7 @@
       api().configure(window.location.origin);
       const session=await api().login(email.value.trim(),secret);
       access()?.setSession(session);
+      document.body.dataset.modo='servidor';
       dialog.close();
       updateButton();
     }catch(ex){
@@ -124,6 +139,13 @@
   document.addEventListener('DOMContentLoaded',()=>{
     updateButton();
     void verify();
+    const local=['localhost','127.0.0.1'].includes(window.location.hostname);
+    const forced=new URLSearchParams(window.location.search).has('acceso');
+    // En producción el primer elemento visible es la pantalla de acceso.
+    // En tests locales puede probarse de manera explícita con ?acceso=1.
+    if(!originalRecovery && (!local || forced) && !access()?.authenticated()){
+      showLogin();
+    }
   });
   window.RutaHDLogin=Object.freeze({show:showLogin,check:verify});
 })();
