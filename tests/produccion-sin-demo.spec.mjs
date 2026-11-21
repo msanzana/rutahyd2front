@@ -140,3 +140,19 @@ test('una respuesta 401 en cualquier módulo cierra la sesión global sin usar d
   expect(session.authenticated).toBe(false);
   expect(session.storedKeys).toEqual([]);
 });
+
+
+test('un 403 conserva sesión y muestra acceso denegado sin inventar datos',async({page})=>{
+  await page.route('**/api/v1/estado',r=>json(r,{servicio:'Ruta H&D2 API',estado:'disponible'}));
+  await page.route('**/api/v1/sesion',r=>json(r,{token:'aaaa.bbbb.cccc',token_type:'Bearer',
+    usuario:{id:2,nombre:'Supervisor CI',rol:'supervisor',permisos:[]}}));
+  await page.route('**/api/v1/recursos/clientes**',r=>json(r,{message:'Acceso denegado'},403));
+  await page.goto('/#inicio');
+  await page.locator('#loginEmail').fill('supervisor@example.invalid');
+  await page.locator('#loginPassword').fill('solo-fixture');
+  await page.locator('#loginSubmit').click();
+  await page.locator('.nav-link[data-nav="clientes"]').click();
+  await expect(page.locator('#workspaceContent')).toContainText('no tiene permisos');
+  await expect(page.locator('#loginDialog')).toBeHidden();
+  expect(await page.evaluate(()=>window.RutaHDAccesos.authenticated())).toBe(true);
+});
