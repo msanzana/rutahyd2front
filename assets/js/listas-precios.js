@@ -9,7 +9,7 @@
  };
  const error=e=>e?.userMessage||
    (e?.status===500
-     ? 'El servidor no pudo guardar la lista (HTTP 500). Se detectó un esquema antiguo sin listas_precios.codigo; revisa el DDL27 en phpMyAdmin antes de intentar nuevamente.'
+     ? 'No se pudo guardar la lista de precios. Comunícate con el administrador si el problema continúa.'
      : e?.status===409
        ? 'Ya existe una lista con ese código o la lista está en uso.'
        : e?.status===422
