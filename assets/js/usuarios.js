@@ -53,45 +53,65 @@ function field(form,label,type,value=''){
 }
 function form(user){
  if(!roles.length)return status('No se cargaron los perfiles.');
- const dlg=el('dialog',undefined,'modal catalog-dialog'),f=el('form',undefined,'form-grid');
- f.noValidate=true;f.append(el('h2',user?'Editar usuario':'Invitar usuario'));
- const name=field(f,'Nombre','text',user?.nombre||'');name.maxLength=160;
- const email=field(f,'Correo','email',user?.correo_electronico||'');email.maxLength=190;
- const wrap=el('label',undefined,'field'),role=el('select');
+ const dlg=el('dialog',undefined,'modal catalog-dialog crud-dialog users-editor-dialog');
+ const f=el('form',undefined,'crud-shell');f.noValidate=true;
+ const heading=el('div',undefined,'crud-heading');
+ const copy=el('div',undefined,'crud-heading-copy');
+ copy.append(el('span','RUTA H&D · ADMINISTRACIÓN','crud-kicker'),
+   el('h2',user?'Editar usuario':'Invitar usuario'),
+   el('p',user?'Actualiza los datos y permisos de la cuenta.':'La persona recibirá un enlace seguro para definir su contraseña.','crud-intro'));
+ const close=btn('×',()=>dlg.close(),'crud-close');close.setAttribute('aria-label','Cerrar ventana');
+ heading.append(copy,close);f.append(heading);
+ const grid=el('div',undefined,'crud-fields crud-form-grid');f.append(grid);
+ const name=field(grid,'Nombre completo','text',user?.nombre||'');name.maxLength=160;
+ const email=field(grid,'Correo electrónico','email',user?.correo_electronico||'');email.maxLength=190;
+ const wrap=el('label',undefined,'field crud-field'),role=el('select');
  roles.forEach(r=>{const opt=el('option',r.nombre);opt.value=r.id;role.append(opt);});
- role.value=String(user?.rol_id||roles[0].id);wrap.append(el('span','Perfil operativo'),role);f.append(wrap);
+ role.value=String(user?.rol_id||roles[0].id);wrap.append(el('span','Perfil operativo'),role);grid.append(wrap);
  let active;
  if(user){
-  const w=el('label',undefined,'field');active=el('select');
+  const w=el('label',undefined,'field crud-field');active=el('select');
   [['1','Activo'],['0','Inactivo']].forEach(([value,text])=>{const o=el('option',text);o.value=value;active.append(o);});
-  active.value=user.activo?'1':'0';w.append(el('span','Estado'),active);f.append(w);
- }else f.append(el('p','Recibirá un correo para definir su contraseña.','catalog-footnote'));
- const message=el('p','', 'form-error');f.append(message);
- const footer=el('div',undefined,'modal-footer');
- const save=el('button',user?'Guardar':'Enviar invitación','button primary');save.type='submit';
+  active.value=user.activo?'1':'0';w.append(el('span','Estado'),active);grid.append(w);
+ }else grid.append(el('p','El sistema enviará un correo para configurar la contraseña.','crud-help'));
+ const message=el('p','', 'form-error crud-message');message.setAttribute('role','alert');message.hidden=true;f.append(message);
+ const footer=el('div',undefined,'modal-footer crud-footer');
+ const save=el('button',user?'Guardar cambios':'Enviar invitación','button primary');save.type='submit';
  footer.append(btn('Cancelar',()=>dlg.close()),save);f.append(footer);
  f.addEventListener('submit',async e=>{
   e.preventDefault();if(busy)return;
-  if(name.value.trim().length<3||!email.validity.valid){message.textContent='Verifica nombre y correo.';return;}
-  busy=true;save.disabled=true;
+  if(name.value.trim().length<3||!email.validity.valid){
+   message.textContent='Verifica nombre y correo electrónico.';message.hidden=false;return;
+  }
+  busy=true;save.disabled=true;message.hidden=true;
   try{
    const dto={nombre:name.value.trim(),correo_electronico:email.value.trim(),rol_id:Number(role.value)};
    if(user)await api().updateUser(user.id,{...dto,activo:active.value==='1'});
    else await api().createUser(dto);
    dlg.close();await load();status(user?'Usuario actualizado.':'Invitación enviada por correo.');
-  }catch(e){message.textContent=err(e);}
+  }catch(e){message.textContent=err(e);message.hidden=false;}
   finally{busy=false;save.disabled=false;}
  });
- dlg.append(f);document.body.append(dlg);dlg.addEventListener('close',()=>dlg.remove(),{once:true});dlg.showModal();
+ dlg.append(f);document.body.append(dlg);dlg.addEventListener('close',()=>dlg.remove(),{once:true});
+ dlg.showModal();name.focus();
 }
 function deactivate(u){
- const dlg=el('dialog',undefined,'modal catalog-dialog');
- dlg.append(el('h2','Desactivar usuario'),el('p','Se revocarán las sesiones de '+u.nombre+'. El historial quedará preservado.'));
- const footer=el('div',undefined,'modal-footer');
+ const dlg=el('dialog',undefined,'modal catalog-dialog crud-dialog crud-confirm-dialog');
+ const wrap=el('div',undefined,'crud-shell');
+ const heading=el('div',undefined,'crud-heading');
+ const copy=el('div',undefined,'crud-heading-copy');
+ copy.append(el('span','RUTA H&D · SEGURIDAD','crud-kicker'),el('h2','Desactivar usuario'),
+  el('p','Esta acción deshabilitará el acceso sin borrar su historial.','crud-intro'));
+ const close=btn('×',()=>dlg.close(),'crud-close');close.setAttribute('aria-label','Cerrar ventana');
+ heading.append(copy,close);
+ const body=el('div',undefined,'crud-fields');
+ body.append(el('p','Se revocarán las sesiones de '+u.nombre+'. Su información histórica se conservará.','crud-confirm-text'));
+ const footer=el('div',undefined,'modal-footer crud-footer');
  footer.append(btn('Cancelar',()=>dlg.close()),btn('Confirmar desactivación',()=>guard(async()=>{
   await api().deleteUser(u.id);dlg.close();await load();status('Usuario desactivado.');
  }),'button danger'));
- dlg.append(footer);document.body.append(dlg);dlg.addEventListener('close',()=>dlg.remove(),{once:true});dlg.showModal();
+ wrap.append(heading,body,footer);dlg.append(wrap);document.body.append(dlg);
+ dlg.addEventListener('close',()=>dlg.remove(),{once:true});dlg.showModal();
 }
 window.RutaHDUsuarios=Object.freeze({mount});
 })();
