@@ -123,7 +123,7 @@ test('productos muestran acceso destacado a agregar códigos de barra',async({pa
  await mock(page);await login(page);
  await page.locator('.nav-link[data-nav="productos"]').click();
  await expect(page.locator('.normalized-table tbody tr')).toHaveCount(1);
- await page.getByRole('button',{name:'Códigos de barras'}).click();
+ await page.getByRole('button',{name:'Códigos de barras',exact:true}).click();
  const dlg=page.locator('dialog.product-editor-dialog[open]');
  await expect(dlg).toBeVisible();
  await expect(dlg.getByRole('button',{name:'Agregar código de barras al producto'})).toBeVisible();
