@@ -94,7 +94,7 @@ test('listado de clientes usa iconos y búsqueda avanzada filtrada',async({page}
  await expect(listing.getByRole('button',{name:'Búsqueda avanzada'})).toBeVisible();
  await listing.getByRole('button',{name:'Búsqueda avanzada'}).click();
  const dialog=page.locator('dialog.advanced-search-dialog[open]');
- await expect(dialog).toContainText('Filtros');
+ await expect(dialog).toContainText('Búsqueda avanzada');
  await dialog.getByLabel('Nombre',{exact:true}).fill('Norte');
  await dialog.getByRole('button',{name:'Aplicar filtros'}).click();
  await expect(listing.locator('tbody tr').first()).toBeVisible();
