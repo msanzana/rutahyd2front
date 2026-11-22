@@ -21,7 +21,7 @@
   const root=el('section',undefined,'surface-panel official-module price-lists-module');
   root.id='priceListsModule';
   const header=el('div',undefined,'panel-heading');
-  header.append(el('h2','Listas de precios'),el('span','Tarifas comerciales · Laravel / MariaDB','official-source'));
+  header.append(el('h2','Listas de precios'),el('span','Tarifas comerciales y condiciones de venta','official-source'));
   const desc=el('p','Una única LISTA BASE general y listas especiales para clientes. Una lista desactivada conserva sus precios históricos.','catalog-footnote');
   const note=el('p','', 'catalog-footnote');note.setAttribute('role','status');
   const toolbar=el('div',undefined,'workspace-actions normalized-toolbar');
