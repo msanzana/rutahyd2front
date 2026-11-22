@@ -226,3 +226,43 @@ body.is-recovering .app-shell{visibility:hidden;pointer-events:none}
  .recovery-brand:after{display:none}
  .recovery-form .recovery-message:not(:empty){padding:11px}
 }
+
+/* CRUD corporativo de Clientes, Proveedores y Bodegas - sin datos simulados */
+.official-module .panel-heading{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.official-row-actions{white-space:nowrap;display:flex;align-items:center;gap:7px}
+.official-row-actions .button{min-height:33px;padding:6px 11px;font-size:12px}
+.official-editor,.official-confirm{
+  width:min(770px,calc(100vw - 24px));max-width:770px;max-height:calc(100dvh - 36px);
+  padding:0;background:#fff;color:#29173b;border:1px solid #e7ddf3;border-radius:20px;
+  overflow:auto;box-shadow:0 28px 90px rgba(29,10,48,.35)
+}
+.official-editor::backdrop,.official-confirm::backdrop{background:rgba(18,5,35,.72);backdrop-filter:blur(4px)}
+.official-editor-form,.official-confirm-panel{display:grid;gap:18px;padding:clamp(22px,4vw,36px)}
+.official-editor-heading{display:grid;gap:7px;border-bottom:1px solid #ede5f6;padding-bottom:18px}
+.official-editor-heading h2,.official-confirm-panel h2{font-size:clamp(23px,2.5vw,30px);line-height:1.2;color:#3b1a59;margin:0}
+.official-editor-eyebrow{color:#8450b8;font-size:10px;font-weight:900;letter-spacing:.12em}
+.official-editor-description,.official-confirm-panel p{color:#706482;line-height:1.55;font-size:13px;margin:0}
+.official-editor-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 18px}
+.official-editor-grid .field{min-width:0;display:grid;gap:6px}
+.official-editor-grid .field span{font-size:12px;font-weight:750;color:#49305d}
+.official-editor-grid .field input,.official-editor-grid .field textarea{
+  display:block;width:100%;min-height:44px;border-radius:10px;background:#fcfaff;
+  border:1px solid #ded1ea;color:#28143b;padding:10px 12px;outline:0
+}
+.official-editor-grid .field textarea{min-height:95px;resize:vertical}
+.official-editor-grid .field input:focus,.official-editor-grid .field textarea:focus{
+  border-color:#8751c4;box-shadow:0 0 0 3px rgba(133,72,201,.15)
+}
+.official-editor-grid .official-editor-wide{grid-column:1/-1}
+.official-active-field{display:flex;align-items:center;gap:12px;color:#49305d;font-size:13px}
+.official-active-field input{width:18px;height:18px;accent-color:#7b3eb4}
+.official-editor-status{font-size:12px;min-height:16px;color:#267347}
+.official-editor-status.is-error{color:#b22a46}
+.official-editor-actions{display:flex;justify-content:flex-end;align-items:center;flex-wrap:wrap;gap:10px}
+.official-editor-actions .button{min-height:43px;border-radius:10px}
+@media(max-width:640px){
+ .official-editor-grid{grid-template-columns:1fr}
+ .official-editor-form,.official-confirm-panel{padding:20px 16px}
+ .official-editor-actions .button{flex:1 1 130px}
+ .official-row-actions{white-space:normal;flex-wrap:wrap}
+}
