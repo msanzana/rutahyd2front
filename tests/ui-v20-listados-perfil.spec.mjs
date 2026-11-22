@@ -104,6 +104,7 @@ test('listado de clientes usa iconos y búsqueda avanzada filtrada',async({page}
 });
 test('permisos muestran árbol con subítems editables y generales protegidos',async({page})=>{
  const state=await mock(page);await login(page);
+ await page.locator('#toggleAdminSubnav').click();
  await page.locator('#navPerfiles').click();
  await page.locator('#selectorPerfil').selectOption('2');
  const tree=page.locator('#permissionTree');
