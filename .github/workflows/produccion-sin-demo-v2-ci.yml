@@ -31,11 +31,14 @@ jobs:
           node --check tests/paginacion-global-v31.spec.mjs
           node --check assets/js/galeria-productos.js
           node --check assets/js/productos-remotos.js
-          grep -Fq 'galeria-productos.js?v=20261122-v31' index.html
+          grep -Fq 'galeria-productos.js?v=20261122-page33' index.html
           grep -Fq 'productos-densidad-v28.css?v=20261122-v31' index.html
-          grep -Fq 'productos-remotos.js?v=20261122-switch32' index.html
-          grep -Fq 'switches-v32.css?v=20261122-switch32' index.html
+          grep -Fq 'productos-remotos.js?v=20261122-page33' index.html
+          grep -Fq 'switches-v32.css?v=20261122-page33' index.html
           test -s assets/css/switches-v32.css
+          test -s assets/css/controles-v33.css
+          grep -Fq 'controles-v33.css?v=20261122-page33' index.html
+          grep -Fq 'renderPager' assets/js/listados-ui.js
           grep -Fq 'login-foto-v26.css?v=20261122-login26' index.html
           grep -Fq 'data:image/webp;base64,' assets/css/login-foto-v26.css
           grep -Fq 'app-produccion.js' index.html
