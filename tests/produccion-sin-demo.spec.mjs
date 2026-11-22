@@ -216,3 +216,47 @@ test('recuperación adaptable en teléfono sin recortes',async({page})=>{
   expect(metrics.right).toBeLessThanOrEqual(metrics.width+1);
   expect(metrics.overflow).toBeLessThanOrEqual(metrics.width+1);
 });
+
+
+test('nuevo enlace con query sobrevive al desafio i=1 y nunca abre login',async({page})=>{
+  const token='d'.repeat(64);
+  await page.route('**/api/v1/estado',async route=>{
+    await new Promise(resolve=>setTimeout(resolve,700));
+    await json(route,{servicio:'Ruta H&D2 API',estado:'disponible'});
+  });
+  await page.goto('/?recuperar='+token+'&i=1');
+  const recovery=page.getByRole('dialog',{name:'Crear nueva contraseña'});
+  await expect(recovery).toBeVisible();
+  await page.waitForTimeout(1400);
+  await expect(recovery).toBeVisible();
+  await expect(page.locator('#loginDialog')).toBeHidden();
+  const data=await page.evaluate(()=>({
+    active:window.RutaHDRecuperacion.isActive(),
+    href:location.href,
+    referrerPolicy:document.querySelector('meta[name="referrer"]')?.content,
+    form:document.querySelector('.recovery-layout')?.getBoundingClientRect().width
+  }));
+  expect(data.active).toBe(true);
+  expect(data.href).not.toContain(token);
+  expect(data.href).not.toContain('recuperar=');
+  expect(data.referrerPolicy).toBe('no-referrer');
+  expect(data.form).toBeGreaterThan(200);
+});
+
+test('recuperación desde query conserva token exacto hasta el POST',async({page})=>{
+  const token='e'.repeat(64);
+  await page.route('**/api/v1/estado',r=>json(r,{servicio:'Ruta H&D2 API',estado:'disponible'}));
+  let request=null;
+  await page.route('**/api/v1/recuperacion/restablecer',r=>{
+    request=r.request().postDataJSON();
+    return json(r,{mensaje:'Contraseña cambiada'});
+  });
+  await page.goto('/?recuperar='+token);
+  const recovery=page.getByRole('dialog',{name:'Crear nueva contraseña'});
+  await recovery.locator('#recovery-password').fill('UnaClaveLargaPara2026!');
+  await recovery.locator('#recovery-confirmation').fill('UnaClaveLargaPara2026!');
+  await recovery.locator('#recoverySubmit').click();
+  await expect(recovery.locator('#recoveryStatus')).toContainText('actualizada correctamente');
+  expect(request?.token).toEqual(token);
+  await expect(page.locator('#loginDialog')).toBeHidden();
+});
