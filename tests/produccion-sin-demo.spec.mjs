@@ -260,3 +260,62 @@ test('recuperación desde query conserva token exacto hasta el POST',async({page
   expect(request?.token).toEqual(token);
   await expect(page.locator('#loginDialog')).toBeHidden();
 });
+
+
+test('un sondeo de estado transitorio no expulsa a una sesión JWT ya autenticada',async({page})=>{
+  await page.route('**/api/v1/estado',r=>json(r,{servicio:'Ruta H&D2 API',estado:'disponible'}));
+  await page.route('**/api/v1/sesion',r=>json(r,{
+    token:'aaaa.bbbb.cccc',token_type:'Bearer',
+    usuario:{id:1,nombre:'Admin QA',rol:'administrador',permisos:[]}
+  }));
+  await page.goto('/#inicio');
+  await page.locator('#loginEmail').fill('qa@example.invalid');
+  await page.locator('#loginPassword').fill('clave-sintetica-para-qa');
+  await page.locator('#loginSubmit').click();
+  await expect(page.locator('#loginDialog')).toBeHidden();
+  await page.evaluate(()=>{
+    document.dispatchEvent(new CustomEvent('rutahd:api-estado',{detail:{disponible:false}}));
+  });
+  await page.waitForTimeout(500);
+  expect(await page.evaluate(()=>window.RutaHDAccesos.authenticated())).toBe(true);
+  await expect(page.locator('#loginDialog')).toBeHidden();
+  await page.evaluate(()=>{
+    document.dispatchEvent(new CustomEvent('rutahd:api-estado',{detail:{disponible:true}}));
+  });
+  await expect(page.locator('#appShell')).toBeVisible();
+});
+
+test('401 de una solicitud anterior no cierra la sesión JWT recién autenticada',async({page})=>{
+  await page.route('**/api/v1/estado',r=>json(r,{servicio:'Ruta H&D2 API',estado:'disponible'}));
+  let resolveOld;
+  const pendingOld=new Promise(resolve=>{resolveOld=resolve;});
+  await page.route('**/api/v1/usuarios',async r=>{
+    if(r.request().headers().authorization==='Bearer aaaa.bbbb.cccc'){
+      await pendingOld;
+      return json(r,{message:'Token anterior revocado'},401);
+    }
+    return json(r,{usuarios:[],roles:[]});
+  });
+  await page.route('**/api/v1/sesion',r=>json(r,{
+    token:'aaaa.bbbb.cccc',token_type:'Bearer',
+    usuario:{id:1,nombre:'Admin QA',rol:'administrador',permisos:[]}
+  }));
+  await page.goto('/#inicio');
+  await page.locator('#loginEmail').fill('qa@example.invalid');
+  await page.locator('#loginPassword').fill('clave-sintetica');
+  await page.locator('#loginSubmit').click();
+  await expect(page.locator('#loginDialog')).toBeHidden();
+  const request=page.evaluate(()=>window.RutaHDApiCatalogos.usersAll().then(
+    ()=>({ok:true}),e=>({status:e.status})
+  ));
+  await page.waitForTimeout(250);
+  await page.evaluate(()=>{
+    window.RutaHDApiCatalogos.authenticate('dddd.eeee.ffff');
+    window.RutaHDAccesos.setSession({nombre:'Admin actualizado',rol:'administrador',permisos:[]});
+  });
+  resolveOld();
+  const result=await request;
+  expect(result.status).toBe(401);
+  expect(await page.evaluate(()=>window.RutaHDAccesos.authenticated())).toBe(true);
+  await expect(page.locator('#loginDialog')).toBeHidden();
+});
