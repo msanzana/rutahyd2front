@@ -310,9 +310,15 @@
       stateCell.append(toggle||el('span','',prod.activo?'Activo':'Inactivo'));
       row.append(stateCell);
       const actions=el('td','catalog-actions product-index-actions');
-      actions.append(indexedAction('Ver',()=>guarded(()=>detailProduct(prod.id)),'ver'));
-      actions.append(indexedAction('Editar',()=>guarded(()=>editProduct(prod.id)),'editar'));
-      actions.append(indexedAction('Códigos de barras',()=>guarded(()=>editProduct(prod.id,true)),'barras'));
+      const view=indexedAction('Ver',()=>guarded(()=>detailProduct(prod.id)),'ver');
+      view.dataset.tip='Consultar ficha de '+prod.nombre;
+      actions.append(view);
+      const edit=indexedAction('Editar',()=>guarded(()=>editProduct(prod.id)),'editar');
+      edit.dataset.tip='Modificar '+prod.nombre;
+      actions.append(edit);
+      const barcodes=indexedAction('Códigos de barras',()=>guarded(()=>editProduct(prod.id,true)),'barras');
+      barcodes.dataset.tip='Gestionar códigos de barras de '+prod.nombre;
+      actions.append(barcodes);
       const photos=indexedAction('Fotos',()=>{
         window.RutaHDGaleriaProductos?.open({
           id:prod.id,sku:prod.sku,nombre:prod.nombre
@@ -320,7 +326,7 @@
       },'fotos');
       photos.dataset.photoAction=String(prod.id);
       photos.setAttribute('aria-label','Fotos de '+prod.nombre);
-      photos.title='Abrir galería de fotografías de '+prod.nombre;
+      photos.dataset.tip='Abrir galería de fotografías de '+prod.nombre;
       actions.append(photos);
 
       row.append(actions);body.append(row);
