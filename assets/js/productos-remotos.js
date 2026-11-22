@@ -470,7 +470,7 @@
     if(compatibility)form.appendChild(el('p','hd-filter-warning product-editor-wide',
       'El servidor aún no publica listas de precios. El formulario conservará únicamente el precio general de presentación.'));
     form.appendChild(el('p','catalog-footnote product-editor-wide',
-      'La Lista Base es obligatoria. El precio y el margen se calculan desde el costo. El precio es neto y el IVA se determina por condición tributaria.'));
+      'La Lista Base es obligatoria. El precio y el margen se calculan desde el costo. Sin costo se conserva el precio y el margen queda sin cálculo. El IVA depende de la condición tributaria.'));
     const minimum=inputField('Mínimo margen precio venta de la línea (%)','number',form,
       producto?.minimoMargenPrecioVenta??'0',{step:0.0001,min:0});
     minimum.readOnly=true;minimum.classList.add('price-readonly');
@@ -492,20 +492,32 @@
     const amount=value=>Number.isFinite(Number(value))?Number(value).toFixed(4):'0.0000';
     const compute=(entry,origin)=>{
       const costo=Number(cost.value||0),price=Number(entry.price.value||0);
-      if(origin==='margen'){
-        const margin=Number(entry.margin.value||0);
-        entry.price.value=amount(costo*(1+margin/100));
+      // Un costo desconocido no significa que el precio histórico sea cero.
+      // Mantener el precio y representar el margen como indeterminado (NULL).
+      if(costo<=0){
+        entry.margin.value='';
+        entry.margin.disabled=true;
+        entry.margin.title='Sin costo neto: se conserva el precio, sin calcular margen.';
+        entry.last='precio';
       }else{
-        const derivado=costo>0?((price-costo)/costo)*100:null;
-        entry.margin.value=derivado===null?'':amount(Math.max(0,derivado));
+        entry.margin.disabled=false;
+        entry.margin.title='Margen porcentual calculado sobre el costo neto.';
+        if(origin==='margen'&&entry.margin.value!==''){
+          const margin=Number(entry.margin.value);
+          entry.price.value=amount(costo*(1+margin/100));
+        }else{
+          const derivado=((price-costo)/costo)*100;
+          entry.margin.value=amount(Math.max(0,derivado));
+          entry.last='precio';
+        }
       }
-      const margen=Number(entry.margin.value);
+      const margen=entry.margin.value===''?null:Number(entry.margin.value);
       const active=entry.active.checked;
       const actualPrice=Number(entry.price.value||0),minimumMargin=Number(minimum.value||0);
       const invalid=active&&costo>0&&(
         !Number.isFinite(actualPrice)||
         actualPrice+0.0001<costo*(1+minimumMargin/100)||
-        !Number.isFinite(margen)||margen<minimumMargin
+        margen===null||!Number.isFinite(margen)||margen<minimumMargin
       );
       entry.row.classList.toggle('price-margin-invalid',invalid);
       entry.error.hidden=!invalid;
@@ -532,6 +544,7 @@
       margin.value=isNewRow?String(Number(minimum.value||0)):
         (initialMargin==null?'':String(Math.max(0,Number(initialMargin))));
       margin.placeholder='0.00';
+      margin.setAttribute('aria-label','Margen porcentual '+list.nombre);
       const marginCell=el('td');marginCell.append(margin);row.appendChild(marginCell);
       const price=el('input');price.type='number';price.min='0';price.step='0.0001';price.required=true;
       price.value=String(initialPrice);price.setAttribute('aria-label','Precio de venta '+list.nombre);
