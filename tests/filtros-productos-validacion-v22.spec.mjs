@@ -120,7 +120,7 @@ test('nuevo producto usa validación elegante sin tooltip nativo',async({page})=
  await page.locator('#productosReales').getByRole('button',{name:'Nuevo Producto'}).click();
  const dlg=page.locator('dialog.product-editor-dialog[open]');
  await expect(dlg).toBeVisible();
- await dlg.getByRole('button',{name:'Guardar en MySQL'}).click();
+ await dlg.getByRole('button',{name:'Guardar'}).click();
  await expect(dlg.locator('.hd-validation-summary')).toBeVisible();
  await expect(dlg.locator('.hd-validation-summary')).toContainText('obligatorio');
  await expect(dlg.locator('input[required]').first()).toHaveAttribute('aria-invalid','true');
