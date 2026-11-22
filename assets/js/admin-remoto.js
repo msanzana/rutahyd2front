@@ -103,7 +103,7 @@
       const labels=errors.map(([key])=>CONFIG[key][0]).join(', ');
       status('No se pudieron consultar: '+labels+'. Usa «Actualizar datos» para reintentar. Los demás catálogos siguen disponibles.',true);
     }else{
-      status('Datos recibidos desde Laravel/MySQL · '+visible.length+' catálogo(s) consultados.');
+      status('');
     }
   }
   function mount(parent,key=null){
@@ -171,12 +171,22 @@
     const rows=el('tbody');
     cache[selected].forEach(rec=>{
       const tr=el('tr'),name=el('td','',rec.nombre);
-      tr.appendChild(name);tr.appendChild(el('td','',rec.activo?'Activo':'Inactivo'));
+      tr.appendChild(name);
+      const cell=el('td','catalog-status-cell');
+      const immutable=selected==='condiciones_tributarias';
+      const state=window.RutaHDListUI?.statusSwitch(rec.nombre,rec.activo,async active=>{
+        const key=selected;
+        const dto={nombre:rec.nombre,activo:active,parentId:rec.parentId??null};
+        if(key==='lineas')dto.minimoMargenPrecioVenta=Number(rec.minimoMargenPrecioVenta??0);
+        await API().update(key,rec.id,dto);
+        await refresh(viewVersion);
+      },{disabled:!canManage(selected)||immutable});
+      cell.append(state||el('span','',rec.activo?'Activo':'Inactivo'));
+      tr.appendChild(cell);
       const actions=el('td','catalog-actions');
       const editBtn=button('Editar',()=>edit(rec),'catalog-small-button');
-      const deleteBtn=button('Eliminar',()=>remove(rec),'catalog-small-button danger-text');
-      editBtn.disabled=!canManage(selected);deleteBtn.disabled=!canManage(selected);
-      actions.appendChild(editBtn);actions.appendChild(deleteBtn);
+      editBtn.disabled=!canManage(selected);
+      actions.append(editBtn);
       tr.appendChild(actions);rows.appendChild(tr);
     });
     table.appendChild(rows);
@@ -268,15 +278,8 @@
       if(key==='lineas')data.minimoMargenPrecioVenta=Number(minimo.value);
       if(rec)await API().update(key,rec.id,data);
       else await API().create(key,data);
-      await refresh(viewVersion);status('Catálogo actualizado en servidor.');
+      await refresh(viewVersion);status('');
     });
-  }
-  function remove(rec){
-    if(!canManage(selected)){status('Tu perfil no puede eliminar este catálogo.',true);return;}
-    const key=selected;
-    dialog('¿Eliminar '+rec.nombre+'?',el('p','','Se eliminará en la base de datos. Solo es posible si no existen relaciones.'),async()=>{
-      await API().remove(key,rec.id);await refresh(viewVersion);status('Registro eliminado del servidor.');
-    },true);
   }
   function renderReadOnlyResources(){
     const permitted=Object.entries(REMOTE_RESOURCES).filter(([,config])=>access()?.has(config.permiso));
@@ -396,7 +399,7 @@
     approvalLabel.appendChild(el('span','',
       'Confirmo que el ID, SKU y nombre corresponden al producto que quiero modificar.'));
     form.appendChild(approvalLabel);
-    const submit=el('button','button primary','Guardar clasificación en MySQL');submit.type='submit';
+    const submit=el('button','button primary','Guardar');submit.type='submit';
     form.appendChild(submit);
     form.addEventListener('submit',event=>{
       event.preventDefault();
