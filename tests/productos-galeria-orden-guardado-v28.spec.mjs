@@ -119,7 +119,6 @@ for(const width of [1440,390]){
  test('galería con BLOB autenticado, fotos múltiples y carga desde archivos '+width,async({page})=>{
   await page.setViewportSize({width,height:850});
   const state=await fixture(page);
-  if(width<700)await page.locator('#menuToggle').click().catch(()=>{});
   await page.locator('#productosRealesListado [data-photo-action="9"]').click();
   const modal=page.locator('dialog.product-gallery-dialog[open]');
   await expect(modal).toBeVisible();
