@@ -28,6 +28,7 @@
     const b=el('button',cls,label);b.type='button';b.addEventListener('click',onClick);return b;
   };
   let root=null,selectedPage=1,query='',busy=false,cache={},result=null,notifier=null,filters={};
+  let sort={key:'',direction:'asc'};
   const FILTER_MAP=Object.fromEntries(ATTRS.map(([field,catalog,label,depends])=>[
     field,{catalog,label,depends,column:field.replace(/Id$/,'').replace(/[A-Z]/g,x=>'_'+x.toLowerCase())+'_id'}
   ]));
@@ -49,7 +50,8 @@
     if(e?.status===403)return 'Tu perfil no tiene permisos para esta operación.';
     if(e?.status===404)return 'Producto inexistente o recurso sin publicar.';
     if(e?.status===409)return 'Conflicto: SKU, código de barras o registro relacionado duplicado.';
-    if(e?.status===422)return 'Datos incompletos: revisa las clasificaciones, la jerarquía y la presentación.';
+    if(e?.userMessage)return e.userMessage;
+    if(e?.status===422)return 'Datos incompletos. Revisa el campo destacado o el margen mínimo en Precios.';
     if(e?.name==='AbortError')return 'El servidor agotó el tiempo de respuesta.';
     return 'No se pudo completar la operación con Laravel.';
   }
@@ -80,7 +82,7 @@
       root.appendChild(button('Ir a Administración',()=>document.querySelector('[data-nav="administracion"].nav-link')?.click()));
       return;
     }
-    filters={};selectedPage=1;query='';
+    filters={};sort={key:'',direction:'asc'};selectedPage=1;query='';
     const tools=el('div','workspace-actions normalized-toolbar');tools.style.flexWrap='wrap';
     tools.dataset.productAdvanced='true';
     const search=el('input');search.type='search';search.placeholder='Buscar SKU o nombre';search.setAttribute('aria-label','Buscar productos reales');
@@ -204,7 +206,7 @@
   }
   async function loadProducts(){
     if(!canManage())return;
-    const data=await api().products(selectedPage,query,filters);
+    const data=await api().products(selectedPage,query,filters,sort);
     if(!Array.isArray(data?.data))throw new Error('Respuesta paginada inesperada');
     result.replaceChildren();
     const advancedKeys=Object.keys(filters).filter(key=>filters[key]!==''&&filters[key]!=null);
@@ -236,30 +238,93 @@
       };
       products=products.filter(p=>advancedKeys.every(key=>match(p,key,String(filters[key]))));
     }
-    const table=el('table','catalog-table');
+    const table=el('table','catalog-table normalized-table product-index-table');
+    const headers=[
+      ['sku','SKU'],['nombre','Nombre'],['rubro','Rubro'],
+      ['departamento','Depto.'],['familia','Familia'],['linea','Línea'],
+      ['marca','Marca'],['modelo','Modelo'],['precios','Precios por lista'],
+      ['codigos','Códigos de barras'],['activo','Estado']
+    ];
     const head=el('tr');
-    ['SKU','Producto','Precio neto','IVA','Estado','Acciones'].forEach(t=>head.appendChild(el('th','',t)));
-    table.appendChild(add(el('thead'),head));
+    for(const [key,label] of headers){
+      const th=el('th','product-sort-heading');
+      const trigger=button(label+' '+(sort.key===key?(sort.direction==='asc'?'↑':'↓'):'↕'),()=>{
+        sort={key,direction:sort.key===key&&sort.direction==='asc'?'desc':'asc'};
+        selectedPage=1;void guarded(loadProducts);
+      },'product-sort-button');
+      trigger.setAttribute('aria-label','Ordenar '+label+' '+(
+        sort.key===key&&sort.direction==='asc'?'descendente':'ascendente'));
+      trigger.title='Ordenar por '+label;
+      th.setAttribute('aria-sort',sort.key===key?
+        (sort.direction==='asc'?'ascending':'descending'):'none');
+      th.append(trigger);head.append(th);
+    }
+    head.append(el('th','table-actions-head','Acciones'));
+    table.append(add(el('thead'),head));
     const body=el('tbody');
+    const captionFor=(prod,key)=>{
+      const label=prod.clasificacionNombres?.[key];
+      if(label)return label;
+      const cat=ATTRS.find(a=>a[0]===key)?.[1];
+      const id=prod.clasificacion?.[key];
+      return (cache[cat]||[]).find(x=>String(x.id)===String(id))?.nombre||'—';
+    };
+    const badge=(label,value,kind)=>{
+      const wrapper=el('span','product-data-pill product-data-pill-'+kind);
+      wrapper.append(el('strong','',label),el('span','',value));
+      return wrapper;
+    };
+    const indexedAction=(label,handler,kind,danger=false)=>{
+      const tools=window.RutaHDListUI;
+      return tools?.action?tools.action(label,handler,{kind,danger}):
+        button(label,handler,'catalog-small-button');
+    };
     products.forEach(prod=>{
-      const row=el('tr');
-      row.appendChild(el('td','',prod.sku||'—'));
-      row.appendChild(el('td','',prod.nombre));
-      row.appendChild(el('td','',prod.presentacion?money(prod.presentacion.precioNeto):'Sin presentación'));
-      row.appendChild(el('td','',prod.presentacion?Number(prod.presentacion.tasaIva)+' %':'—'));
-      row.appendChild(el('td','',prod.activo?'Activo':'Inactivo'));
-      const actions=el('td','catalog-actions');
-      actions.appendChild(button('Ver',()=>guarded(()=>detailProduct(prod.id)),'catalog-small-button'));
-      actions.appendChild(button('Editar',()=>guarded(()=>editProduct(prod.id)),'catalog-small-button'));
-      actions.appendChild(button('Códigos de barras',()=>guarded(()=>editProduct(prod.id,true)),'catalog-small-button'));
-      if(prod.activo)actions.appendChild(button('Desactivar',()=>deactivate(prod),'catalog-small-button danger-text'));
-      row.appendChild(actions);body.appendChild(row);
+      const row=el('tr','product-index-row');
+      row.append(el('td','product-sku-cell',prod.sku||'—'),
+        el('td','product-name-cell',prod.nombre));
+      ['rubroId','departamentoId','familiaId','lineaId','marcaId','modeloId']
+        .forEach(key=>row.append(el('td','product-classification-cell',captionFor(prod,key))));
+      const priceCell=el('td','product-badges-cell'),priceItems=prod.precios||[];
+      if(priceItems.length){
+        priceItems.forEach(price=>priceCell.append(badge(
+          price.listaNombre||'Lista',
+          money(price.precioVenta),'price')));
+      }else if(prod.presentacion){
+        priceCell.append(badge('BASE',money(prod.presentacion.precioNeto),'price'));
+      }else priceCell.append(el('span','product-empty-label','Sin precios'));
+      row.append(priceCell);
+      const codeCell=el('td','product-badges-cell');
+      const items=prod.codigosVenta||[];
+      if(items.length)items.forEach(item=>codeCell.append(badge(
+        item.tipoNombre||item.tipo_nombre||item.tipoCodigo||'Código',
+        item.codigoBarras||item.codigo_barras||'—','barcode')));
+      else if(prod.presentacion?.codigoBarras)codeCell.append(badge(
+        'Código',prod.presentacion.codigoBarras,'barcode'));
+      else codeCell.append(el('span','product-empty-label','Sin códigos'));
+      row.append(codeCell);
+      row.append(el('td','product-status-cell',prod.activo?'Activo':'Inactivo'));
+      const actions=el('td','catalog-actions product-index-actions');
+      actions.append(indexedAction('Ver',()=>guarded(()=>detailProduct(prod.id)),'ver'));
+      actions.append(indexedAction('Editar',()=>guarded(()=>editProduct(prod.id)),'editar'));
+      actions.append(indexedAction('Códigos de barras',()=>guarded(()=>editProduct(prod.id,true)),'barras'));
+      const photos=indexedAction('Fotos',()=>{
+        window.RutaHDGaleriaProductos?.open({
+          id:prod.id,sku:prod.sku,nombre:prod.nombre
+        });
+      },'fotos');
+      photos.dataset.photoAction=String(prod.id);
+      photos.setAttribute('aria-label','Fotos de '+prod.nombre);
+      photos.title='Abrir galería de fotografías de '+prod.nombre;
+      actions.append(photos);
+      if(prod.activo)actions.append(indexedAction('Desactivar',()=>deactivate(prod),'desactivar',true));
+      row.append(actions);body.append(row);
     });
-    table.appendChild(body);
-    if(!products.length)result.appendChild(el('p','catalog-footnote',
-      advancedKeys.length?'No hay productos que coincidan con estos filtros. Puedes limpiar los filtros y reintentar.':
-      'No hay productos registrados para esta búsqueda. Puedes crear el primero con «Nuevo producto».'));
-    else result.appendChild(table);
+    table.append(body);
+    if(!products.length)result.append(el('p','catalog-footnote',
+      advancedKeys.length?'No hay productos con los filtros seleccionados.':
+      'No hay productos registrados. Puedes crear el primero con «Nuevo Producto».'));
+    else result.append(table);
     const footer=el('div','workspace-actions');
     const previous=button('Anterior',()=>guarded(async()=>{selectedPage--;await loadProducts();}));
     const next=button('Siguiente',()=>guarded(async()=>{selectedPage++;await loadProducts();}));
