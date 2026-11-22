@@ -263,6 +263,39 @@
       send('/ubicaciones/'+encodeURIComponent(tipo)+'/'+id(geoId),'PUT',datos),
     deactivateLocation: (tipo,geoId)=>
       send('/ubicaciones/'+encodeURIComponent(tipo)+'/'+id(geoId),'DELETE'),
+    // Catálogos SII vigentes y buscador de producto reutilizable para cualquier módulo.
+    girosSii: ({buscar='',page=1,perPage=25,codigo=null}={})=>{
+      const q=new URLSearchParams({buscar:String(buscar).slice(0,120),
+        page:String(page),por_pagina:String(perPage)});
+      if(codigo!==null)q.set('codigo',String(codigo));
+      return send('/giros-sii?'+q.toString());
+    },
+    buscarProductos: ({buscar='',page=1,filters={},orden='nombre',perPage=25}={})=>{
+      const allowed=new Set([
+        'codigo_barras','rubro_id','departamento_id','familia_id','linea_id',
+        'marca_id','modelo_id','tipo_unidad_id','tipo_envasado_id',
+        'condicion_tributaria_id','proveedor_id','solo_sin_proveedor_id',
+        'sku_desde','sku_hasta','id_desde','id_hasta'
+      ]);
+      if(!Number.isInteger(Number(page))||Number(page)<1||Number(page)>10000)
+        throw Error('Página de buscador inválida');
+      if(![ 'sku','nombre' ].includes(orden))throw Error('Orden inválido');
+      if(!Number.isInteger(Number(perPage))||Number(perPage)<1||Number(perPage)>25)
+        throw Error('Cantidad de productos fuera del límite');
+      const q=new URLSearchParams({page:String(page),por_pagina:String(perPage),
+        orden,buscar:String(buscar).slice(0,120)});
+      for(const [key,value] of Object.entries(filters||{})){
+        if(!allowed.has(key))throw Error('Filtro de producto no permitido: '+key);
+        if(value===null||value===undefined||value==='')continue;
+        const str=String(value);
+        if(str.length>100)throw Error('Filtro demasiado largo');
+        if(key.endsWith('_id')||key.startsWith('id_')){
+          if(!/^[1-9][0-9]*$/.test(str))throw Error('ID de filtro inválido');
+        }
+        q.set(key,str);
+      }
+      return send('/productos/buscador?'+q.toString());
+    },
     supplierMix: (page=1,buscar='')=>send('/proveedores/mix?'+
       new URLSearchParams({page:String(page),por_pagina:'25',buscar:String(buscar).slice(0,120)})),
     resources: (recurso, pagina = 1, buscar = '', perPage=25) => {
