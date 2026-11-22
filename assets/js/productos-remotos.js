@@ -182,8 +182,8 @@
     if(!canManage())throw Error('No autorizado');
     await loadCatalogs();
     const producto=id?await api().getProduct(id):null;
-    const modal=el('dialog','modal catalog-dialog');
-    const form=el('form','form-grid');
+    const modal=el('dialog','modal catalog-dialog product-legacy-editor-dialog');
+    const form=el('form','form-grid product-legacy-editor-form');
     form.noValidate=false;
     modal.appendChild(form);
     form.appendChild(el('h2','',producto?'Editar producto real':'Nuevo producto real'));
@@ -194,7 +194,6 @@
     const descripcion=inputField('Descripción','textarea',form,producto?.descripcion,{maxLength:10000});
     const activo=el('input');activo.type='checkbox';activo.checked=producto?.activo!==false;
     const activeLabel=el('label','field');add(activeLabel,activo,el('span','','Producto activo'));form.appendChild(activeLabel);
-    const proveedor=inputField('ID de proveedor (opcional)','number',form,producto?.proveedorId,{min:1,step:1});
     const controls={};
     ATTRS.forEach(([field,,label])=>controls[field]=selectField(label,[],form,null));
     const initial=producto?.clasificacion||{};
@@ -260,7 +259,7 @@
       }
       const dto={
         sku:sku.value.trim(),nombre:nombre.value.trim(),descripcion:descripcion.value.trim(),
-        activo:activo.checked,proveedorId:proveedor.value?Number(proveedor.value):null,
+        activo:activo.checked,
         clasificacion:classification,
         presentacion:{
           ...(producto?.presentacion?.id?{id:Number(producto.presentacion.id)}:{}),
