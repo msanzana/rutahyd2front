@@ -8,13 +8,13 @@
   'use strict';
   const VALID = new Set([
     'rubros','departamentos','familias','lineas','marcas','modelos',
-    'tipos_unidad','gramajes','tipos_envasado','condiciones_tributarias'
+    'tipos_unidad','tipos_envasado','condiciones_tributarias','tipos_codigos_barras'
   ]);
   const RESOURCES = new Set(['clientes','productos','ventas','notas_venta','bodegas','movimientos_inventario','proveedores','ordenes_compra']);
   const MANAGEABLE = new Set(['clientes','proveedores','bodegas']);
   const FIELDS = [
     'rubroId','departamentoId','familiaId','lineaId','marcaId','modeloId',
-    'tipoUnidadId','gramajeId','tipoEnvasadoId','condicionTributariaId'
+    'tipoUnidadId','tipoEnvasadoId','condicionTributariaId'
   ];
   let endpoint = null;
   let bearer = null;
@@ -187,12 +187,14 @@
       send('/perfiles/usuarios/' + id(userId) + '/rol','PUT',{rol_id:Number(id(roleId))}),
     saveRoleCatalogPermissions: (roleId, modulos) =>
       send('/perfiles/' + id(roleId) + '/catalogos','PUT',{modulos}),
-    resources: (recurso, pagina = 1) => {
+    resources: (recurso, pagina = 1, buscar = '', perPage=25) => {
       if (!RESOURCES.has(recurso)) throw new Error('Recurso remoto no permitido.');
-      if (!Number.isSafeInteger(pagina) || pagina < 1 || pagina > 10000) {
-        throw new Error('Página inválida.');
-      }
-      return send('/recursos/' + encodeURIComponent(recurso) + '?por_pagina=25&page=' + pagina);
+      if (!Number.isSafeInteger(pagina) || pagina < 1 || pagina > 10000 ||
+        !Number.isSafeInteger(perPage)||perPage<1||perPage>100)throw new Error('Paginación inválida.');
+      if(typeof buscar!=='string'||buscar.length>120)throw Error('Búsqueda inválida');
+      const query=new URLSearchParams({por_pagina:String(perPage),page:String(pagina)});
+      if(buscar.trim()&&['clientes','proveedores'].includes(recurso))query.set('buscar',buscar.trim());
+      return send('/recursos/'+encodeURIComponent(recurso)+'?'+query.toString());
     },
     createResource: (recurso,datos) => {
       if (!MANAGEABLE.has(recurso)) throw new Error('La escritura no está permitida para esta entidad.');
@@ -221,6 +223,30 @@
     createProduct: datos => send('/productos','POST',datos),
     updateProduct: (identificador,datos) => send('/productos/'+id(identificador),'PUT',datos),
     deactivateProduct: identificador => send('/productos/'+id(identificador),'DELETE'),
+    productSuppliers: (page=1,filters={}) => {
+      if(!Number.isSafeInteger(page)||page<1)throw new Error('Página inválida');
+      const query=new URLSearchParams({page:String(page),por_pagina:'25',incluye_inactivos:'1'});
+      if(filters.proveedor_id)query.set('proveedor_id',id(filters.proveedor_id));
+      if(filters.producto_id)query.set('producto_id',id(filters.producto_id));
+      if(filters.buscar)query.set('buscar',String(filters.buscar).slice(0,120));
+      return send('/proveedores-productos?'+query.toString());
+    },
+    createProductSupplier: data => send('/proveedores-productos','POST',data),
+    updateProductSupplier: (identificador,data) => send('/proveedores-productos/'+id(identificador),'PUT',data),
+    deactivateProductSupplier: identificador => send('/proveedores-productos/'+id(identificador),'DELETE'),
+    saleBarcodes: productId => send('/productos/'+id(productId)+'/codigos-venta'),
+    createSaleBarcode: (productId,data) => send('/productos/'+id(productId)+'/codigos-venta','POST',data),
+    updateSaleBarcode: (productId,barcodeId,data) =>
+      send('/productos/'+id(productId)+'/codigos-venta/'+id(barcodeId),'PUT',data),
+    deactivateSaleBarcode: (productId,barcodeId) =>
+      send('/productos/'+id(productId)+'/codigos-venta/'+id(barcodeId),'DELETE'),
+    purchaseBarcodes: linkId => send('/proveedores-productos/'+id(linkId)+'/codigos-compra'),
+    createPurchaseBarcode: (linkId,data) =>
+      send('/proveedores-productos/'+id(linkId)+'/codigos-compra','POST',data),
+    updatePurchaseBarcode: (linkId,barcodeId,data) =>
+      send('/proveedores-productos/'+id(linkId)+'/codigos-compra/'+id(barcodeId),'PUT',data),
+    deactivatePurchaseBarcode: (linkId,barcodeId) =>
+      send('/proveedores-productos/'+id(linkId)+'/codigos-compra/'+id(barcodeId),'DELETE'),
     getProductClassification: (identificador) =>
       send('/productos/' + id(identificador) + '/clasificacion'),
     classifyProduct: (identificador, datos) => {
