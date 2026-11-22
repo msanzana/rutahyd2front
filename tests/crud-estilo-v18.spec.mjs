@@ -67,7 +67,7 @@ for(const width of [1440,820,390]){
 test('Producto v18 conserva formulario ancho y cierre accesible',async({page})=>{
   await page.setViewportSize({width:1440,height:900});await fixture(page);
   await menu(page,1440,'.nav-link[data-nav="productos"]');
-  await page.getByRole('button',{name:'Nuevo producto real'}).click();
+  await page.getByRole('button',{name:'Nuevo Producto'}).click();
   const dlg=page.locator('dialog.product-editor-dialog[open]');
   await expect(dlg).toBeVisible();
   const d=await inside(dlg);
