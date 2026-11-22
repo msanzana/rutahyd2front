@@ -306,3 +306,27 @@ html[data-theme=oscuro] .official-customer-price-field select{background:#342740
  .sale-price-actions button{width:100%}
  .official-customer-price-field{margin:0 18px 13px}
 }
+
+/* V31 · Paginación transversal de 25 filas máximo por página. */
+#workspaceContent .list-pagination{
+ display:flex;align-items:center;justify-content:flex-end;
+ flex-wrap:wrap;gap:9px;min-height:43px;padding:10px 4px 5px;
+ position:sticky;left:0;max-width:100%;box-sizing:border-box
+}
+#workspaceContent .list-pagination[hidden]{display:none!important}
+#workspaceContent .list-pagination .button{
+ min-height:34px;border-radius:8px;padding:6px 12px;
+ font-size:11.5px;line-height:1.4;white-space:nowrap
+}
+#workspaceContent .list-pagination .button:disabled{opacity:.44;cursor:not-allowed}
+#workspaceContent .list-pagination-info{
+ font-size:11.5px;font-weight:700;color:#694b82;text-align:center;
+ font-variant-numeric:tabular-nums
+}
+#workspaceContent table tbody tr[hidden]{display:none!important}
+html[data-theme=oscuro] #workspaceContent .list-pagination-info{color:#e2caef}
+@media(max-width:650px){
+ #workspaceContent .list-pagination{justify-content:center;gap:6px}
+ #workspaceContent .list-pagination .button{min-height:40px;padding:8px 11px}
+ #workspaceContent .list-pagination-info{flex:1 1 100%;order:-1}
+}
