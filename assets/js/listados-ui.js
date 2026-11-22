@@ -133,55 +133,74 @@
  };
 
  const PAGE_SIZE=25;
- const paginationStates=new WeakMap();
- // Paginación local sobre filas que YA fueron cargadas: nunca simula
- // haber consultado páginas adicionales en MariaDB. Los módulos con
- // paginación de API conservan sus controles Anterior/Siguiente propios.
+ const paginationStates=new WeakMap(),pagerCallbacks=new WeakMap();
+ // Un solo paginador accesible para todas las tablas: no mezcla paginación
+ // local (filas cargadas) con páginas que todavía deben consultarse en Laravel.
+ function renderPager(nav,{page=1,pages=1,total=null,label='registros',onPage}={}){
+  if(!nav)return;
+  const last=Math.max(1,Math.trunc(Number(pages)||1));
+  const now=Math.max(1,Math.min(last,Math.trunc(Number(page)||1)));
+  pagerCallbacks.set(nav,typeof onPage==='function'?onPage:()=>{});
+  const totalText=total===null||total===undefined?'':String(total)+' '+label+' · ';
+  const signature=[now,last,totalText].join('|');
+  if(nav.dataset.pagerKey===signature)return;
+  nav.dataset.pagerKey=signature;
+  nav.classList.add('list-pagination','hd-numbered-pagination');
+  if(!nav.hasAttribute('aria-label'))nav.setAttribute('aria-label','Paginación de resultados');
+  const button=(name,destination,kind,disabled=false)=>{
+   const control=document.createElement('button');control.type='button';
+   control.className='hd-page-button '+kind;control.textContent=name;
+   control.setAttribute('aria-label',kind==='hd-page-number'?'Página '+destination:name);
+   if(kind==='hd-page-number'&&destination===now){
+    control.setAttribute('aria-current','page');control.classList.add('is-current');
+   }
+   control.disabled=disabled;
+   if(!disabled)control.addEventListener('click',()=>pagerCallbacks.get(nav)?.(destination));
+   return control;
+  };
+  const numbers=document.createElement('span');numbers.className='hd-page-numbers';
+  const visible=new Set([1,last]);
+  for(let n=Math.max(1,now-2);n<=Math.min(last,now+2);n++)visible.add(n);
+  const sequence=[...visible].sort((x,y)=>x-y);
+  sequence.forEach((number,i)=>{
+   if(i&&number-sequence[i-1]>1){
+    const dots=document.createElement('span');dots.textContent='…';
+    dots.className='hd-page-ellipsis';dots.setAttribute('aria-hidden','true');
+    numbers.append(dots);
+   }
+   numbers.append(button(String(number),number,'hd-page-number',number===now));
+  });
+  const info=document.createElement('span');info.className='list-pagination-info';
+  info.setAttribute('aria-live','polite');
+  info.textContent=totalText+'Página '+now+' de '+last+' · máximo '+PAGE_SIZE+' por página';
+  nav.replaceChildren(button('Anterior',now-1,'hd-page-arrow',now===1),
+    numbers,button('Siguiente',now+1,'hd-page-arrow',now===last),info);
+ }
  function paginate(table,matchedRows=null){
   if(!table?.tBodies?.length)return;
   const all=Array.from(table.tBodies[0].rows);
   const matches=Array.isArray(matchedRows)?matchedRows:all;
   let state=paginationStates.get(table);
-  if(!state && all.length<=PAGE_SIZE){
-   const allowed=new Set(matches);
-   all.forEach(row=>{row.hidden=!allowed.has(row);});
+  if(!state&&all.length<=PAGE_SIZE){
+   const allowed=new Set(matches);all.forEach(row=>{row.hidden=!allowed.has(row);});
    return;
   }
   if(!state){
-   const nav=document.createElement('nav');
-   nav.className='list-pagination';
-   nav.setAttribute('aria-label','Paginación de resultados');
-   const previous=document.createElement('button');
-   previous.type='button';previous.className='button ghost';
-   previous.textContent='Anterior';
-   const info=document.createElement('span');
-   info.className='list-pagination-info';info.setAttribute('aria-live','polite');
-   const next=document.createElement('button');
-   next.type='button';next.className='button ghost';
-   next.textContent='Siguiente';
-   nav.append(previous,info,next);
-   table.after(nav);
-   state={page:1,nav,previous,next,info,matches};
-   paginationStates.set(table,state);
-   previous.addEventListener('click',()=>{
-    if(state.page>1){state.page--;paginate(table,state.matches);}
-   });
-   next.addEventListener('click',()=>{
-    const last=Math.max(1,Math.ceil(state.matches.length/PAGE_SIZE));
-    if(state.page<last){state.page++;paginate(table,state.matches);}
-   });
+   const nav=document.createElement('nav');nav.className='list-pagination';
+   nav.setAttribute('aria-label','Paginación de resultados');table.after(nav);
+   state={page:1,nav,matches};paginationStates.set(table,state);
   }
   state.matches=matches;
   const pages=Math.max(1,Math.ceil(matches.length/PAGE_SIZE));
   state.page=Math.min(state.page,pages);
   const visible=new Set(matches.slice((state.page-1)*PAGE_SIZE,state.page*PAGE_SIZE));
   all.forEach(row=>{row.hidden=!visible.has(row);});
-  state.previous.disabled=state.page<=1;
-  state.next.disabled=state.page>=pages;
   state.nav.hidden=all.length<=PAGE_SIZE;
-  const label='Página '+state.page+' de '+pages+' · '+matches.length+
-    ' de '+all.length+' registros cargados · máximo 25 por página';
-  if(state.info.textContent!==label)state.info.textContent=label;
+  renderPager(state.nav,{page:state.page,pages,total:matches.length,
+   label:'registros cargados',onPage:n=>{
+    if(n<1||n>pages||n===state.page)return;
+    state.page=n;paginate(table,state.matches);
+   }});
  }
 
  const actionKinds={editar:'editar',desactivar:'desactivar',eliminar:'desactivar',
@@ -302,5 +321,5 @@
   new MutationObserver(rescan).observe(area,{childList:true,subtree:true});
   rescan();
  });
- window.RutaHDListUI=Object.freeze({action,actionsCell,wrapTable,registerSearch,advanced,filterButton,matching,createSearch,icon,paginate,PAGE_SIZE});
+ window.RutaHDListUI=Object.freeze({action,actionsCell,wrapTable,registerSearch,advanced,filterButton,matching,createSearch,icon,paginate,renderPager,PAGE_SIZE});
 })();
