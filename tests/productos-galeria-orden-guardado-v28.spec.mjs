@@ -25,7 +25,8 @@ const product={
  presentacion:{id:23,nombre:'Unidad',unidadesPorEnvase:1,precioNeto:'130',tasaIva:0},
  precios:[{listaPrecioId:1,listaNombre:'LISTA BASE',precioVenta:'130',
           margenPorcentaje:'30',activo:true}],
- codigosVenta:[{tipoNombre:'EAN-13',codigoBarras:'7801234567890'}],
+ codigosVenta:[{id:81,tipoNombre:'EAN-13',tipoCodigoBarraId:10,
+   codigoBarras:'7801234567890',unidadesPorCodigo:'1',activo:true}],
  stock:'0',cantidadFotos:2,galeriaDisponible:true,minimoMargenPrecioVenta:'15.0000'
 };
 const send=(r,obj,status=200)=>r.fulfill({
