@@ -1,0 +1,57 @@
+/* Ruta H&D V40 · Selección múltiple y borrador del mix por proveedor.
+ * Sin cambiar el diseño corporativo ni la columna Acciones existente.
+ */
+.supplier-mix-staged{
+  display:grid;gap:12px;padding:14px;
+  border:1px solid #cfb1ed;border-radius:14px;
+  background:linear-gradient(125deg,#fcf9ff,#f6edff);
+}
+.supplier-mix-staged[hidden]{display:none!important}
+.supplier-mix-staged-heading{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  flex-wrap:wrap;color:#50227a
+}
+.supplier-mix-staged-heading strong{font-size:14px;letter-spacing:.01em}
+.supplier-mix-staged-scroll{width:100%;overflow-x:auto}
+.supplier-mix-draft-table{width:max-content;min-width:100%;font-size:12px}
+.supplier-mix-draft-table td{vertical-align:middle;padding:9px}
+.supplier-mix-draft-table td:first-child{min-width:220px}
+.supplier-mix-draft-table td:nth-child(2),
+.supplier-mix-draft-table td:nth-child(3){min-width:150px}
+.supplier-mix-draft-table input{
+  box-sizing:border-box;width:100%;max-width:240px;min-height:39px;
+  padding:8px 10px;border-radius:9px;border:1px solid #d9c3e8;
+  background:#fff;color:#39234e;font:inherit
+}
+.supplier-mix-draft-row strong{display:block;color:#4b2771;font-weight:720}
+.supplier-mix-pending-label{
+  display:inline-block;margin-top:5px;color:#76539b;font-size:10px
+}
+.supplier-mix-pending-state{
+  color:#6533a2;font-size:11px;font-weight:750;white-space:nowrap
+}
+.supplier-mix-batch-actions{
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;
+  gap:12px;border-top:1px solid #e3d2f3;padding-top:12px
+}
+.supplier-mix-batch-actions .supplier-status{margin:0;flex:1}
+.supplier-mix-batch-actions button{min-height:42px}
+.supplier-mix-draft-reminder{font-size:11px;color:#806895;margin:3px 0 0}
+.supplier-mix-dialog .supplier-mix-tools{justify-content:flex-start}
+.supplier-mix-dialog .supplier-mix-tools .button{white-space:normal}
+html[data-theme=oscuro] .supplier-mix-staged{
+  background:linear-gradient(125deg,#3f2b51,#352543);border-color:#70558b
+}
+html[data-theme=oscuro] .supplier-mix-staged-heading,
+html[data-theme=oscuro] .supplier-mix-draft-row strong{color:#eddaff}
+html[data-theme=oscuro] .supplier-mix-draft-table input{
+  background:#423152;color:#fff;border-color:#74588e
+}
+html[data-theme=oscuro] .supplier-mix-pending-state,
+html[data-theme=oscuro] .supplier-mix-pending-label{color:#e0baff}
+@media(max-width:680px){
+ .supplier-mix-staged{padding:10px}
+ .supplier-mix-batch-actions{flex-direction:column;align-items:stretch}
+ .supplier-mix-batch-actions button{width:100%}
+ .supplier-mix-draft-table td:first-child{min-width:160px}
+}
