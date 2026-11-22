@@ -9,7 +9,7 @@ const catalogNames={
 const respond=(route,value,code=200)=>route.fulfill({
   status:code,contentType:'application/json',body:JSON.stringify(value)
 });
-async function setup(page,{failBarcodes=false,delayedRubro=false}={}){
+async function setup(page,{failBarcodes=false,delayedRubro=false,emptyCatalogs=[]}={}){
  const records=Object.fromEntries(Object.keys(catalogNames).map(k=>[k,[
   {id:1,nombre:'Inicial '+catalogNames[k],activo:true,parentId:null}
  ]]));
@@ -26,7 +26,7 @@ async function setup(page,{failBarcodes=false,delayedRubro=false}={}){
       requestNames.push(key);
       if(delayedRubro&&key==='rubros')await new Promise(resolve=>setTimeout(resolve,450));
       if(failBarcodes&&key==='tipos_codigos_barras')return respond(route,{error:'Sin permiso'},403);
-      return respond(route,{items:records[key]||[]});
+      return respond(route,{items:emptyCatalogs.includes(key)?[]:records[key]||[]});
     }
     if(method==='POST'){
       const row={id:records[key].length+10,...req.postDataJSON()};
@@ -118,8 +118,7 @@ test('cambio rápido Rubros a Marcas no deja el submódulo vacío',async({page})
  await expect(page.locator('dialog.remote-catalog-dialog[open]')).toBeVisible();
 });
 test('catálogo vacío genuino permite crear el primer registro',async({page})=>{
- await page.route('**/api/v1/catalogos/marcas',route=>respond(route,{items:[]}));
- await setup(page);
+ await setup(page,{emptyCatalogs:['marcas']});
  await page.locator('#toggleProductSubnav').click();
  await page.locator('#productSubnav [data-nav="catalogos.marcas"]').click();
  await expect(page.locator('#adminRemoto')).toContainText('No hay registros guardados');
