@@ -21,6 +21,7 @@
     condiciones_tributarias:'Condiciones tributarias'};
   let current='inicio',online=false;
   const logged=()=>Boolean(acl()?.authenticated());
+  const recoveringNow=()=>Boolean(window.RutaHDRecuperacion?.isActive());
 
   function node(tag,text,cls){
     const element=document.createElement(tag);
@@ -153,7 +154,7 @@
     $('#workspaceView').hidden=true;
     $('#workspaceContent').replaceChildren();
     $('#breadcrumbCurrent').textContent='Acceso';
-    window.RutaHDLogin?.show();
+    if(!recoveringNow())window.RutaHDLogin?.show();
   }
   document.addEventListener('rutahd:permisos-actualizados',()=>{
     if(logged())loggedIn();
@@ -202,7 +203,7 @@
   window.addEventListener('hashchange',()=>{
     const key=location.hash.slice(1)||'inicio';
     if(allowed(key))navigate(key);
-    else if(!logged())window.RutaHDLogin?.show();
+    else if(!logged()&&!recoveringNow())window.RutaHDLogin?.show();
   });
   document.addEventListener('DOMContentLoaded',async()=>{
     menuAccess();
