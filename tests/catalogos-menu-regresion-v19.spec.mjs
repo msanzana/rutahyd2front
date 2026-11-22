@@ -102,7 +102,7 @@ test('un fallo de código de barras no oculta el listado de productos',async({pa
  await setup(page,{failBarcodes:true});
  await page.locator('.nav-link[data-nav="productos"]').click();
  await expect(page.locator('#productosRealesListado')).toContainText('SKU-REAL-MOCK');
- await page.getByRole('button',{name:'Nuevo producto real'}).click();
+ await page.getByRole('button',{name:'Nuevo Producto'}).click();
  const warn=page.locator('dialog.crud-dialog[open]');
  await expect(warn).toContainText('tipos_codigos_barras');
  await expect(warn.getByRole('button',{name:'Reintentar'})).toBeVisible();
