@@ -266,3 +266,65 @@ body.is-recovering .app-shell{visibility:hidden;pointer-events:none}
  .official-editor-actions .button{flex:1 1 130px}
  .official-row-actions{white-space:normal;flex-wrap:wrap}
 }
+
+/* Hotfix visual del editor de productos existente, compatible con backend actual.
+ * Los nuevos catálogos y códigos de barras permanecen en rama de integración. */
+.modal.catalog-dialog.product-legacy-editor-dialog{
+  box-sizing:border-box;width:min(1100px,calc(100vw - 28px));
+  max-width:min(1100px,calc(100vw - 28px));
+  max-height:calc(100dvh - 28px);overflow-x:hidden;overflow-y:auto;
+  border-radius:22px;box-shadow:0 26px 85px rgba(35,12,55,.32)
+}
+.product-legacy-editor-form{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:18px 24px;box-sizing:border-box;padding:clamp(18px,3vw,34px);
+  align-items:start;width:100%;min-width:0
+}
+.product-legacy-editor-form>*{min-width:0;max-width:100%}
+.product-legacy-editor-form>h2,
+.product-legacy-editor-form>h3,
+.product-legacy-editor-form>.catalog-footnote,
+.product-legacy-editor-form>.modal-footer,
+.product-legacy-editor-form>.form-error{grid-column:1/-1}
+.product-legacy-editor-form>h2{color:#3a1856;font-size:clamp(23px,2.6vw,31px);margin:0}
+.product-legacy-editor-form>h3{
+  color:#63378a;font-size:15px;margin:8px 0 0;
+  padding:13px 15px;background:#f4eefb;border-radius:10px
+}
+.product-legacy-editor-form>.catalog-footnote{
+  color:#786989;line-height:1.6;padding:0;border:0;font-size:12px
+}
+.product-legacy-editor-form>.field{
+  box-sizing:border-box;display:grid;gap:7px;min-width:0;font-size:13px;
+  font-weight:700;color:#51345f
+}
+.product-legacy-editor-form>.field input:not([type="checkbox"]),
+.product-legacy-editor-form>.field select,.product-legacy-editor-form>.field textarea{
+  box-sizing:border-box;width:100%;max-width:100%;min-width:0;
+  padding:11px 13px;min-height:45px;border:1px solid #e1d3ed;
+  border-radius:11px;background:white;font:inherit;font-size:13px
+}
+.product-legacy-editor-form>.field:has(> input[type="checkbox"]){
+  display:flex;align-items:center;gap:12px;padding:12px 14px;
+  border:1px solid #e6ddec;border-radius:11px;background:#fbf8fe
+}
+.product-legacy-editor-form>.field input[type="checkbox"]{
+  width:21px;height:21px;min-width:21px;accent-color:#8047b7
+}
+.product-legacy-editor-form>.modal-footer{
+  margin:4px -7px -7px;padding:16px 7px 7px;
+  position:sticky;bottom:-1px;z-index:2;
+  background:rgba(255,255,255,.98);border-top:1px solid #eee5f5;
+  flex-wrap:wrap
+}
+.product-legacy-editor-form>.modal-footer .button{min-height:43px}
+@media(max-width:680px){
+  .modal.catalog-dialog.product-legacy-editor-dialog{
+    width:calc(100vw - 12px);max-width:calc(100vw - 12px);
+    max-height:calc(100dvh - 12px);border-radius:14px
+  }
+  .product-legacy-editor-form{
+    grid-template-columns:minmax(0,1fr);padding:18px 14px;gap:14px
+  }
+  .product-legacy-editor-form>*{grid-column:1}
+}
