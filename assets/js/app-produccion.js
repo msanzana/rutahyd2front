@@ -13,6 +13,7 @@
     bodega:'Bodega',cuentas_corrientes:'Cuentas corrientes',
     usuarios:'Usuarios',perfiles:'Perfiles y permisos',inicio:'Inicio'
   });
+  const ADMIN_CATALOGS=new Set(['tipos_unidad','tipos_envasado','condiciones_tributarias','tipos_codigos_barras']);
   const CATALOGS=new Set(['rubros','departamentos','familias','lineas','marcas','modelos',
     'tipos_unidad','tipos_envasado','condiciones_tributarias','tipos_codigos_barras']);
   const NAMES={rubros:'Rubros',departamentos:'Departamentos',familias:'Familias',
@@ -76,7 +77,8 @@
     }
   }
   function allowed(section){
-    if(!logged() || !online)return false;
+    // Una comprobación transitoria del estado no debe congelar menús de una sesión JWT válida.
+    if(!logged())return false;
     if(section==='usuarios'||section==='perfiles')return acl().isAdmin();
     if(section==='proveedores_productos')return acl().isAdmin()||acl().has('compras.gestionar');
     if(section.startsWith('catalogos.')){
@@ -93,13 +95,15 @@
       return;
     }
     current=section;
+    const categoryKey=section.startsWith('catalogos.')?section.split('.')[1]:null;
+    const categoryOrigin=categoryKey?(ADMIN_CATALOGS.has(categoryKey)?'administracion':'productos'):from;
     const isHome=section==='inicio';
     $('#homeView').hidden=!isHome;
     $('#workspaceView').hidden=isHome;
     $('#breadcrumbCurrent').textContent=titleFor(section);
     $$('.nav-link').forEach(button=>{
       const active=button.dataset.nav===section || (section.startsWith('catalogos.')&&
-        button.dataset.nav===(from==='administracion'?'administracion':'productos')) ||
+        button.dataset.nav===categoryOrigin) ||
         ((section==='usuarios'||section==='perfiles')&&button.dataset.nav==='administracion') ||
         (section==='proveedores_productos'&&button.dataset.nav==='proveedores');
       button.classList.toggle('active',active);
@@ -111,7 +115,7 @@
         'catalogos.'+button.dataset.adminCatalog:button.dataset.nav;
       button.classList.toggle('active',key===section);
     });
-    if(section.startsWith('catalogos.'))expand(from==='administracion'?'administracion':'productos');
+    if(section.startsWith('catalogos.'))expand(categoryOrigin);
     else if(['administracion','usuarios','perfiles'].includes(section))expand('administracion');
     else if(section==='productos')expand('productos');
     else if(section==='proveedores'||section==='proveedores_productos')expand('proveedores');
@@ -201,7 +205,7 @@
     if(link){
       event.preventDefault();
       const key=link.dataset.nav;
-      const from=link.closest('#adminNavGroup')?'administracion':null;
+      const from=link.closest('#adminNavGroup')?'administracion':link.closest('#productsNavGroup')?'productos':null;
       navigate(key,from);return;
     }
     if(event.target.closest('#menuToggle')){
