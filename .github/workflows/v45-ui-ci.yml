@@ -1,0 +1,36 @@
+name: V45 - validar mix profesional, checkboxes y validación
+on:
+  push:
+    branches: [feature/v45-mix-checkbox-validacion-20261122]
+permissions:
+  contents: read
+jobs:
+  interfaz:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Comprobar sintaxis y contratos de V45
+        run: |
+          set -euo pipefail
+          for f in assets/js/proveedores-productos.js assets/js/buscador-productos-v39.js assets/js/validacion-ui.js; do
+            node --check "$f"
+          done
+          node --check tests/interfaz-v45.cjs
+          grep -Fq 'interfaz-mix-validacion-v45.css?v=20261122-v45prod' index.html
+          grep -Fq 'proveedores-productos.js?v=20261122-v45prod' index.html
+          grep -Fq 'buscador-productos-v39.js?v=20261122-v45prod' index.html
+          grep -Fq 'validacion-ui.js?v=20261122-v45prod' index.html
+          grep -Fq 'supplier-mix-metrics' assets/js/proveedores-productos.js
+          grep -Fq 'hd-lookup-check' assets/js/buscador-productos-v39.js
+          ! grep -q 'input.closest(.login-modal' assets/js/validacion-ui.js
+      - name: Ejecutar Playwright Chromium (API de prueba en memoria)
+        run: |
+          set -euo pipefail
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium >/dev/null
+          node tests/interfaz-v45.cjs
+          echo 'V45 visual y funcional validada sin credenciales, red y SQL de producción.' >> "$GITHUB_STEP_SUMMARY"
