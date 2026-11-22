@@ -119,10 +119,10 @@
     ]},
     {title:'Compras',children:[]},
     {title:'Ventas',children:[]},
-    {title:'Proveedores',children:[['proveedores.listado','Listado de proveedores'],
-     ['proveedores.productos','Proveedores productos']]},
+    {title:'Proveedores',children:[['proveedores_listado','Listado de proveedores'],
+     ['proveedores_productos','Proveedores productos']]},
     {title:'Clientes',children:[]},
-    {title:'Productos',children:[['productos.listado','Listado de productos'],
+    {title:'Productos',children:[['productos_listado','Listado de productos'],
       ['rubros','Rubros'],['departamentos','Departamentos'],['familias','Familias'],
       ['lineas','Líneas'],['marcas','Marcas'],['modelos','Modelos']]},
     {title:'Bodega',children:[]},
@@ -163,7 +163,7 @@
       changes[key]={ver:Boolean(current.ver),gestionar:Boolean(current.gestionar)};
     }
     const navChanges=role.submodulos&&typeof role.submodulos==='object'?
-      Object.fromEntries(['productos.listado','proveedores.listado','proveedores.productos'].map(k=>
+      Object.fromEntries(['productos_listado','proveedores_listado','proveedores_productos'].map(k=>
         [k,{ver:Boolean(role.submodulos?.[k]?.ver),
              gestionar:Boolean(role.submodulos?.[k]?.gestionar)}])):null;
     const editable=Boolean(role.editable);
