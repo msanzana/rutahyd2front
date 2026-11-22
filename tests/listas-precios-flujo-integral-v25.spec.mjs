@@ -151,3 +151,39 @@ test('cliente elige solo una lista, y ventas muestran el precio exclusivo de esa
  const order=state.calls.find(x=>x.p==='/api/v1/ventas'&&x.m==='POST')?.dto;
  expect(order.detalles[0]).toMatchObject({producto_id:9,cantidad:2,precio_unitario:115});
 });
+
+
+test('switch activo violeta es compacto y el error 500 no cierra el formulario',async({page})=>{
+ await prepare(page);
+ await page.route('**/api/v1/listas-precios',route=>{
+  if(route.request().method()==='POST')
+    return send(route,{message:'Error interno del servidor'},500);
+  return route.fallback();
+ });
+ await page.locator('#toggleProductSubnav').click();
+ await page.locator('[data-nav="listas_precios"]').click();
+ await page.getByRole('button',{name:'Nueva lista de precios'}).click();
+ const dialog=page.locator('dialog.price-list-dialog[open]');
+ const checked=dialog.getByRole('checkbox',{name:'Lista activa'});
+ await expect(checked).toBeChecked();
+ const style=await checked.evaluate(n=>{
+  const css=getComputedStyle(n);
+  return {appearance:css.appearance,width:parseFloat(css.width),
+   height:parseFloat(css.height),radius:css.borderRadius,
+   thumb:getComputedStyle(n,'::before').content};
+ });
+ expect(style.appearance).toBe('none');
+ expect(style.width).toBeGreaterThanOrEqual(36);
+ expect(style.width).toBeLessThanOrEqual(42);
+ expect(style.height).toBeLessThanOrEqual(25);
+ expect(style.radius).not.toBe('0px');
+ expect(style.thumb).not.toBe('none');
+ await checked.uncheck();
+ await expect(checked).not.toBeChecked();
+ await checked.check();
+ await dialog.getByText('Código',{exact:true}).locator('..').locator('input').fill('PLATA');
+ await dialog.getByText('Nombre',{exact:true}).locator('..').locator('input').fill('Lista Plata');
+ await dialog.getByRole('button',{name:'Crear lista'}).click();
+ await expect(dialog.locator('.form-error')).toContainText('HTTP 500');
+ await expect(dialog).toBeVisible();
+});
