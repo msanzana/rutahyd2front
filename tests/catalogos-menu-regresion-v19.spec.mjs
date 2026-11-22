@@ -55,7 +55,7 @@ test('ocho módulos y subítems oficiales planos y ordenados',async({page})=>{
  expect(items.filter(x=>['Administración','Compras','Ventas','Proveedores','Clientes','Productos','Bodega','Cuentas corrientes'].includes(x.trim())))
   .toEqual(['Administración','Compras','Ventas','Proveedores','Clientes','Productos','Bodega','Cuentas corrientes']);
  expect((await page.locator('#adminSubnav .nav-sublink').allTextContents()).map(x=>x.trim()))
-  .toEqual(['Tipos de unidad','Tipos de envasado','Condición tributaria','Tipos de códigos de barras','Usuarios','Perfiles y permisos']);
+  .toEqual(['Tipos de unidad','Tipos de envasado','Condición tributaria','Tipos de códigos de barras','Ubicaciones','Países','Regiones','Provincias','Comunas','Ciudades','Usuarios','Perfiles y permisos']);
  expect((await page.locator('#productSubnav .nav-sublink').allTextContents()).map(x=>x.trim()))
   .toEqual(['Listado de productos','Listas de precios','Rubros','Departamentos','Familias','Líneas','Marcas','Modelos']);
  expect((await page.locator('#providerSubnav .nav-sublink').allTextContents()).map(x=>x.trim()))
