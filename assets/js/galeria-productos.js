@@ -73,8 +73,8 @@
   body.append(viewer,aside);panel.append(body);dialog.append(panel);
   document.body.append(dialog);dialog.showModal();
   let photos=[],index=-1,files=[],working=false,live=true,ticket=0;
-  const urls=new Map();
-  const release=()=>{for(const url of urls.values())URL.revokeObjectURL(url);urls.clear();};
+  const urls=new Map(),pending=new Map();
+  const release=()=>{for(const url of urls.values())URL.revokeObjectURL(url);urls.clear();pending.clear();};
   dialog.addEventListener('close',()=>{live=false;ticket++;release();dialog.remove();},{once:true});
   function setFiles(raw){
     const incoming=Array.from(raw||[]);
@@ -112,10 +112,15 @@
   });
   async function photoUrl(item){
     if(urls.has(item.id))return urls.get(item.id);
-    const blob=await api().productPhotoBlob(product.id,item.id);
-    if(!live)return null;
-    const url=URL.createObjectURL(blob);urls.set(item.id,url);
-    return url;
+    if(pending.has(item.id))return pending.get(item.id);
+    const task=(async()=>{
+      const blob=await api().productPhotoBlob(product.id,item.id);
+      if(!live)return null;
+      const url=URL.createObjectURL(blob);urls.set(item.id,url);
+      return url;
+    })();
+    pending.set(item.id,task);
+    try{return await task;}finally{pending.delete(item.id);}
   }
   async function select(i){
     if(!live||!photos.length)return;
@@ -142,16 +147,31 @@
       if(!live)return;
       photos=Array.isArray(data?.items)?data.items:[];
       thumbs.replaceChildren();
-      // Miniaturas en carga diferida: únicamente la imagen seleccionada utiliza BLOB.
+      // Miniaturas reales; carga diferida y limitada para no inundar la API
+      // cuando un producto tiene cientos de fotografías.
       photos.forEach((item,i)=>{
         const card=button('',()=>void select(i),'product-gallery-thumb');
         const icon=el('span','product-gallery-thumb-symbol','▧');
         const info=el('span','product-gallery-thumb-label',
-          'Foto '+(i+1)+' · '+(Math.round(item.tamano_bytes/1024))+' KB');
+          'Foto '+(i+1)+' · '+Math.round(item.tamano_bytes/1024)+' KB');
         card.append(icon,info);
         card.title=item.nombre_archivo;
         thumbs.append(card);
       });
+      async function thumbImage(item,i){
+        if(!live||i>=24)return;
+        const card=thumbs.children[i];if(!card)return;
+        try{
+          const src=await photoUrl(item);
+          if(!src||!live||card!==thumbs.children[i])return;
+          const img=el('img','product-gallery-mini');
+          img.src=src;img.alt='Miniatura '+(i+1);img.loading='lazy';
+          card.querySelector('.product-gallery-thumb-symbol')?.replaceWith(img);
+        }catch(_ignored){}
+      }
+      for(let i=0;i<Math.min(photos.length,24);i+=3){
+        void Promise.all(photos.slice(i,i+3).map((photo,j)=>thumbImage(photo,i+j)));
+      }
       if(!photos.length){
         index=-1;main.hidden=true;empty.hidden=false;
         empty.replaceChildren(el('span','product-gallery-empty-icon','▧'),
