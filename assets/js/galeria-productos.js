@@ -48,10 +48,7 @@
   thumbs.setAttribute('aria-label','Miniaturas de fotografías del producto');
   const thumbPages=el('nav','product-gallery-thumb-pages');
   thumbPages.setAttribute('aria-label','Páginas de fotografías');
-  const thumbPrev=button('Anterior',()=>{thumbPage--;renderThumbs();},'button ghost');
-  const thumbCounter=el('span','product-gallery-thumb-count','');
-  const thumbNext=button('Siguiente',()=>{thumbPage++;renderThumbs();},'button ghost');
-  thumbPages.append(thumbPrev,thumbCounter,thumbNext);
+  // Páginas numéricas compartidas, generadas después de consultar fotografías.
   viewer.append(stage,arrows,thumbs,thumbPages);
   const aside=el('aside','product-gallery-tools');
   aside.append(el('h3','','Agregar fotografías'),
@@ -163,9 +160,12 @@
   function renderThumbs(){
     const pages=Math.max(1,Math.ceil(photos.length/25));
     thumbPage=Math.max(1,Math.min(thumbPage,pages));
-    thumbPrev.disabled=thumbPage<=1;thumbNext.disabled=thumbPage>=pages;
     thumbPages.hidden=pages<=1;
-    thumbCounter.textContent='Página '+thumbPage+' de '+pages+' · máximo 25';
+    window.RutaHDListUI?.renderPager(thumbPages,{
+      page:thumbPage,pages,total:photos.length,label:'fotografías',
+      onPage:n=>{thumbPage=n;renderThumbs();}
+    });
+    thumbPages.querySelector('.list-pagination-info')?.classList.add('product-gallery-thumb-count');
     thumbs.replaceChildren();
     const start=(thumbPage-1)*25;
     photos.slice(start,start+25).forEach((item,j)=>{
