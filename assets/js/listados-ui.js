@@ -102,7 +102,7 @@
    ver:'ver','códigos de compra':'barras','enviar recuperación':'ver'};
  const modules='#adminRemoto,#productosReales,#usersCrud,#rolesCatalogos,.official-module,.supplier-products-module';
  let activeRoot=null;const states=new WeakMap();
- const normalize=x=>String(x??'').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toLocaleLowerCase('es-CL');
+ const normalize=x=>String(x??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('es-CL');
  const current=root=>root.querySelector('.catalog-table,.data-table,.permissions-table');
  const stateOf=root=>{
   if(!states.has(root))states.set(root,{text:'',filters:{},columns:[]});
