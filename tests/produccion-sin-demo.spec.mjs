@@ -320,3 +320,32 @@ test('401 de una solicitud anterior no cierra la sesión JWT recién autenticada
   expect(await page.evaluate(()=>window.RutaHDAccesos.authenticated())).toBe(true);
   await expect(page.locator('#loginDialog')).toBeHidden();
 });
+
+test('el botón Entendido cierra el popup informativo por las dos entradas sin cerrar sesión',async({page})=>{
+  await page.route('**/api/v1/estado',route=>json(route,{servicio:'Ruta H&D2 API',estado:'disponible'}));
+  await page.route('**/api/v1/sesion',route=>json(route,{token:'ci.header.signature',token_type:'Bearer',
+    usuario:{id:51,nombre:'Inspector Popup',rol:'administrador',permisos:['productos.gestionar']}}));
+  await page.goto('/#inicio');
+  await expect(page.locator('#loginSubmit')).toBeEnabled();
+  await page.locator('#loginEmail').fill('popup@example.invalid');
+  await page.locator('#loginPassword').fill('NO_ES_CREDENCIAL_REAL');
+  await page.locator('#loginSubmit').click();
+  await expect(page.locator('#loginDialog')).toBeHidden();
+  for (const source of ['#notificationButton','[data-action="about"]']){
+    if(source.includes('data-action')){
+      await page.locator('.environment-notice').evaluate(node=>{node.hidden=false;});
+    }
+    await page.locator(source).click();
+    const dialog=page.locator('#infoDialog');
+    await expect(dialog).toBeVisible();
+    await expect(dialog).toContainText('Información de conexión');
+    await page.locator('#infoClose').click();
+    await expect(dialog).toBeHidden();
+    await expect(page.locator('#loginDialog')).toBeHidden();
+    await expect(page.locator('#appShell')).toBeVisible();
+  }
+  await page.locator('#notificationButton').click();
+  await expect(page.locator('#infoDialog')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#infoDialog')).toBeHidden();
+});
