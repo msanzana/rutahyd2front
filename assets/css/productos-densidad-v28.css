@@ -240,3 +240,12 @@ html[data-theme=oscuro] .product-gallery-status{color:#dfbaf6}
  ){min-height:44px;font-size:13px}
  .product-editor-dialog .product-editor-actions .button{min-height:44px}
 }
+
+/* V30 · Margen indeterminado: accesible y legible al faltar costo neto. */
+.product-editor-dialog .product-price-row input[type="number"]:disabled{
+ opacity:1;color:#6b557c;background:#f5f1f8;border:1px dashed #c9b9d9;
+ cursor:not-allowed
+}
+html[data-theme=oscuro] .product-editor-dialog .product-price-row input[type="number"]:disabled{
+ color:#e0d0ef;background:#372842;border-color:#7c658d
+}
