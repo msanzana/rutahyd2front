@@ -149,7 +149,7 @@
     // Las líneas de una venta también respetan el máximo de 25 visibles.
     window.RutaHDListUI?.paginate(table);
     const net=items.reduce((n,it)=>n+it.precio*it.cantidad,0);
-    cartArea.append(el('p','Total neto estimado: '+money(net)+'. IVA según condición tributaria; Laravel recalculará el total.','sale-cart-total'));
+    cartArea.append(el('p','Total neto estimado: '+money(net)+'. IVA según condición tributaria. El total definitivo se confirmará al registrar la venta.','sale-cart-total'));
    }
    save.disabled=!canSell||!items.length||busy;
   }
