@@ -60,7 +60,10 @@
   const input=el('input','product-gallery-file');
   input.type='file';input.multiple=true;input.accept='image/jpeg,image/png,image/webp';
   input.hidden=true;input.setAttribute('aria-label','Examinar fotos del producto');
-  drop.append(dropIcon,label,hint,browse,input);
+  const preview=el('div','product-gallery-pending-preview');
+  preview.hidden=true;preview.setAttribute('role','group');
+  preview.setAttribute('aria-label','Vista previa de las imágenes por cargar');
+  drop.append(dropIcon,preview,label,hint,browse,input);
   aside.append(drop);
   const selected=el('p','product-gallery-selection','No hay archivos seleccionados');
   const submit=button('Guardar fotos',()=>void upload(),'button primary');
@@ -73,8 +76,19 @@
   body.append(viewer,aside);panel.append(body);dialog.append(panel);
   document.body.append(dialog);dialog.showModal();
   let photos=[],index=-1,files=[],working=false,live=true,ticket=0;
-  const urls=new Map(),pending=new Map();
-  const release=()=>{for(const url of urls.values())URL.revokeObjectURL(url);urls.clear();pending.clear();};
+  const urls=new Map(),pending=new Map(),previewUrls=[];
+  const clearPreview=()=>{
+    previewUrls.forEach(url=>URL.revokeObjectURL(url));previewUrls.length=0;
+    preview.replaceChildren();preview.hidden=true;
+    dropIcon.hidden=false;drop.classList.remove('has-selection');
+    label.textContent='Arrastra tus fotos aquí';
+    hint.textContent='o selecciona archivos de tu equipo';
+  };
+  const release=()=>{
+    clearPreview();
+    for(const url of urls.values())URL.revokeObjectURL(url);
+    urls.clear();pending.clear();
+  };
   dialog.addEventListener('close',()=>{live=false;ticket++;release();dialog.remove();},{once:true});
   function setFiles(raw){
     const incoming=Array.from(raw||[]);
@@ -83,10 +97,26 @@
       f.size>MAX_BYTES||f.size<1)){
       status.textContent='Utiliza JPG, PNG o WebP de hasta 2 MB por fotografía.';return;
     }
-    files=incoming;
+    clearPreview();files=incoming;
+    // Vista previa LOCAL; las fotos no se envían hasta presionar Guardar fotos.
+    if(files.length){
+      files.forEach((file,i)=>{
+        const url=URL.createObjectURL(file);previewUrls.push(url);
+        const thumb=el('figure','product-gallery-pending-item');
+        const img=el('img','product-gallery-pending-image');
+        img.src=url;img.alt='Foto por cargar '+(i+1)+': '+file.name;
+        const caption=el('figcaption','',String(i+1)+' · '+Math.max(1,Math.ceil(file.size/1024))+' KB');
+        thumb.append(img,caption);preview.append(thumb);
+      });
+      preview.hidden=false;dropIcon.hidden=true;
+      drop.classList.add('has-selection');
+      label.textContent=files.length+' fotografía(s) listas para cargar';
+      hint.textContent='Vista previa · Todavía no están guardadas en MariaDB';
+    }
     selected.textContent=files.length?
       files.length+' seleccionada(s): '+files.map(f=>f.name).join(', '):
       'No hay archivos seleccionados';
+    if(!files.length)input.value='';
     submit.disabled=!files.length||working;
     status.textContent='';
   }
@@ -225,6 +255,11 @@
     confirmDialog.addEventListener('close',()=>confirmDialog.remove(),{once:true});
   },'button ghost product-gallery-delete');
   aside.append(remove);
+  const footer=el('footer','product-gallery-footer');
+  const closeFooter=button('Cerrar galería',()=>dialog.close(),'button ghost product-gallery-close');
+  closeFooter.setAttribute('aria-label','Cerrar galería de fotografías');
+  footer.append(closeFooter);
+  panel.append(footer);
   prev.disabled=next.disabled=true;
   void reload();
  }
