@@ -25,7 +25,7 @@
   headingContent.append(el('span','overline','RUTA H&D · GALERÍA DE PRODUCTOS'),
     el('h2','',product.nombre),el('p','',product.sku+' · Fotos en MariaDB'));
   const close=button('×',()=>dialog.close(),'crud-close');
-  close.setAttribute('aria-label','Cerrar galería');
+  close.setAttribute('aria-label','Cerrar ventana de galería');
   heading.append(headingContent,close);panel.append(heading);
   const body=el('div','product-gallery-body');
   const viewer=el('section','product-gallery-viewer');
@@ -269,7 +269,7 @@
   aside.append(remove);
   const footer=el('footer','product-gallery-footer');
   const closeFooter=button('Cerrar galería',()=>dialog.close(),'button ghost product-gallery-close');
-  closeFooter.setAttribute('aria-label','Cerrar galería de fotografías');
+  closeFooter.setAttribute('aria-label','Cerrar galería');
   footer.append(closeFooter);
   panel.append(footer);
   prev.disabled=next.disabled=true;
