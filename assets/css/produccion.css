@@ -442,3 +442,73 @@ body.is-recovering .app-shell{visibility:hidden;pointer-events:none}
   .supplier-search-bar>button,.official-search-bar>button{width:100%}
   .modal.supplier-product-dialog{max-height:calc(100dvh - 12px)}
 }
+
+
+/* Ruta H&D V2 · Auditoría transversal CRUD y listados · 2026-11-21.
+   Mantener TD como celda de tabla y ubicar acciones al final/derecha. */
+.catalog-table-scroll,.permissions-table-scroll,.table-scroll,.table-responsive{
+  max-width:100%;min-width:0;overflow-x:auto;overscroll-behavior-x:contain;
+  scrollbar-width:thin;-webkit-overflow-scrolling:touch
+}
+.catalog-table,.data-table,.official-table,.supplier-products-table{
+  width:100%;border-collapse:separate;border-spacing:0
+}
+.catalog-table thead th,.data-table thead th{
+  background:#f6f0fb;color:#51346b;font-weight:800;
+  text-align:left;vertical-align:middle
+}
+.catalog-table td,.catalog-table th,.data-table td,.data-table th{
+  padding:12px 13px;vertical-align:middle
+}
+.catalog-table tbody tr:hover,.data-table tbody tr:hover{background:#fcf9ff}
+.catalog-table :is(th,td):last-child,.data-table :is(th,td):last-child{
+  text-align:right
+}
+.catalog-table td.catalog-actions,
+.catalog-table td.official-row-actions,
+.catalog-table td.supplier-row-actions,
+.data-table td.catalog-actions{
+  display:table-cell!important;text-align:right!important;
+  white-space:nowrap;min-width:160px
+}
+:is(.catalog-actions,.official-row-actions,.supplier-row-actions) .button,
+:is(.catalog-actions,.official-row-actions,.supplier-row-actions) button{
+  display:inline-flex;align-items:center;justify-content:center;
+  white-space:nowrap;min-height:35px;margin:3px 0 3px 6px;
+  border-radius:9px;vertical-align:middle
+}
+.modal:not(.login-modal),.catalog-dialog,.official-editor,.supplier-product-dialog{
+  box-sizing:border-box;max-width:calc(100vw - 24px);
+  max-height:calc(100dvh - 24px);overscroll-behavior:contain
+}
+.modal:not(.login-modal) input:not([type="checkbox"]),
+.modal:not(.login-modal) select,
+.modal:not(.login-modal) textarea{
+  box-sizing:border-box;min-width:0;max-width:100%;
+}
+.modal:not(.login-modal) :is(input,select,textarea):focus-visible{
+  outline:2px solid #9d6ad5;outline-offset:1px
+}
+.modal:not(.login-modal) :is(.modal-footer,.official-editor-actions,.supplier-dialog-actions){
+  justify-content:flex-end;flex-wrap:wrap;gap:10px
+}
+.topbar-right .profile{min-width:0;display:flex;align-items:center}
+.topbar-right .profile-label{min-width:0}
+.topbar-right #authButton{order:10;flex-shrink:0;white-space:nowrap}
+@media(max-width:760px){
+  .catalog-table,.data-table{width:max-content;min-width:100%}
+  .catalog-table td,.catalog-table th,.data-table td,.data-table th{
+    overflow-wrap:normal;white-space:nowrap
+  }
+  .catalog-table td.catalog-actions,.catalog-table td.official-row-actions,
+  .catalog-table td.supplier-row-actions{min-width:145px}
+  .modal:not(.login-modal){width:calc(100vw - 16px);max-width:calc(100vw - 16px)}
+  .topbar-right #authButton{min-height:38px;padding:8px 10px;font-size:12px}
+}
+@media(max-width:480px){
+  .modal:not(.login-modal) :is(.modal-footer,.official-editor-actions,.supplier-dialog-actions) .button{
+    flex:1 1 120px
+  }
+  .catalog-table td,.catalog-table th,.data-table td,.data-table th{padding:10px}
+  .topbar-right .profile-label small{display:none}
+}
