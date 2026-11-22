@@ -220,10 +220,38 @@
       send('/catalogos/' + key(catalogo) + '/' + id(identificador), 'PUT', datos),
     remove: (catalogo, identificador) =>
       send('/catalogos/' + key(catalogo) + '/' + id(identificador), 'DELETE'),
-    products: (page=1, buscar='') => {
+    products: (page=1, buscar='', filters={}) => {
       if(!Number.isSafeInteger(page)||page<1||page>10000)throw new Error('Página inválida');
       if(typeof buscar!=='string'||buscar.length>120)throw new Error('Búsqueda inválida');
-      return send('/productos?por_pagina=25&page='+page+'&incluye_inactivos=1&buscar='+encodeURIComponent(buscar));
+      if(!filters||typeof filters!=='object'||Array.isArray(filters))throw new Error('Filtros inválidos');
+      const allowed=new Set([
+        'sku','nombre','descripcion','codigo_barras','activo','proveedor_id',
+        'rubro_id','departamento_id','familia_id','linea_id','marca_id','modelo_id',
+        'tipo_unidad_id','tipo_envasado_id','condicion_tributaria_id',
+        'tipo_codigo_barra_id','precio_min','precio_max','iva','presentacion',
+        'unidades_min','unidades_max'
+      ]);
+      const integerKeys=new Set([
+        'proveedor_id','rubro_id','departamento_id','familia_id','linea_id',
+        'marca_id','modelo_id','tipo_unidad_id','tipo_envasado_id',
+        'condicion_tributaria_id','tipo_codigo_barra_id'
+      ]);
+      const numericKeys=new Set(['precio_min','precio_max','iva','unidades_min','unidades_max']);
+      const query=new URLSearchParams({por_pagina:'25',page:String(page),incluye_inactivos:'1'});
+      if(buscar.trim())query.set('buscar',buscar.trim());
+      for(const [key,val] of Object.entries(filters)){
+        if(!allowed.has(key))throw new Error('Filtro de productos no permitido');
+        const value=String(val??'').trim();
+        if(!value)continue;
+        if(integerKeys.has(key)&&(!/^[1-9][0-9]*$/.test(value)||!Number.isSafeInteger(Number(value))))
+          throw new Error('Identificador de filtro inválido');
+        if(numericKeys.has(key)&&(!/^\\d+(?:\\.\\d+)?$/.test(value)||!Number.isFinite(Number(value))))
+          throw new Error('Rango numérico inválido');
+        if(key==='activo'&&value!=='0'&&value!=='1')throw new Error('Estado de filtro inválido');
+        if(value.length>200)throw new Error('Filtro demasiado largo');
+        query.set(key,value);
+      }
+      return send('/productos?'+query.toString());
     },
     getProduct: (identificador) => send('/productos/'+id(identificador)),
     createProduct: datos => send('/productos','POST',datos),
