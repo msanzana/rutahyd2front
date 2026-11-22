@@ -185,12 +185,14 @@
    row.hidden=Boolean((state.text&&!haystack.includes(normalize(state.text)))||!columnMatches);
    if(!row.hidden)visible++;
   });
-  root.querySelector('.list-filter-note')?.remove();
+  let note=root.querySelector('.list-filter-note');
   if(state.text||Object.values(state.filters).some(Boolean)){
-   const note=document.createElement('p');note.className='list-filter-note';
+   if(!note){
+    note=document.createElement('p');note.className='list-filter-note';
+    table.closest('.catalog-table-scroll,.permissions-table-scroll,.table-scroll')?.before(note);
+   }
    note.textContent='Filtros: '+visible+' de '+rows.length+' registros de esta página. Para más resultados utiliza la paginación.';
-   table.closest('.catalog-table-scroll,.permissions-table-scroll,.table-scroll')?.before(note);
-  }
+  }else if(note)note.remove();
  }
  let pending=false;
  function rescan(){
