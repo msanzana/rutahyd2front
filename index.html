@@ -18,6 +18,7 @@
   <link rel="stylesheet" href="assets/css/switches-v32.css?v=20261122-status34">
   <link rel="stylesheet" href="assets/css/controles-v33.css?v=20261122-page33">
   <link rel="stylesheet" href="assets/css/productos-estados-v34.css?v=20261122-status34">
+  <link rel="stylesheet" href="assets/css/navegacion-v35.css?v=20261122-nav35">
 </head>
 <body>
   <svg class="svg-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -48,6 +49,18 @@
         <img class="brand-logo" src="assets/img/prueba-rutahd2.webp" alt="Logotipo oficial Comercializadora H&D" width="70" height="70">
         <span><strong>Ruta H&amp;D2</strong><small>Gestión Comercial</small></span>
       </a>
+      <div class="hd-menu-finder" id="menuFinder" hidden>
+        <label class="hd-menu-finder-label" for="menuQuickSearch">Buscar en el menú</label>
+        <div class="hd-menu-finder-input">
+          <svg class="icon" aria-hidden="true"><use href="#i-search"/></svg>
+          <input id="menuQuickSearch" type="search" autocomplete="off" maxlength="80"
+            aria-label="Buscar opciones y subopciones del menú" aria-controls="menuQuickResults"
+            aria-expanded="false" placeholder="Buscar opción o subopción…">
+          <kbd aria-hidden="true">/</kbd>
+        </div>
+        <div class="hd-menu-finder-results" id="menuQuickResults" role="region"
+          aria-label="Resultados de búsqueda en el menú" hidden></div>
+      </div>
       <div class="sidebar-heading">MENÚ PRINCIPAL</div>
       <nav class="nav" aria-label="Menú principal">
         <div class="nav-group" id="adminNavGroup">
@@ -177,7 +190,7 @@
   </dialog>
   <div id="toastRegion" class="toast-region" role="status" aria-live="polite" aria-atomic="false"></div>
   <script src="assets/js/accesos.js?v=20261122-ui20" defer></script>
-  <script src="assets/js/listados-ui.js?v=20261122-status34" defer></script>
+  <script src="assets/js/listados-ui.js?v=20261122-nav35" defer></script>
   <script src="assets/js/validacion-ui.js?v=20261122-filters22" defer></script>
   <script src="assets/js/menu-usuario.js?v=20261122-ui20" defer></script>
   <script src="assets/js/catalogos-api.js?v=20261122-v31" defer></script>
