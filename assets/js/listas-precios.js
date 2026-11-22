@@ -29,7 +29,8 @@
   search.setAttribute('aria-label','Buscar listas de precios');
   const add=btn('Nueva lista de precios',()=>openEditor(null),'primary');
   const refresh=btn('Actualizar',()=>void load());
-  toolbar.append(search,add,refresh);
+  add.classList.add('hd-list-create-action');
+  toolbar.append(search,refresh,add);
   const list=el('div',undefined,'catalog-table-scroll');
   const pager=el('nav',undefined,'list-pagination price-lists-pagination');
   pager.setAttribute('aria-label','Páginas de listas de precios');
