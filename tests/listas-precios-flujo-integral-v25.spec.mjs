@@ -187,3 +187,27 @@ test('switch activo violeta es compacto y el error 500 no cierra el formulario',
  await expect(dialog.locator('.form-error')).toContainText('HTTP 500');
  await expect(dialog).toBeVisible();
 });
+
+test('switch de Lista activa se renderiza compacto, violeta y sin checkbox gigante',async({page})=>{
+ await prepare(page);
+ await page.locator('#toggleProductSubnav').click();
+ await page.locator('[data-nav="listas_precios"]').click();
+ await page.getByRole('button',{name:'Nueva lista de precios'}).click();
+ const dlg=page.locator('dialog.price-list-dialog[open]');
+ const check=dlg.getByRole('checkbox',{name:'Lista activa'});
+ await expect(check).toBeChecked();
+ const appearance=await check.evaluate(node=>{
+  const st=getComputedStyle(node),bar=node.getBoundingClientRect();
+  return {appearance:st.appearance,width:bar.width,height:bar.height,
+   radius:st.borderRadius,background:st.backgroundColor};
+ });
+ expect(appearance.appearance).toBe('none');
+ expect(appearance.width).toBeGreaterThanOrEqual(39);
+ expect(appearance.width).toBeLessThanOrEqual(45);
+ expect(appearance.height).toBeLessThanOrEqual(26);
+ expect(parseFloat(appearance.radius)).toBeGreaterThan(10);
+ await check.uncheck();
+ await expect(check).not.toBeChecked();
+ await check.check();
+ await expect(check).toBeChecked();
+});
