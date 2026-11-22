@@ -27,7 +27,17 @@
   const button=(label,onClick,cls='button ghost')=>{
     const b=el('button',cls,label);b.type='button';b.addEventListener('click',onClick);return b;
   };
-  let root=null,selectedPage=1,query='',busy=false,cache={},result=null,notifier=null;
+  let root=null,selectedPage=1,query='',busy=false,cache={},result=null,notifier=null,filters={};
+  const FILTER_MAP=Object.fromEntries(ATTRS.map(([field,catalog,label,depends])=>[
+    field,{catalog,label,depends,column:field.replace(/Id$/,'').replace(/[A-Z]/g,x=>'_'+x.toLowerCase())+'_id'}
+  ]));
+  // El servidor utiliza estos nombres de columnas, no propiedades del frontend.
+  const DB_FIELDS={
+    rubroId:'rubro_id',departamentoId:'departamento_id',familiaId:'familia_id',
+    lineaId:'linea_id',marcaId:'marca_id',modeloId:'modelo_id',
+    tipoUnidadId:'tipo_unidad_id',tipoEnvasadoId:'tipo_envasado_id',
+    condicionTributariaId:'condicion_tributaria_id'
+  };
   const canManage=()=>Boolean(access()?.authenticated()&&access()?.has('productos.gestionar'));
   function message(text,error=false){
     if(!notifier)return;
@@ -70,13 +80,17 @@
       root.appendChild(button('Ir a Administración',()=>document.querySelector('[data-nav="administracion"].nav-link')?.click()));
       return;
     }
-    const tools=el('div','workspace-actions');tools.style.flexWrap='wrap';
+    filters={};selectedPage=1;query='';
+    const tools=el('div','workspace-actions normalized-toolbar');tools.style.flexWrap='wrap';
+    tools.dataset.productAdvanced='true';
     const search=el('input');search.type='search';search.placeholder='Buscar SKU o nombre';search.setAttribute('aria-label','Buscar productos reales');
     search.maxLength=120;
     const searchBtn=button('Buscar',()=>guarded(async()=>{selectedPage=1;query=search.value.trim();await loadProducts();}),'button ghost');
     const create=button('Nuevo producto real',()=>guarded(()=>editProduct(null)),'button primary');
     const refresh=button('Actualizar',()=>guarded(loadProducts));
-    add(tools,search,searchBtn,create,refresh);
+    const advanced=button('Búsqueda avanzada',()=>guarded(openAdvancedSearch),'button ghost advanced-filter-trigger');
+    advanced.innerHTML=window.RutaHDListUI?.icon('filtros')+'<span>Búsqueda avanzada</span>';
+    add(tools,search,searchBtn,advanced,create,refresh);
     root.appendChild(tools);
     result=el('div','catalog-table-scroll');
     result.id='productosRealesListado';
@@ -104,6 +118,69 @@
       throw error;
     }
   }
+  async function openAdvancedSearch(){
+    // La búsqueda nunca depende de tener todas las clasificaciones disponibles.
+    const names=[...new Set([...ATTRS.map(([,cat])=>cat),'tipos_codigos_barras'])];
+    const responses=await Promise.allSettled(names.map(name=>api().list(name)));
+    const failed=[];
+    responses.forEach((item,index)=>{
+      const key=names[index];
+      if(item.status==='fulfilled'&&Array.isArray(item.value?.items))cache[key]=item.value.items;
+      else{cache[key]=[];failed.push(key);}
+    });
+    const fields=[
+      {key:'sku',label:'SKU / Código',value:filters.sku||''},
+      {key:'nombre',label:'Nombre',value:filters.nombre||''},
+      {key:'descripcion',label:'Descripción',value:filters.descripcion||''},
+    ];
+    for(const [key,cat,label,depends] of ATTRS){
+      const entries=cache[cat]||[];
+      fields.push({
+        key:DB_FIELDS[key],label,value:filters[DB_FIELDS[key]]||'',
+        options:entries.map(item=>[String(item.id),item.nombre,
+          item.parentId==null?'':String(item.parentId)]),
+        ...(depends?{dependsOn:DB_FIELDS[depends]}:{})
+      });
+    }
+    fields.push(
+      {key:'activo',label:'Estado del producto',
+        options:[['1','Activo'],['0','Inactivo']],value:filters.activo||''},
+      {key:'codigo_barras',label:'Código de barras',value:filters.codigo_barras||''},
+      {key:'tipo_codigo_barra_id',label:'Tipo de código de barras',
+        options:(cache.tipos_codigos_barras||[]).map(item=>[String(item.id),item.nombre]),
+        value:filters.tipo_codigo_barra_id||''},
+      {key:'presentacion',label:'Nombre de presentación',value:filters.presentacion||''},
+      {key:'precio_min',label:'Precio neto desde (CLP)',type:'number',min:'0',value:filters.precio_min||''},
+      {key:'precio_max',label:'Precio neto hasta (CLP)',type:'number',min:'0',value:filters.precio_max||''},
+      {key:'iva',label:'Tasa IVA (%)',type:'number',min:'0',value:filters.iva||''},
+      {key:'unidades_min',label:'Unidades por envase desde',type:'number',min:'0',value:filters.unidades_min||''},
+      {key:'unidades_max',label:'Unidades por envase hasta',type:'number',min:'0',value:filters.unidades_max||''},
+      {key:'proveedor_id',label:'ID del proveedor asociado',type:'number',min:'1',step:'1',value:filters.proveedor_id||''}
+    );
+    const modal=window.RutaHDListUI?.advanced(fields,values=>{
+      filters=Object.fromEntries(Object.entries(values).filter(([,v])=>v!==''&&!(/^0+$/.test(v)&&v!==values.activo)));
+      selectedPage=1;
+      void guarded(loadProducts);
+    },{
+      title:'Búsqueda avanzada · Productos',
+      hint:'Filtra el catálogo completo por jerarquía, marca, modelo, estado, presentación, precios y códigos de barras. Los criterios se combinan entre sí.',
+      validate:values=>{
+        for(const [min,max] of [['precio_min','precio_max'],['unidades_min','unidades_max']]){
+          if(values[min]!==''&&values[max]!==''&&Number(values[min])>Number(values[max]))
+            return {field:max,message:'El valor máximo debe ser igual o mayor que el mínimo.'};
+        }
+        return null;
+      }
+    });
+    if(!modal)throw new Error('No está disponible el formulario de búsqueda avanzada');
+    modal.classList.add('product-advanced-dialog');
+    if(failed.length){
+      const warning=el('p','hd-filter-warning',
+        'Algunos catálogos no se pudieron consultar: '+failed.join(', ')+'. Puedes usar los filtros disponibles y reintentar después.');
+      warning.setAttribute('role','status');
+      modal.querySelector('.crud-fields')?.before(warning);
+    }
+  }
   function catalogErrorDialog(error){
     const dialog=el('dialog','modal catalog-dialog crud-dialog');
     const form=el('div','crud-shell');
@@ -127,15 +204,44 @@
   }
   async function loadProducts(){
     if(!canManage())return;
-    const data=await api().products(selectedPage,query);
+    const data=await api().products(selectedPage,query,filters);
     if(!Array.isArray(data?.data))throw new Error('Respuesta paginada inesperada');
     result.replaceChildren();
+    const advancedKeys=Object.keys(filters).filter(key=>filters[key]!==''&&filters[key]!=null);
+    const serverFiltering=data.filtros_aplicados===true;
+    if(advancedKeys.length){
+      const note=el('p',serverFiltering?'hd-filter-active':'hd-filter-warning',
+        serverFiltering?
+          advancedKeys.length+' filtros avanzados aplicados a la base de productos.':
+          'El servidor todavía no admite los filtros avanzados. Se mostrarán coincidencias de esta página hasta actualizar la API.');
+      note.setAttribute('role','status');result.appendChild(note);
+    }
+    let products=data.data;
+    if(advancedKeys.length&&!serverFiltering){
+      const match=(p,key,value)=>{
+        if(key==='activo')return String(p.activo?'1':'0')===value;
+        const mapped=Object.entries(DB_FIELDS).find(([,column])=>column===key);
+        if(mapped)return String(p.clasificacion?.[mapped[0]]??'')===value;
+        if(key==='sku'||key==='nombre'||key==='descripcion')return String(p[key]??'').toLowerCase().includes(value.toLowerCase());
+        if(key==='proveedor_id')return String(p.proveedorId??'')===value;
+        if(key==='presentacion')return String(p.presentacion?.nombre??'').toLowerCase().includes(value.toLowerCase());
+        if(key==='precio_min')return Number(p.presentacion?.precioNeto)>=Number(value);
+        if(key==='precio_max')return Number(p.presentacion?.precioNeto)<=Number(value);
+        if(key==='iva')return Number(p.presentacion?.tasaIva)===Number(value);
+        if(key==='unidades_min')return Number(p.presentacion?.unidadesPorEnvase)>=Number(value);
+        if(key==='unidades_max')return Number(p.presentacion?.unidadesPorEnvase)<=Number(value);
+        // Si el servidor no expone código de barras en el listado,
+        // no inventar coincidencias de estos criterios.
+        return false;
+      };
+      products=products.filter(p=>advancedKeys.every(key=>match(p,key,String(filters[key]))));
+    }
     const table=el('table','catalog-table');
     const head=el('tr');
     ['SKU','Producto','Precio neto','IVA','Estado','Acciones'].forEach(t=>head.appendChild(el('th','',t)));
     table.appendChild(add(el('thead'),head));
     const body=el('tbody');
-    data.data.forEach(prod=>{
+    products.forEach(prod=>{
       const row=el('tr');
       row.appendChild(el('td','',prod.sku||'—'));
       row.appendChild(el('td','',prod.nombre));
@@ -150,7 +256,9 @@
       row.appendChild(actions);body.appendChild(row);
     });
     table.appendChild(body);
-    if(!data.data.length)result.appendChild(el('p','catalog-footnote','No hay productos registrados para esta búsqueda. Puedes crear el primero con «Nuevo producto».'));
+    if(!products.length)result.appendChild(el('p','catalog-footnote',
+      advancedKeys.length?'No hay productos que coincidan con estos filtros. Puedes limpiar los filtros y reintentar.':
+      'No hay productos registrados para esta búsqueda. Puedes crear el primero con «Nuevo producto».'));
     else result.appendChild(table);
     const footer=el('div','workspace-actions');
     const previous=button('Anterior',()=>guarded(async()=>{selectedPage--;await loadProducts();}));
@@ -158,7 +266,8 @@
     previous.disabled=selectedPage<=1;
     next.disabled=selectedPage>=Number(data.last_page||1);
     add(footer,previous,el('span','catalog-footnote',
-      'Página '+selectedPage+' / '+Number(data.last_page||1)+' · '+Number(data.total||0)+' productos'),next);
+      'Página '+selectedPage+' / '+Number(data.last_page||1)+' · '+Number(data.total||0)+
+      ' productos'+(advancedKeys.length&&!serverFiltering?' (total sin filtrar)':'')),next);
     result.appendChild(footer);
     message('Productos consultados directamente en Laravel/MySQL. Sin sincronizar datos locales.');
   }
