@@ -1,0 +1,30 @@
+name: V47 - códigos de compra, validación y mensajes HTTP422
+on:
+  push:
+    branches: [hotfix/v47-codigos-compra-422-20261122]
+permissions:
+  contents: read
+jobs:
+  codigos-compra:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verificar JS y versión de caché
+        run: |
+          set -euo pipefail
+          node --check assets/js/proveedores-productos.js
+          node --check tests/codigos-compra-v47.cjs
+          grep -Fq 'proveedores-productos.js?v=20261122-v47prod' index.html
+          grep -Fq 'interfaz-mix-validacion-v45.css?v=20261122-v47prod' index.html
+          grep -Fq 'purchaseBarcodeValidation' assets/js/proveedores-productos.js
+      - name: Chromium contra API simulada, sin escritura productiva
+        run: |
+          set -euo pipefail
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium >/dev/null
+          node tests/codigos-compra-v47.cjs
+          echo 'V47: el UI valida formato antes de POST y muestra mensaje Laravel 422; no usa credenciales ni producción.' >> "$GITHUB_STEP_SUMMARY"
