@@ -9,6 +9,7 @@
   desactivar:'<circle cx="12" cy="12" r="9"/><path d="M5.6 5.6 18.4 18.4"/>',
   ver:'<path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="2.5"/>',
   barras:'<path d="M3 5v14M6 5v14M10 5v14M12 5v14M16 5v14M20 5v14M22 5v14"/>',
+  fotos:'<rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="8.2" cy="9" r="1.6"/><path d="m4.5 17 4.8-4.5 3.1 2.5 3.3-4L20 15"/>',
   buscar:'<circle cx="10.8" cy="10.8" r="7.5"/><path d="m16.5 16.5 5 5"/>',
   filtros:'<path d="M4 7h16M7 12h10M10 17h4"/>'};
  const icon=(key)=>'<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">'+(SVG[key]||SVG.ver)+'</svg>';
@@ -132,7 +133,7 @@
  };
 
  const actionKinds={editar:'editar',desactivar:'desactivar',eliminar:'desactivar',
-   ver:'ver','codigos de compra':'barras','codigos de barras':'barras',
+   ver:'ver',fotos:'fotos','codigos de compra':'barras','codigos de barras':'barras',
    'enviar recuperacion':'ver'};
  const modules='#adminRemoto,#productosReales,#usersCrud,#rolesCatalogos,.official-module,.supplier-products-module';
  let activeRoot=null;const states=new WeakMap();
