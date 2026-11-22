@@ -97,8 +97,10 @@
             clientPriceList.selectedIndex=0;
           clientPriceList.required=true;label.append(clientPriceList);
         }catch(error){
-          label.append(create('p','No fue posible cargar la lista del cliente. Reintenta la edición.','form-error'));
-          throw error;
+          if(error?.status===404){
+            // Compatibilidad con API antigua, sin inventar IDs de listas.
+            label.append(create('p','El servidor aún no tiene habilitada la selección de listas. Los datos del cliente siguen editables.','catalog-footnote'));
+          }else throw error;
         }
       }else{
         label.append(create('p','Al crear este cliente se le asignará automáticamente la LISTA BASE. Puedes asignarle una lista especial después.','catalog-footnote'));
