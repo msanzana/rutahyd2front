@@ -136,7 +136,7 @@
           activo:active.checked
         };
         if(!record){data.proveedor_id=Number(provider.value);data.producto_id=Number(product.value);}
-        save.disabled=true;status.textContent='Guardando en Laravel…';
+        save.disabled=true;status.textContent='Guardando cambios…';
         try{
           if(record)await api().updateProductSupplier(record.id,data);
           else await api().createProductSupplier(data);
@@ -314,7 +314,7 @@
     let page=1,query='',loading=false;
     async function load(){
       if(loading)return;
-      loading=true;status.textContent='Cargando directorio de proveedores desde Laravel…';
+      loading=true;status.textContent='Cargando directorio de proveedores…';
       try{
         const data=await api().supplierMix(page,query);
         if(current!==marker||!root.isConnected)return;
