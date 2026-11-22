@@ -326,14 +326,12 @@
       advancedKeys.length?'No hay productos con los filtros seleccionados.':
       'No hay productos registrados. Puedes crear el primero con «Nuevo Producto».'));
     else result.append(table);
-    const footer=el('div','workspace-actions');
-    const previous=button('Anterior',()=>guarded(async()=>{selectedPage--;await loadProducts();}));
-    const next=button('Siguiente',()=>guarded(async()=>{selectedPage++;await loadProducts();}));
-    previous.disabled=selectedPage<=1;
-    next.disabled=selectedPage>=Number(data.last_page||1);
-    add(footer,previous,el('span','catalog-footnote',
-      'Página '+selectedPage+' / '+Number(data.last_page||1)+' · '+Number(data.total||0)+
-      ' productos'+(advancedKeys.length&&!serverFiltering?' (total sin filtrar)':'')),next);
+    const footer=el('nav','list-pagination');
+    window.RutaHDListUI?.renderPager(footer,{
+      page:selectedPage,pages:Number(data.last_page||1),total:Number(data.total||0),
+      label:'productos'+(advancedKeys.length&&!serverFiltering?' (total sin filtrar)':''),
+      onPage:n=>guarded(async()=>{selectedPage=n;await loadProducts();})
+    });
     result.appendChild(footer);
     message('Productos consultados directamente en Laravel/MySQL. Sin sincronizar datos locales.');
   }
