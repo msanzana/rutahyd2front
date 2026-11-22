@@ -215,3 +215,25 @@ test('nuevo producto bloquea EAN-13 de doce dígitos sin enviar POST y permite c
  const dto=state.calls.find(x=>x.m==='POST'&&x.p==='/api/v1/productos')?.dto;
  expect(dto?.codigosVenta?.[0]?.codigoBarras).toBe('9780201379624');
 });
+
+test('conserva precio al dejar costo en cero y guarda margen indefinido',async({page})=>{
+ const state=await fixture(page);
+ await page.locator('#productosRealesListado').getByRole('button',{name:'Editar',exact:true}).click();
+ const dlg=page.locator('dialog.product-editor-dialog[open]');
+ const row=dlg.locator('.product-price-row').filter({hasText:'LISTA BASE'});
+ const margin=row.getByLabel('Margen porcentual LISTA BASE');
+ const price=row.getByLabel('Precio de venta LISTA BASE');
+ await margin.fill('30');
+ await expect(price).toHaveValue('130.0000');
+ await dlg.locator('#productoCostoNeto').fill('0');
+ await expect(price).toHaveValue('130.0000');
+ await expect(margin).toHaveValue('');
+ await expect(margin).toBeDisabled();
+ await dlg.getByRole('button',{name:'Guardar en MySQL'}).click();
+ await expect(dlg).toBeHidden();
+ const dto=state.calls.find(c=>c.p==='/api/v1/productos/9'&&c.m==='PUT')?.dto;
+ expect(dto).toBeDefined();
+ expect(dto.costoNeto).toBe('0');
+ expect(Number(dto.precios[0].precioVenta)).toBe(130);
+ expect(dto.precios[0].margenPorcentaje).toBeUndefined();
+});
