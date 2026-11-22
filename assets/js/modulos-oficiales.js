@@ -226,7 +226,10 @@
         if(current!==currentId||!root.isConnected)return;
         if(!response||!Array.isArray(response.data))throw Error('Lista remota inválida');
         const rows=response.data;
-        if(editable)bar.append(action('Nuevo registro',()=>openEditor(cfg,null,load)));
+        if(editable){
+          const create=action('Nuevo registro',()=>openEditor(cfg,null,load));
+          create.classList.add('hd-list-create-action');bar.append(create);
+        }
         if(rows.length){
           const columns=cfg.fields.filter(([f])=>rows.some(v=>Object.prototype.hasOwnProperty.call(v,f)));
           const table=create('table',undefined,'catalog-table official-table');
