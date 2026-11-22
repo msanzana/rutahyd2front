@@ -14,7 +14,7 @@
   b.addEventListener('click',handler);return b;
  };
  const error=e=>e?.userMessage||(e?.status===503?
-  'Falta importar DDL25 (productos_fotos) en MariaDB.':'No se pudo completar la operación de fotos. Comprueba la conexión y permisos.');
+  'La galería no está disponible. Contacta al administrador.':'No se pudo completar la operación de fotos. Comprueba la conexión y permisos.');
  const MAX_FILES=6,MAX_BYTES=2097152;
  function open(product){
   const dialog=el('dialog','modal crud-dialog product-gallery-dialog');
