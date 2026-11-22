@@ -27,12 +27,12 @@
     try {
       api().configure(location.origin);
       const health=await api().status();
-      if(health.disponible)report('ok','Servidor conectado',
+      if(health.disponible)report('ok','Sistema disponible',
         'Acceso disponible. Ingresa con tu usuario y contraseña.');
-      else report('blocked','Servidor no habilitado',
-        'El servidor informó HTTP '+health.http+' ('+health.estado+'). El administrador debe habilitar la API para iniciar sesión.');
+      else report('blocked','Acceso no disponible',
+        'No se pudo habilitar el acceso (código '+health.http+'). Contacta al administrador.');
     } catch {
-      report('blocked','Sin conexión al servidor',
+      report('blocked','Sin conexión',
         'No se pudo establecer una conexión segura. No se enviaron tus credenciales.');
     } finally {checking=false;}
     return online;
@@ -72,7 +72,7 @@
   form.addEventListener('submit',async event=>{
     event.preventDefault();
     if(busy||!form.reportValidity())return;
-    if(!online){error.textContent='El servidor no está habilitado. No se enviaron tus credenciales.';error.hidden=false;return;}
+    if(!online){error.textContent='El acceso no está disponible. No se enviaron tus credenciales.';error.hidden=false;return;}
     busy=true;submit.disabled=true;error.hidden=true;
     const secret=pass.value;
     pass.value='';
