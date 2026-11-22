@@ -43,6 +43,8 @@ for(const width of [1440,820,572,390]){
     await expect(dialog).not.toContainText('ID de proveedor');
     await expect(dialog).not.toContainText('Gramajes');
     await expect(dialog).toContainText('Códigos de barras de venta');
-    await expect(dialog).toContainText('Presentación, precio e IVA');
+    await expect(dialog).toContainText('Precios');
+    await expect(dialog).toContainText('Costo neto (CLP)');
+    await expect(dialog).not.toContainText('Nombre de presentación');
   });
 }
