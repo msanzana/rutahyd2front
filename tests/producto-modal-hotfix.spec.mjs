@@ -1,10 +1,10 @@
 import {test,expect} from '@playwright/test';
-const cats=['rubros','departamentos','familias','lineas','marcas','modelos','tipos_unidad','gramajes','tipos_envasado','condiciones_tributarias'];
+const cats=['rubros','departamentos','familias','lineas','marcas','modelos','tipos_unidad','tipos_codigos_barras','tipos_envasado','condiciones_tributarias'];
 const respond=(route,value,status=200)=>route.fulfill({
   status,contentType:'application/json',body:JSON.stringify(value)
 });
 for(const width of [1440,820,572,390]){
-  test('popup producto actual ancho, centrado y sin scroll horizontal '+width,async({page})=>{
+  test('popup producto avanzado ancho, centrado y sin scroll horizontal '+width,async({page})=>{
     await page.setViewportSize({width,height:820});
     await page.route('**/api/v1/**',r=>{
       const path=new URL(r.request().url()).pathname;
@@ -26,7 +26,7 @@ for(const width of [1440,820,572,390]){
     if(width<1000)await page.locator('#menuToggle').click();
     await page.locator('.nav-link[data-nav="productos"]').click();
     await page.getByRole('button',{name:'Nuevo producto real'}).click();
-    const dialog=page.locator('.product-legacy-editor-dialog[open]');
+    const dialog=page.locator('.product-editor-dialog[open]');
     await expect(dialog).toBeVisible();
     const m=await dialog.evaluate(node=>{
       const rect=node.getBoundingClientRect();
@@ -41,6 +41,8 @@ for(const width of [1440,820,572,390]){
     if(width>=1100)expect(m.width).toBeGreaterThan(850);
     expect(m.cols).toBe(width<=680?1:2);
     await expect(dialog).not.toContainText('ID de proveedor');
+    await expect(dialog).not.toContainText('Gramajes');
+    await expect(dialog).toContainText('Códigos de barras de venta');
     await expect(dialog).toContainText('Presentación, precio e IVA');
   });
 }
