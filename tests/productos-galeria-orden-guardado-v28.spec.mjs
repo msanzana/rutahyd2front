@@ -166,7 +166,7 @@ test('nueva ficha empieza con margen mínimo y guarda precio calculado sin ser n
  const dto=state.calls.find(c=>c.m==='POST'&&c.p==='/api/v1/productos')?.dto;
  expect(dto).toBeDefined();
  expect(dto.costoNeto).toBe('100');
- expect(dto.precios[0].margenPorcentaje).toBe('15');
+ expect(Number(dto.precios[0].margenPorcentaje)).toBe(15);
  expect(Number(dto.presentacion.precioNeto)).toBe(115);
 });
 test('guardado de producto muestra error de margen del backend y nunca lo oculta',async({page})=>{
