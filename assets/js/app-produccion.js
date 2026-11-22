@@ -191,6 +191,14 @@
     online=Boolean(event.detail?.disponible);
   });
   document.addEventListener('click',event=>{
+    // Popup de información: el frontend productivo no carga app.js (demo).
+    // La acción de cierre debe atenderse aquí, sin alterar JWT ni navegación.
+    if(event.target.closest('#infoClose')){
+      event.preventDefault();
+      const dialog=$('#infoDialog');
+      if(dialog?.open)dialog.close();
+      return;
+    }
     const exp=event.target.closest('#toggleProductSubnav,#toggleAdminSubnav,#toggleProviderSubnav');
     if(exp){
       event.preventDefault();
