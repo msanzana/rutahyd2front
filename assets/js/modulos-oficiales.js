@@ -51,7 +51,7 @@
   function openEditor(cfg,row,onSaved){
     const editing=Boolean(row),definition=FIELDS[cfg.resource];
     if(!definition)return;
-    const dialog=create('dialog',undefined,'modal official-editor');
+    const dialog=create('dialog',undefined,'modal official-editor crud-official-dialog');
     dialog.setAttribute('aria-label',(editing?'Editar ':'Crear ')+cfg.title);
     const form=create('form',undefined,'official-editor-form');
     form.noValidate=true;
@@ -59,7 +59,8 @@
     heading.append(create('span','RUTA H&D · GESTIÓN COMERCIAL','official-editor-eyebrow'),
       create('h2',(editing?'Editar ':'Nuevo registro · ')+cfg.title));
     heading.append(create('p','Los cambios se guardan directamente en Laravel y MariaDB.','official-editor-description'));
-    form.append(heading);
+    const close=action('×',()=>dialog.close(),'crud-close');close.setAttribute('aria-label','Cerrar ventana');
+    heading.append(close);form.append(heading);
     const grid=create('div',undefined,'official-editor-grid'),inputs={};
     for(const [key,label,type,max,required] of definition){
       const field=create('label',undefined,'field');
@@ -116,7 +117,7 @@
   }
 
   function confirmDeactivate(cfg,row,onSaved){
-    const dialog=create('dialog',undefined,'modal official-confirm');
+    const dialog=create('dialog',undefined,'modal official-confirm crud-official-dialog');
     dialog.setAttribute('aria-label','Confirmar desactivación');
     const panel=create('div',undefined,'official-confirm-panel');
     panel.append(create('span','RUTA H&D · CONFIRMACIÓN','official-editor-eyebrow'),
@@ -136,7 +137,7 @@
       }catch(error){
         note.textContent=statusText(error);note.classList.add('is-error');
       }finally{deactivate.disabled=false;cancel.disabled=false;}
-    });
+    },'danger');
     buttons.append(cancel,deactivate);panel.append(buttons);dialog.append(panel);
     document.body.append(dialog);
     dialog.addEventListener('close',()=>dialog.remove(),{once:true});dialog.showModal();
