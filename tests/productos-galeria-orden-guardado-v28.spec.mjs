@@ -158,9 +158,12 @@ test('nueva ficha empieza con margen mínimo y guarda precio calculado sin ser n
  const fields=dlg.locator('.product-editor-form > label.field select');
  const values=[1,2,3,4,5,6,7,8,9];
  for(let i=0;i<values.length;i++)await fields.nth(i).selectOption(String(values[i]));
- // Antes de elegir Línea no se puede conocer su mínimo comercial.
- await expect(price.locator('input[type=number]').nth(1)).toHaveValue('15.0000');
+ // Sin costo el margen no existe; al ingresar costo se aplica el mínimo de Línea.
+ await expect(price.locator('input[type=number]').nth(1)).toHaveValue('');
+ await expect(price.locator('input[type=number]').nth(1)).toBeDisabled();
  await dlg.locator('#productoCostoNeto').fill('100');
+ await expect(price.locator('input[type=number]').nth(1)).toHaveValue('15.0000');
+ await expect(price.locator('input[type=number]').nth(1)).toBeEnabled();
  await expect(price.locator('input[type=number]').nth(2)).toHaveValue('115.0000');
  await dlg.getByRole('button',{name:'Guardar en MySQL'}).click();
  await expect(dlg).toBeHidden();
