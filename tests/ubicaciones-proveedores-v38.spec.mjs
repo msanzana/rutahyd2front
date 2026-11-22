@@ -28,6 +28,11 @@ async function fixture(page){
      Number(x.parentId)===Number(url.searchParams.get('padre_id')));
    return json(route,{data:list,last_page:1,total:list.length});
   }
+  if(p==='/api/v1/giros-sii'){
+   return json(route,{data:[{codigo:'469000',
+     descripcion:'VENTA AL POR MAYOR NO ESPECIALIZADA',
+     afecta_iva:'SI',categoria_tributaria:'1'}],last_page:1,total:1});
+  }
   if(p==='/api/v1/recursos/proveedores'){
    if(method==='POST'){
     const dto=request.postDataJSON();writes.push(dto);
@@ -76,8 +81,12 @@ test('nuevo proveedor SII guarda solo ciudad_id y todos los niveles se obtienen 
  await expect(dlg).toBeVisible();
  await dlg.locator('input[name="nombre"]').fill('Proveedor territorial');
  await dlg.locator('input[name="razon_social"]').fill('Proveedor Territorial SpA');
- await dlg.locator('input[name="giro"]').fill('Distribución de mercaderías');
- await dlg.locator('input[name="correo_dte"]').fill('dte@example.invalid');
+ await dlg.getByRole('button',{name:'Buscar giro SII'}).click();
+ const giros=page.locator('dialog.hd-giro-dialog[open]');
+ await expect(giros).toBeVisible();
+ await giros.getByRole('button',{name:'Seleccionar giro 469000'}).click();
+ await expect(giros).toBeHidden();
+ await dlg.locator('input[name="correo_electronico"]').fill('prov@example.invalid');
  const selects=dlg.locator('.location-chain select');
  await expect(selects).toHaveCount(5);
  await expect(selects.nth(0)).toHaveValue('1');
@@ -89,8 +98,9 @@ test('nuevo proveedor SII guarda solo ciudad_id y todos los niveles se obtienen 
  await expect(dlg).toBeHidden();
  expect(writes).toHaveLength(1);
  expect(writes[0]).toMatchObject({nombre:'Proveedor territorial',
-  razon_social:'Proveedor Territorial SpA',giro:'Distribución de mercaderías',
-  correo_dte:'dte@example.invalid',ciudad_id:9101});
+  razon_social:'Proveedor Territorial SpA',giro:'VENTA AL POR MAYOR NO ESPECIALIZADA',
+  actividad_economica_codigo:'469000',
+  correo_electronico:'prov@example.invalid',ciudad_id:9101});
  for(const field of ['pais_id','region_id','provincia_id','comuna_id','comuna','ciudad']){
   expect(writes[0]).not.toHaveProperty(field);
  }
