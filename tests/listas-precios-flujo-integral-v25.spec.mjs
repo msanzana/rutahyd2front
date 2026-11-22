@@ -198,7 +198,7 @@ test('switch de Lista activa se renderiza compacto, violeta y sin checkbox gigan
  await expect(check).toBeChecked();
  const appearance=await check.evaluate(node=>{
   const st=getComputedStyle(node),bar=node.getBoundingClientRect();
-  return {appearance:st.appearance,width:bar.width,height:bar.height,
+  return {appearance:st.appearance,width:parseFloat(st.width),height:parseFloat(st.height),
    radius:st.borderRadius,background:st.backgroundColor};
  });
  expect(appearance.appearance).toBe('none');
