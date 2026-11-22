@@ -215,7 +215,7 @@
       if(inputs.activo)datos.activo=inputs.activo.checked;
       if(clientPriceList&&clientPriceList.value)datos.lista_precio_id=Number(clientPriceList.value);
       submit.disabled=true;cancel.disabled=true;
-      note.textContent='Guardando en el servidor…';note.classList.remove('is-error');
+      note.textContent='Guardando cambios…';note.classList.remove('is-error');
       try {
         if(editing)await api().updateResource(cfg.resource,row.id,datos);
         else await api().createResource(cfg.resource,datos);
@@ -276,7 +276,7 @@
       return;
     }
     if(!cfg.resource){
-      notice.textContent='El backend no tiene todavía un contrato comprobado de cuentas corrientes. No se mostrarán saldos estimados.';
+      notice.textContent='Este módulo aún no está disponible. No se mostrarán saldos estimados.';
       return;
     }
     const editable=Boolean(FIELDS[cfg.resource]&&(access()?.isAdmin()||access()?.has(cfg.permission)));
@@ -349,7 +349,7 @@
           table.append(body);content.append(table);
           notice.textContent='';
         }else{
-          notice.textContent='No existen registros para esta página de la base de datos.';
+          notice.textContent='No hay registros para mostrar en esta página.';
         }
         window.RutaHDListUI?.renderPager(pager,{
           page,pages:Number(response.last_page||1),total:Number(response.total||rows.length),
