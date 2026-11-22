@@ -245,3 +245,46 @@
 @media(prefers-reduced-motion:reduce){
   :where(.crud-dialog,.crud-official-dialog,.crud-product-dialog,.crud-supplier-dialog)[open]{animation:none}
 }
+
+
+/* Ruta H&D V2 · Menú jerárquico oficial estable v19.
+   Ocho padres y subítems de un solo nivel. El orden lo determina el HTML. */
+.sidebar .nav{display:flex;flex-direction:column;align-items:stretch;gap:5px;min-width:0}
+.sidebar .nav>.nav-link,.sidebar .nav>.nav-group{flex:0 0 auto;min-width:0;width:100%}
+.sidebar .nav-group{display:block;min-width:0;width:100%}
+.sidebar .nav-parent{display:flex;align-items:stretch;width:100%;gap:4px;min-width:0}
+.sidebar .nav-parent>.nav-link{flex:1 1 auto;width:auto;min-width:0}
+.sidebar .nav-parent>.nav-expand{
+  flex:0 0 34px;width:34px;min-width:34px;align-self:center;
+  display:grid;place-items:center;border-radius:9px;color:#e6d1f7
+}
+.sidebar :is(#adminSubnav,#productSubnav,#providerSubnav){
+  box-sizing:border-box;display:flex;flex-direction:column;align-items:stretch;
+  gap:3px;margin:5px 0 11px 12px;padding:4px 0 4px 10px;
+  width:calc(100% - 12px);min-width:0;max-width:calc(100% - 12px);
+  border-left:1px solid rgba(222,196,245,.35);overflow:visible
+}
+.sidebar :is(#adminSubnav,#productSubnav,#providerSubnav)[hidden]{display:none!important}
+.sidebar :is(#adminSubnav,#productSubnav,#providerSubnav) .nav-sublink{
+  box-sizing:border-box;display:flex;align-items:center;text-align:left;
+  flex:0 0 auto;width:100%;max-width:100%;min-width:0;min-height:37px;
+  padding:9px 10px!important;margin:0!important;border:0;border-radius:8px;
+  background:transparent;color:#e7d9f1;font-size:12px;font-weight:560;
+  line-height:1.45;white-space:normal;overflow-wrap:anywhere;word-break:normal
+}
+.sidebar :is(#adminSubnav,#productSubnav,#providerSubnav) .nav-sublink span{
+  display:block;min-width:0;max-width:100%;white-space:normal;overflow-wrap:anywhere
+}
+.sidebar :is(#adminSubnav,#productSubnav,#providerSubnav) .nav-sublink:hover{
+  background:rgba(225,184,255,.13);color:#fff
+}
+.sidebar :is(#adminSubnav,#productSubnav,#providerSubnav) .nav-sublink.active{
+  background:rgba(205,158,248,.23);color:#fff;font-weight:750;
+  box-shadow:inset 3px 0 0 #d6a6ff
+}
+.sidebar :is(#adminSubnav,#productSubnav,#providerSubnav) .nav-sublink[hidden]{display:none!important}
+@media(max-width:900px){
+  .sidebar :is(#adminSubnav,#productSubnav,#providerSubnav){
+    margin-left:10px;width:calc(100% - 10px);max-width:calc(100% - 10px)
+  }
+}
