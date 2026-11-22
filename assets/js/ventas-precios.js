@@ -28,7 +28,9 @@
   const client=control('Cliente','select'),product=control('Producto','select'),qty=control('Cantidad','number');
   const typeDte=control('Tipo de documento','select'),document=control('Documento receptor'),name=control('Nombre receptor');
   const address=control('Dirección del receptor (factura)'),date=control('Fecha emisión','date');
-  client.input.required=true;product.input.required=true;qty.input.required=true;qty.input.min='0.001';qty.input.step='0.001';
+  client.input.required=true;product.input.required=true;
+  // Cantidad se valida al agregar una línea, no al finalizar la venta.
+  qty.input.required=false;qty.input.min='0.001';qty.input.step='0.001';
   document.input.required=true;name.input.required=true;date.input.required=true;
   date.input.value=new Date().toISOString().slice(0,10);
   option(client.input,'','Selecciona un cliente');option(product.input,'','Selecciona un producto');
