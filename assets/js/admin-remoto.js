@@ -127,7 +127,12 @@
       el('p','','Los cambios se guardan en MariaDB bajo control de permisos.'));
     root.appendChild(header);
     const message=el('p','catalog-footnote','');message.id='remoteStatus';root.appendChild(message);
-    if(!authorized){renderLogin();return;}
+    if(!authorized){
+      if(access()?.authenticated()){
+        root.appendChild(el('p','catalog-footnote','Cargando los registros autorizados desde Laravel…'));
+      }else renderLogin();
+      return;
+    }
     const keys=KEYS.filter(key=>canSee(key)&&(restrictedKey?key===restrictedKey:ADMIN_ONLY.has(key)));
     if(!keys.length && !access()?.has('productos.gestionar')){
       root.appendChild(el('p','catalog-footnote','Tu perfil no tiene acceso a los catálogos de Productos.'));
