@@ -1,0 +1,117 @@
+/* Ruta H&D V2 · V33 · Checkboxes redondeados y páginas numeradas.
+   El paginador compartido usa siempre páginas reales del módulo;
+   las listas locales mantienen 25 registros por página sin descartar datos. */
+:root{--hd-pagination-main:#7134af;--hd-pagination-hover:#f0e3fc}
+#workspaceContent .list-pagination.hd-numbered-pagination,
+.product-gallery-thumb-pages.hd-numbered-pagination{
+ position:relative;display:flex;align-items:center;justify-content:center;
+ flex-wrap:wrap;gap:7px;max-width:100%;min-height:42px;
+ padding:10px 8px 7px;box-sizing:border-box;
+ background:transparent;border:0;
+}
+#workspaceContent .hd-numbered-pagination[hidden],
+.product-gallery-thumb-pages.hd-numbered-pagination[hidden]{display:none!important}
+.hd-numbered-pagination .hd-page-numbers{
+ display:inline-flex;align-items:center;justify-content:center;
+ flex-wrap:wrap;gap:5px;min-width:0
+}
+.hd-numbered-pagination .hd-page-button{
+ display:inline-flex;align-items:center;justify-content:center;
+ flex:0 0 auto;min-width:35px;width:35px;height:35px;
+ padding:0 5px;border:1px solid #decbea;border-radius:999px;
+ box-shadow:0 2px 5px rgba(70,29,103,.04);
+ color:#542c78;background:#fff;font-weight:800;font-size:12px;
+ font-family:inherit;line-height:1;cursor:pointer;
+ transition:background .15s ease,border .15s ease,color .15s ease,box-shadow .15s ease;
+}
+.hd-numbered-pagination .hd-page-button.hd-page-arrow{
+ width:auto;min-width:82px;padding:0 12px;
+ font-weight:700;color:#674980;border-radius:999px
+}
+.hd-numbered-pagination .hd-page-button:not(:disabled):hover{
+ background:var(--hd-pagination-hover);border-color:#a56ddb;
+ box-shadow:0 3px 10px rgba(94,35,137,.12)
+}
+.hd-numbered-pagination .hd-page-button.is-current,
+.hd-numbered-pagination .hd-page-button[aria-current="page"]{
+ background:var(--hd-pagination-main)!important;border-color:var(--hd-pagination-main)!important;
+ color:#fff!important;box-shadow:0 3px 9px rgba(92,34,157,.22)!important;
+}
+.hd-numbered-pagination .hd-page-button:disabled:not(.is-current){
+ opacity:.38;cursor:not-allowed;box-shadow:none
+}
+.hd-numbered-pagination .hd-page-button:focus-visible{
+ outline:3px solid #aa7bde;outline-offset:3px
+}
+.hd-numbered-pagination .hd-page-ellipsis{
+ display:inline-flex;align-items:center;justify-content:center;
+ width:18px;height:34px;color:#8a6f9a;font-size:15px;
+ user-select:none
+}
+#workspaceContent .hd-numbered-pagination .list-pagination-info,
+.product-gallery-thumb-pages.hd-numbered-pagination .list-pagination-info{
+ flex:1 1 100%;order:4;text-align:center;
+ margin:1px 0 0;color:#755b88;font-size:11px;line-height:1.35;
+ font-variant-numeric:tabular-nums
+}
+/* Permisos Ver/Gestionar son selecciones múltiples, NO interruptores.
+   Se presentan como checkbox profesional con esquinas suavemente redondeadas. */
+.permissions-table input[type="checkbox"],
+.permission-tree-row input[type="checkbox"],
+input.hd-rounded-check[type="checkbox"]{
+ -webkit-appearance:none!important;appearance:none!important;
+ position:relative;display:inline-block;vertical-align:middle;
+ margin:0!important;padding:0!important;
+ width:20px!important;min-width:20px!important;
+ height:20px!important;min-height:20px!important;
+ border:1.5px solid #a18ab5!important;border-radius:6px!important;
+ background:#fff!important;cursor:pointer;box-sizing:border-box;
+ box-shadow:0 1px 2px rgba(54,19,83,.08)!important
+}
+.permissions-table input[type="checkbox"]:checked,
+.permission-tree-row input[type="checkbox"]:checked,
+input.hd-rounded-check[type="checkbox"]:checked{
+ background:#7134af!important;border-color:#7134af!important
+}
+.permissions-table input[type="checkbox"]:checked::after,
+.permission-tree-row input[type="checkbox"]:checked::after,
+input.hd-rounded-check[type="checkbox"]:checked::after{
+ content:"";position:absolute;left:6px;top:2px;
+ width:5px;height:10px;box-sizing:border-box;
+ border:solid #fff;border-width:0 2.5px 2.5px 0;
+ transform:rotate(45deg)
+}
+.permissions-table input[type="checkbox"]:focus-visible,
+.permission-tree-row input[type="checkbox"]:focus-visible,
+input.hd-rounded-check[type="checkbox"]:focus-visible{
+ outline:3px solid #b995e9;outline-offset:3px
+}
+.permissions-table input[type="checkbox"]:disabled,
+.permission-tree-row input[type="checkbox"]:disabled,
+input.hd-rounded-check[type="checkbox"]:disabled{
+ opacity:.5;cursor:not-allowed
+}
+html[data-theme=oscuro]{
+ --hd-pagination-main:#9856d3;--hd-pagination-hover:#443051
+}
+html[data-theme=oscuro] .hd-numbered-pagination .hd-page-button:not(.is-current){
+ background:#30233d;color:#f1dcff;border-color:#6a4e81
+}
+html[data-theme=oscuro] .hd-numbered-pagination .hd-page-ellipsis,
+html[data-theme=oscuro] .hd-numbered-pagination .list-pagination-info{
+ color:#e3c9f5
+}
+html[data-theme=oscuro] :is(.permissions-table,.permission-tree-row) input[type="checkbox"]{
+ background:#30233d!important;border-color:#a68bbd!important
+}
+html[data-theme=oscuro] :is(.permissions-table,.permission-tree-row) input[type="checkbox"]:checked{
+ background:#9856d3!important;border-color:#9856d3!important
+}
+@media(max-width:680px){
+ .hd-numbered-pagination .hd-page-button{min-width:40px;width:40px;height:40px}
+ .hd-numbered-pagination .hd-page-button.hd-page-arrow{min-width:76px;padding:0 11px}
+ #workspaceContent .list-pagination.hd-numbered-pagination{gap:6px;padding:10px 2px}
+}
+@media(prefers-reduced-motion:reduce){
+ .hd-numbered-pagination .hd-page-button{transition:none}
+}
