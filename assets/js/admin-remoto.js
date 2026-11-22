@@ -240,11 +240,17 @@
     if(parentKey){
       parent=el('select');parent.required=true;
       const blank=el('option','','Seleccione un padre');blank.value='';parent.appendChild(blank);
-      cache[parentKey].filter(x=>x.activo||String(x.id)===String(rec?.parentId)).forEach(p=>{
+      const parents=cache[parentKey].filter(x=>x.activo||String(x.id)===String(rec?.parentId));
+      parents.forEach(p=>{
         const option=el('option','',p.nombre);option.value=p.id;parent.appendChild(option);
       });
       parent.value=rec?.parentId??'';
       body.append(wrap('Pertenece a '+CONFIG[parentKey][0]+' *',parent));
+      if(!parents.length){
+        const note=el('p','crud-help','Antes de crear '+CONFIG[key][0]+
+          ' debes registrar al menos una opción activa en '+CONFIG[parentKey][0]+'.');
+        note.setAttribute('role','status');body.append(note);
+      }
     }
     if(key==='condiciones_tributarias'&&rec){
       name.readOnly=true;
