@@ -59,7 +59,7 @@
   };
   const errorText=e=>{
     if(e?.status===401)return 'Sesión vencida: vuelve a iniciar sesión.';
-    if(e?.status===503)return 'Laravel aún no está habilitado: faltan configurar sus secretos privados y la cuenta administradora.';
+    if(e?.status===503)return 'El sistema no está disponible. Contacta al administrador.';
     if(e?.status===403)return 'El perfil no tiene permiso para operar este submódulo.';
     if(e?.status===404)return 'El recurso no existe o aún no se ha desplegado.';
     if(e?.status===409)return 'Conflicto: registro duplicado o con referencias.';
@@ -207,7 +207,7 @@
     const copy=el('div','crud-heading-copy');
     copy.append(el('span','crud-kicker','RUTA H&D · CATÁLOGOS'),
       el('h2','',title),
-      el('p','crud-intro',deleteMode?'Esta acción requiere confirmación y se validará en el servidor.':'Completa la información para mantener actualizado el catálogo comercial.'));
+      el('p','crud-intro',deleteMode?'Esta acción requiere confirmación antes de continuar.':'Completa la información para mantener actualizado el catálogo comercial.'));
     const close=button('×',()=>dialog.close(),'crud-close');
     close.setAttribute('aria-label','Cerrar ventana');
     heading.append(copy,close);
