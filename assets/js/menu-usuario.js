@@ -35,6 +35,10 @@
   if(currentUserId){
    try{dark=localStorage.getItem(storageKey(currentUserId))==='oscuro';}catch{}
   }
+  if(['claro','oscuro'].includes(user.tema_interfaz)){
+   dark=user.tema_interfaz==='oscuro';
+   if(currentUserId){try{localStorage.setItem(storageKey(currentUserId),user.tema_interfaz);}catch{}}
+  }
   setDark(dark);close();
  };
  trigger.addEventListener('click',event=>{event.preventDefault();toggle();});
@@ -50,6 +54,13 @@
   if(currentUserId){
    try{localStorage.setItem(storageKey(currentUserId),dark?'oscuro':'claro');}
    catch{window.RutaHDAvisos?.toast?.('warning','Preferencia no guardada','El navegador no permitió guardar el tema.');}
+  }
+  // El servidor actualizado sincroniza la preferencia entre dispositivos.
+  // Sin DDL23 se mantiene exclusivamente por cuenta en este navegador.
+  if(['claro','oscuro'].includes(acl()?.usuario()?.tema_interfaz)){
+   void window.RutaHDApiCatalogos?.saveTheme(dark?'oscuro':'claro').catch(()=>{
+    window.RutaHDAvisos?.toast?.('warning','Tema local','No se pudo sincronizar la preferencia con el servidor.');
+   });
   }
  });
  get('menuSignOut')?.addEventListener('click',()=>{close();void window.RutaHDLogin?.logout();});
