@@ -34,14 +34,27 @@ function draw(){
  const thead=el('thead');thead.append(head);table.append(thead);
  const body=el('tbody');
  users.filter(u=>(u.nombre+' '+u.correo_electronico+' '+u.perfil).toLocaleLowerCase('es-CL').includes(filter)).forEach(u=>{
-  const tr=el('tr');[u.nombre,u.correo_electronico,u.perfil,u.activo?'Activo':'Inactivo'].forEach(v=>tr.append(el('td',String(v))));
+  const tr=el('tr');
+  [u.nombre,u.correo_electronico,u.perfil].forEach(v=>tr.append(el('td',String(v))));
+  const stateCell=el('td',undefined,'catalog-status-cell');
+  const protectedAccount=u.rol_codigo==='administrador';
+  const toggle=window.RutaHDListUI?.statusSwitch(u.nombre,Boolean(u.activo),async active=>{
+    await api().updateUser(u.id,{
+      nombre:u.nombre,correo_electronico:u.correo_electronico,
+      rol_id:Number(u.rol_id),activo:active
+    });
+    await load();
+  },{disabled:protectedAccount});
+  stateCell.append(toggle||el('span',u.activo?'Activo':'Inactivo'));
+  tr.append(stateCell);
   const actions=el('td',undefined,'catalog-actions');
-  if(u.rol_codigo==='administrador'){actions.append(el('span','Administrador protegido'));}
-  else {
-   actions.append(btn('Editar',()=>form(u),'catalog-small-button'),
-    btn('Enviar recuperación',()=>guard(async()=>{await api().requestRecovery(u.correo_electronico);status('Si la cuenta está activa, recibirá un enlace por correo.');}),'catalog-small-button'));
-   if(u.activo)actions.append(btn('Desactivar',()=>deactivate(u),'catalog-small-button danger-text'));
-  }
+  if(protectedAccount)actions.append(el('span','Administrador protegido'));
+  else actions.append(
+    btn('Editar',()=>form(u),'catalog-small-button'),
+    btn('Enviar recuperación',()=>guard(async()=>{
+      await api().requestRecovery(u.correo_electronico);
+      status('Si la cuenta está activa, recibirá un enlace por correo.');
+    }),'catalog-small-button'));
   tr.append(actions);body.append(tr);
  });
  table.append(body);box.append(table);
