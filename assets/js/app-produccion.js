@@ -42,11 +42,11 @@
     $('#toggleAdminSubnav').hidden=!logged();
     $('#toggleProviderSubnav').hidden=!logged();
     const providerProducts=$('#providerSubnav [data-nav="proveedores_productos"]');
-    if(providerProducts)providerProducts.hidden=!logged()||!acl().canSeeSubmodule('proveedores.productos');
+    if(providerProducts)providerProducts.hidden=!logged()||!acl().canSeeSubmodule('proveedores_productos');
     const providerList=$('#providerSubnav [data-nav="proveedores"]');
-    if(providerList)providerList.hidden=!logged()||!acl().canSeeSubmodule('proveedores.listado');
+    if(providerList)providerList.hidden=!logged()||!acl().canSeeSubmodule('proveedores_listado');
     const productList=$('#productSubnav [data-nav="productos"]');
-    if(productList)productList.hidden=!logged()||!acl().canSeeSubmodule('productos.listado');
+    if(productList)productList.hidden=!logged()||!acl().canSeeSubmodule('productos_listado');
     $$('#productSubnav [data-catalog-key]').forEach(btn=>{
       btn.hidden=!logged()||!acl().canViewCatalog(btn.dataset.catalogKey);
     });
@@ -84,9 +84,9 @@
     // Una comprobación transitoria del estado no debe congelar menús de una sesión JWT válida.
     if(!logged())return false;
     if(section==='usuarios'||section==='perfiles')return acl().isAdmin();
-    if(section==='proveedores_productos')return acl().canSeeSubmodule('proveedores.productos');
-    if(section==='proveedores')return acl().canSeeSubmodule('proveedores.listado');
-    if(section==='productos')return acl().canSeeSubmodule('productos.listado');
+    if(section==='proveedores_productos')return acl().canSeeSubmodule('proveedores_productos');
+    if(section==='proveedores')return acl().canSeeSubmodule('proveedores_listado');
+    if(section==='productos')return acl().canSeeSubmodule('productos_listado');
     if(section.startsWith('catalogos.')){
       const key=section.split('.')[1];
       return CATALOGS.has(key)&&acl().canViewCatalog(key);
