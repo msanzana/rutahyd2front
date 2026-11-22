@@ -402,7 +402,9 @@
     if(!baseList)throw new Error('No existe una LISTA BASE activa. Verifica el DDL24.');
     const modal=el('dialog','modal catalog-dialog product-editor-dialog crud-product-dialog');
     const form=el('form','form-grid product-editor-form');
-    form.noValidate=false;
+    // Gestionar el submit incluso con un campo inválido: mostrar error visible,
+    // no bloquear silenciosamente el botón con la validación nativa.
+    form.noValidate=true;
     modal.appendChild(form);
     const heading=el('div','product-editor-heading');
     heading.append(el('span','overline','RUTA H&D · CATÁLOGO DE PRODUCTOS'),
@@ -435,18 +437,22 @@
         select.disabled=Boolean(depends&&!parent);
       });
     };
-    // Restaurar la selección original respetando primero las dependencias.
-    ATTRS.forEach(([field,catalog,,depends])=>{
-      if(!controls[field])return;
-      const parent=depends?Number(initial[depends]):null;
-      const original=(cache[catalog]||[]).find(x=>Number(x.id)===Number(initial[field]));
-      if(original&&(!depends||Number(original.parentId)===parent)) {
-        const option=el('option','',original.nombre);
-        option.value=String(original.id);controls[field].appendChild(option);
-        controls[field].value=option.value;
-      }
-    });
+    // Inicializar padres ANTES de hijos. Redibujar en cada nivel impide
+    // que la renovación de opciones borre silenciosamente una clasificación.
     redraw();
+    ATTRS.forEach(([field,catalog,,depends])=>{
+      const desired=initial[field],original=(cache[catalog]||[])
+        .find(x=>String(x.id)===String(desired));
+      if(!original)return;
+      if(depends && String(original.parentId)!==String(controls[depends].value))return;
+      const current=controls[field];
+      if(![...current.options].some(option=>option.value===String(desired))){
+        const option=el('option','',original.nombre);
+        option.value=String(original.id);current.append(option);
+      }
+      current.value=String(desired);
+      redraw();
+    });
     ATTRS.forEach(([field])=>controls[field].addEventListener('change',()=>{
       const clearChildren=k=>ATTRS.filter(x=>x[3]===k).forEach(([child])=>{
         controls[child].value='';clearChildren(child);
@@ -635,9 +641,13 @@
     form.addEventListener('submit',async(event)=>{
       event.preventDefault();
       if(busy)return;
-      if(!form.reportValidity()){
-        form.querySelector(':invalid')?.scrollIntoView({behavior:'smooth',block:'center'});
-        feedback.textContent='Revisa los campos obligatorios y valores indicados antes de guardar.';
+      if(!form.checkValidity()){
+        const invalid=form.querySelector(':invalid');
+        invalid?.scrollIntoView({behavior:'smooth',block:'center'});
+        invalid?.focus();
+        const name=invalid?.closest('label')?.querySelector('span')?.textContent?.trim();
+        feedback.textContent='Revisa el campo «'+(name||'obligatorio')+
+          '»: selecciona o ingresa un valor válido para guardar el producto.';
         feedback.hidden=false;return;
       }
       const classification=Object.fromEntries(ATTRS.map(([field])=>[field,Number(controls[field].value)]));
