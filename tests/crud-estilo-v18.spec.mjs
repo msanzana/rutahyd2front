@@ -43,7 +43,8 @@ for(const width of [1440,820,390]){
   test('CRUD de cliente estilizado y acciones a la derecha '+width,async({page})=>{
     await page.setViewportSize({width,height:850});
     await fixture(page);
-    await expect(page.getByRole('button',{name:'Cerrar sesión',exact:true})).toHaveCount(1);
+    await expect(page.locator('#userMenuTrigger')).toBeVisible();
+    await expect(page.locator('#userMenuPopup')).toBeHidden();
     await menu(page,width,'.nav-link[data-nav="clientes"]');
     const row=page.locator('.official-table tbody tr').first();
     await expect(row).toContainText('Cliente visual CI');
