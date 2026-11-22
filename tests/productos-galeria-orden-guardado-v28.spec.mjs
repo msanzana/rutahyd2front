@@ -317,3 +317,48 @@ test('ficha consulta resuelve nombres de clasificación aunque GET individual en
  await expect(classification).not.toContainText('Asignado · ID 1');
  await dialog.getByRole('button',{name:'Cerrar ficha',exact:true}).click();
 });
+
+test('switch de producto desactiva y reactiva sin botón Eliminar',async({page})=>{
+ const state=await fixture(page);
+ const table=page.locator('#productosRealesListado .product-index-table');
+ await expect(table.getByRole('button',{name:/Eliminar|Desactivar/})).toHaveCount(0);
+ const row=table.locator('tbody tr').first();
+ page.once('dialog',dialog=>dialog.accept());
+ await row.getByRole('checkbox',{name:'Desactivar Conserva del Sur'}).uncheck();
+ await expect(row.getByRole('checkbox',{name:'Activar Conserva del Sur'})).not.toBeChecked();
+ await expect.poll(()=>state.calls.findLast(c=>c.p==='/api/v1/productos/9'&&c.m==='PUT')?.dto)
+   .toMatchObject({activo:false});
+ await row.getByRole('checkbox',{name:'Activar Conserva del Sur'}).check();
+ await expect(row.getByRole('checkbox',{name:'Desactivar Conserva del Sur'})).toBeChecked();
+ await expect.poll(()=>state.calls.findLast(c=>c.p==='/api/v1/productos/9'&&c.m==='PUT')?.dto)
+   .toMatchObject({activo:true});
+});
+test('glóbulos de precios y códigos se apilan y tooltips salen debajo sin recorte',async({page})=>{
+ await fixture(page);
+ const table=page.locator('.product-index-table');
+ const cell=table.locator('tbody .product-badges-cell').first();
+ const positions=await cell.evaluate(node=>{
+  const sample=node.querySelector('.product-data-pill');
+  const copy=sample.cloneNode(true);
+  node.append(copy);
+  const a=sample.getBoundingClientRect(),b=copy.getBoundingClientRect();
+  const layout=getComputedStyle(node.closest('table')).tableLayout;
+  copy.remove();
+  return {firstTop:a.top,secondTop:b.top,layout};
+ });
+ expect(positions.secondTop).toBeGreaterThan(positions.firstTop+5);
+ expect(positions.layout).toBe('auto');
+ const action=table.getByRole('button',{name:'Fotos de Conserva del Sur'});
+ await action.hover();
+ const tip=page.locator('body > .hd-floating-tooltip');
+ await expect(tip).toBeVisible();
+ await expect(tip).toContainText('Fotos');
+ const locations=await page.evaluate(()=>{
+  const button=document.querySelector('#productosRealesListado [data-photo-action="9"]');
+  const tip=document.querySelector('body > .hd-floating-tooltip');
+  return {buttonBottom:button.getBoundingClientRect().bottom,
+    tipTop:tip.getBoundingClientRect().top,correctParent:tip.parentElement===document.body};
+ });
+ expect(locations.correctParent).toBe(true);
+ expect(locations.tipTop).toBeGreaterThan(locations.buttonBottom);
+});
