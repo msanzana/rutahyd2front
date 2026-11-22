@@ -143,10 +143,10 @@
           if(meta)meta.textContent='No fue posible consultar el catálogo SII.';
         }
       },'ghost');
+      original.replaceWith(wrap);
       wrap.append(original,select,
         create('p',code.value?'Código SII seleccionado: '+code.value:
           'Selecciona el giro desde el catálogo oficial.','hd-giro-selected'));
-      original.replaceWith(wrap);
     }
     let location=null;
     if(['clientes','proveedores','bodegas'].includes(cfg.resource)){
