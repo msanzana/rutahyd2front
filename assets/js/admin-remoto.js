@@ -38,7 +38,8 @@
     ['condicionTributariaId','condiciones_tributarias',null]
   ];
   const cache=Object.fromEntries(KEYS.map(k=>[k,[]]));
-  let authorized=false,selected='rubros',restrictedKey=null,root=null,busy=false;
+  let authorized=false,selected='rubros',restrictedKey=null,root=null,busy=false,viewVersion=0;
+  let catalogErrors=new Map();
   const access=()=>window.RutaHDAccesos;
   const canSee=key=>access()?.canViewCatalog(key)??true;
   const canManage=key=>access()?.canManageCatalog(key)??true;
@@ -73,28 +74,50 @@
     catch(e){status(errorText(e),true);if(e?.status===401){API().signOut();authorized=false;access()?.clear();render();}}
     finally{busy=false;}
   }
-  async function refresh(){
-    const permitted=KEYS.filter(key=>canSee(key));
-    const response=await Promise.all(permitted.map(key=>API().list(key)));
-    KEYS.forEach(key=>cache[key]=[]);
-    permitted.forEach((key,i)=>{cache[key]=response[i].items;});
-    const visible=restrictedKey?permitted:[...permitted].filter(key=>ADMIN_ONLY.has(key));
-    if(!visible.includes(selected))selected=visible[0]||'tipos_unidad';
+  async function refresh(version=viewVersion){
+    const target=root;
+    if(!target||version!==viewVersion)return;
+    const visible=KEYS.filter(key=>canSee(key)&&
+      (restrictedKey?key===restrictedKey:ADMIN_ONLY.has(key)));
+    const selectedKey=restrictedKey||selected;
+    const parent=CONFIG[selectedKey]?.[1]||null;
+    const keys=[...new Set([...visible,...(restrictedKey&&parent&&canSee(parent)?[parent]:[])])];
+    status('Consultando '+(restrictedKey?CONFIG[restrictedKey][0]:'los catálogos de Administración')+' en Laravel…');
+    const results=await Promise.allSettled(keys.map(key=>API().list(key)));
+    if(version!==viewVersion||root!==target||!target.isConnected)return;
+    catalogErrors=new Map();
+    keys.forEach((key,i)=>{
+      const answer=results[i];
+      if(answer.status==='fulfilled'&&Array.isArray(answer.value?.items)){
+        cache[key]=answer.value.items;
+      }else{
+        cache[key]=[];
+        const error=answer.status==='rejected'?answer.reason:new Error('Formato de catálogo incorrecto');
+        catalogErrors.set(key,error);
+      }
+    });
+    if(visible.length&&!visible.includes(selected))selected=visible[0];
     authorized=true;render();
-    status('Catálogos cargados desde la API autenticada. No se importaron los datos locales.');
+    const errors=[...catalogErrors.entries()].filter(([key])=>visible.includes(key));
+    if(errors.length){
+      const labels=errors.map(([key])=>CONFIG[key][0]).join(', ');
+      status('No se pudieron consultar: '+labels+'. Usa «Actualizar datos» para reintentar. Los demás catálogos siguen disponibles.',true);
+    }else{
+      status('Datos recibidos desde Laravel/MySQL · '+visible.length+' catálogo(s) consultados.');
+    }
   }
   function mount(parent,key=null){
+    const version=++viewVersion;
     restrictedKey=key&&KEYS.includes(key)?key:null;
     if(restrictedKey)selected=restrictedKey;
+    authorized=false;
     const container=el('section','surface-panel');
     container.id='adminRemoto';
     container.style.marginBottom='20px';
     root=container;
-    parent.prepend(container);
-    // El login principal de la cabecera comparte la misma sesión JWT en memoria.
-    // Cargar los catálogos reales al entrar, sin exigir un segundo login.
-    if(access()?.authenticated()) guarded(refresh);
-    else { authorized=false; render(); }
+    parent.replaceChildren(container);
+    render();
+    if(access()?.authenticated())void refresh(version);
   }
   function render(){
     if(!root)return;
@@ -111,7 +134,7 @@
       return;
     }
     const bar=el('div','workspace-actions');
-    bar.appendChild(button('Actualizar datos',()=>guarded(refresh),'button ghost'));
+    bar.appendChild(button('Actualizar datos',()=>void refresh(viewVersion),'button ghost'));
     root.appendChild(bar);
     if(!restrictedKey){
       const tabs=el('div','catalog-tabs');
@@ -123,6 +146,12 @@
     }
     if(!keys.includes(selected)){
       root.appendChild(el('p','catalog-footnote','Acceso denegado al submódulo solicitado.'));
+      return;
+    }
+    if(catalogErrors.has(selected)){
+      const warning=el('p','catalog-footnote','No se pudo cargar '+CONFIG[selected][0]+'. El listado no es una confirmación de que esté vacío.');
+      warning.setAttribute('role','alert');root.appendChild(warning);
+      root.appendChild(button('Reintentar catálogo',()=>void refresh(viewVersion),'button ghost'));
       return;
     }
     const action=el('div','workspace-actions');
@@ -145,8 +174,10 @@
       actions.appendChild(editBtn);actions.appendChild(deleteBtn);
       tr.appendChild(actions);rows.appendChild(tr);
     });
-    table.appendChild(rows);list.appendChild(table);root.appendChild(list);
-
+    table.appendChild(rows);
+    if(rows.childElementCount===0){
+      root.appendChild(el('p','catalog-footnote','No hay registros guardados para '+CONFIG[selected][0]+'. Puedes crear el primero con «Nuevo registro».'));
+    }else{list.appendChild(table);root.appendChild(list);}
   }
   function renderLogin(){
     root.appendChild(el('p','catalog-footnote',
@@ -189,7 +220,8 @@
   }
   function edit(rec){
     if(!canManage(selected)){status('Tu perfil no puede modificar este catálogo.',true);return;}
-    const key=selected,parentKey=CONFIG[key][1],body=el('div','crud-form-grid');
+    const key=selected;
+    const parentKey=CONFIG[key][1],body=el('div','crud-form-grid');
     const wrap=(label,control)=>{const field=el('label','field crud-field');field.append(el('span','',label),control);return field;};
     const name=el('input');name.required=true;name.maxLength=100;name.value=rec?.nombre??'';
     body.append(wrap('Nombre o valor *',name));
@@ -213,18 +245,18 @@
       name.readOnly=true;
     }
     dialog((rec?'Editar ':'Crear ')+CONFIG[key][0],body,async()=>{
-      if(!name.value.trim()||(parent&&!parent.value))throw new Error('Formulario incompleto');
+      if(!name.value.trim()||(parent&&!parent.value))throw Object.assign(new Error('Formulario incompleto'),{status:422});
       const data={nombre:name.value.trim(),activo:state.value==='1',parentId:parent?Number(parent.value):null};
       if(rec)await API().update(key,rec.id,data);
       else await API().create(key,data);
-      await refresh();status('Catálogo actualizado en servidor.');
+      await refresh(viewVersion);status('Catálogo actualizado en servidor.');
     });
   }
   function remove(rec){
     if(!canManage(selected)){status('Tu perfil no puede eliminar este catálogo.',true);return;}
     const key=selected;
     dialog('¿Eliminar '+rec.nombre+'?',el('p','','Se eliminará en la base de datos. Solo es posible si no existen relaciones.'),async()=>{
-      await API().remove(key,rec.id);await refresh();status('Registro eliminado del servidor.');
+      await API().remove(key,rec.id);await refresh(viewVersion);status('Registro eliminado del servidor.');
     },true);
   }
   function renderReadOnlyResources(){
