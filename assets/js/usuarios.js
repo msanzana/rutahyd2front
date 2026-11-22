@@ -11,7 +11,7 @@ async function guard(fn){if(busy)return;busy=true;try{await fn();}catch(e){statu
 async function load(){
  const res=await api().usersAll();
  if(!Array.isArray(res.usuarios)||!Array.isArray(res.roles))throw Error('Formato inválido');
- users=res.usuarios;roles=res.roles;draw();status('Datos reales actualizados desde Laravel/MySQL.');
+ users=res.usuarios;roles=res.roles;draw();status('Lista de usuarios actualizada.');
 }
 function mount(parent){
  parent.replaceChildren();
