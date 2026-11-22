@@ -321,6 +321,11 @@
     try{await loadCatalogs();}
     catch(error){catalogErrorDialog(error);return;}
     const producto=id?await api().getProduct(id):null;
+    // Tarifario del servidor: la Lista Base es obligatoria para todo producto.
+    const listReply=await api().priceLists();
+    const priceLists=Array.isArray(listReply?.data)?listReply.data:[];
+    const baseList=priceLists.find(item=>item.es_base);
+    if(!baseList)throw new Error('No existe una LISTA BASE activa. Verifica el DDL24.');
     const modal=el('dialog','modal catalog-dialog product-editor-dialog crud-product-dialog');
     const form=el('form','form-grid product-editor-form');
     form.noValidate=false;
@@ -374,16 +379,125 @@
       });
       clearChildren(field);redraw();
     }));
-    form.appendChild(el('h3','product-editor-section','Presentación, precio e IVA'));
-    form.appendChild(el('p','catalog-footnote product-editor-wide',
-      'Precio neto en CLP. La condición tributaria calcula el IVA; el stock se mantiene en Inventario.'));
-    const presName=inputField('Nombre de presentación','text',form,producto?.presentacion?.nombre||'Unidad',
-      {required:true,maxLength:150});
-
+    form.appendChild(el('h3','product-editor-section','Datos de envase y costo'));
     const units=inputField('Unidades por envase','number',form,producto?.presentacion?.unidadesPorEnvase??'1',
       {required:true,min:0.001,step:0.001});
-    const price=inputField('Precio neto (CLP)','number',form,producto?.presentacion?.precioNeto??'0',
+    const cost=inputField('Costo neto (CLP)','number',form,producto?.costoNeto??'0',
       {required:true,min:0,step:0.0001});
+    cost.id='productoCostoNeto';
+    form.appendChild(el('h3','product-editor-section','Precios'));
+    form.appendChild(el('p','catalog-footnote product-editor-wide',
+      'La Lista Base es obligatoria. El precio y el margen se calculan desde el costo. El precio es neto y el IVA se determina por condición tributaria.'));
+    const minimum=inputField('Mínimo margen precio venta de la línea (%)','number',form,
+      producto?.minimoMargenPrecioVenta??'0',{step:0.0001,min:0});
+    minimum.readOnly=true;minimum.classList.add('price-readonly');
+    const updateMinimum=()=>{
+      const linea=(cache.lineas||[]).find(x=>String(x.id)===String(controls.lineaId.value));
+      minimum.value=String(linea?.minimoMargenPrecioVenta??producto?.minimoMargenPrecioVenta??0);
+    };
+    controls.lineaId.addEventListener('change',updateMinimum);
+    updateMinimum();
+
+    const priceArea=el('div','price-list-editor product-editor-wide');
+    const priceTable=el('table','catalog-table product-price-table');
+    const phead=el('thead'),prHead=el('tr');
+    ['Lista de precio','Activo','Costo neto','Margen %','Precio venta (CLP)','Acción'].forEach(label=>
+      prHead.appendChild(el('th','',label)));
+    phead.appendChild(prHead);priceTable.appendChild(phead);
+    const priceBody=el('tbody');priceTable.appendChild(priceBody);
+    const prices=[];
+    const amount=value=>Number.isFinite(Number(value))?Number(value).toFixed(4):'0.0000';
+    const compute=(entry,origin)=>{
+      const costo=Number(cost.value||0),price=Number(entry.price.value||0);
+      if(origin==='margen'){
+        const margin=Number(entry.margin.value||0);
+        entry.price.value=amount(costo*(1+margin/100));
+      }else{
+        entry.margin.value=costo>0?amount(((price-costo)/costo)*100):'';
+      }
+      const margen=Number(entry.margin.value);
+      const active=entry.active.checked;
+      const invalid=active&&costo>0&&(!Number.isFinite(margen)||margen<Number(minimum.value));
+      entry.row.classList.toggle('price-margin-invalid',invalid);
+      entry.error.hidden=!invalid;
+      entry.error.textContent=invalid?
+        'El margen debe ser al menos '+Number(minimum.value).toFixed(2)+' % para esta línea.':'';
+    };
+    function addPrice(list,data={},fresh=true){
+      if(prices.some(item=>String(item.list.id)===String(list.id)))return;
+      const row=el('tr','product-price-row');
+      const label=el('td','',list.nombre+(list.es_base?' · Base':''));row.appendChild(label);
+      const state=el('input');state.type='checkbox';state.checked=data.activo!==false;
+      if(list.es_base){state.checked=true;state.disabled=true;}
+      const stateCell=el('td');stateCell.append(state);row.appendChild(stateCell);
+      const costDisplay=el('input');costDisplay.type='number';costDisplay.readOnly=true;
+      costDisplay.className='price-readonly';costDisplay.value=cost.value||'0';
+      const costCell=el('td');costCell.append(costDisplay);row.appendChild(costCell);
+      const margin=el('input');margin.type='number';margin.min='0';margin.step='0.0001';
+      const suppliedPrice=data.precioVenta??(!producto&&list.es_base?'0':null);
+      const initialPrice=suppliedPrice??(list.es_base?producto?.presentacion?.precioNeto:'0')??'0';
+      const initialMargin=data.margenPorcentaje;
+      margin.value=initialMargin==null?'':String(initialMargin);
+      margin.placeholder='0.00';
+      const marginCell=el('td');marginCell.append(margin);row.appendChild(marginCell);
+      const price=el('input');price.type='number';price.min='0';price.step='0.0001';price.required=true;
+      price.value=String(initialPrice);price.setAttribute('aria-label','Precio de venta '+list.nombre);
+      const priceCell=el('td');priceCell.append(price);row.appendChild(priceCell);
+      const actionCell=el('td');
+      const error=el('small','price-margin-warning','');error.hidden=true;
+      const entry={list,row,active:state,costDisplay,margin,price,error,last:'precio'};
+      if(!list.es_base){
+        const remove=button('Quitar',()=>{
+          if(fresh){row.remove();prices.splice(prices.indexOf(entry),1);}
+          else{state.checked=false;row.classList.add('price-deactivated');}
+        },'button ghost');
+        actionCell.append(remove);
+      }else actionCell.append(el('span','price-base-tag','Obligatoria'));
+      row.appendChild(actionCell);
+      const errorRow=el('tr','price-validation-row'),errCell=el('td');
+      errCell.colSpan=6;errCell.append(error);errorRow.append(errCell);
+      entry.errorRow=errorRow;
+      priceBody.append(row,errorRow);prices.push(entry);
+      margin.addEventListener('input',()=>{entry.last='margen';compute(entry,'margen');});
+      price.addEventListener('input',()=>{entry.last='precio';compute(entry,'precio');});
+      state.addEventListener('change',()=>compute(entry,entry.last));
+      compute(entry,initialMargin!=null?'precio':'precio');
+    }
+    const existing=producto?.precios||[];
+    const originalBase=existing.find(x=>String(x.listaPrecioId)===String(baseList.id));
+    addPrice(baseList,originalBase||{},false);
+    for(const data of existing){
+      const list=priceLists.find(item=>String(item.id)===String(data.listaPrecioId));
+      if(list&&!list.es_base)addPrice(list,data,false);
+    }
+    const selector=el('select');selector.setAttribute('aria-label','Agregar lista de precios al producto');
+    const refreshSelector=()=>{
+      const previous=selector.value;selector.replaceChildren();
+      const blank=el('option','','Selecciona otra lista de precios…');blank.value='';
+      selector.append(blank);
+      priceLists.filter(item=>!item.es_base&&item.activo&&
+        !prices.some(p=>String(p.list.id)===String(item.id))).forEach(item=>{
+          const opt=el('option','',item.nombre);opt.value=String(item.id);selector.append(opt);
+        });
+      selector.value=[...selector.options].some(o=>o.value===previous)?previous:'';
+    };
+    const addListButton=button('Agregar lista al producto',()=>{
+      const selected=priceLists.find(item=>String(item.id)===selector.value);
+      if(!selected)return;
+      addPrice(selected,{},true);refreshSelector();
+    },'button ghost');
+    const priceToolbar=el('div','price-editor-toolbar');
+    priceToolbar.append(selector,addListButton);
+    priceArea.append(priceTable,priceToolbar);form.appendChild(priceArea);
+    cost.addEventListener('input',()=>{
+      for(const entry of prices){
+        entry.costDisplay.value=cost.value;
+        compute(entry,entry.last);
+      }
+    });
+    minimum.addEventListener('change',()=>prices.forEach(x=>compute(x,x.last)));
+    controls.lineaId.addEventListener('change',()=>prices.forEach(x=>compute(x,x.last)));
+    refreshSelector();
     if(producto)form.appendChild(el('p','catalog-footnote',
       'Presentación principal ID '+(producto.presentacion?.id??'sin asignar')+
       ' · Existencias actuales: '+producto.stock+' (solo lectura).'));
@@ -430,17 +544,37 @@
         feedback.textContent='Completa todas las clasificaciones antes de guardar.';
         feedback.hidden=false;return;
       }
+      const activePrices=prices.filter(item=>item.row.isConnected&&item.active.checked);
+      const invalidPrice=activePrices.find(item=>{
+        const monto=Number(item.price.value),margen=Number(item.margin.value);
+        return !Number.isFinite(monto)||monto<0||(
+          Number(cost.value)>0&&(!Number.isFinite(margen)||margen<Number(minimum.value))
+        );
+      });
+      if(invalidPrice){
+        invalidPrice.price.focus();
+        feedback.textContent='Una lista tiene un precio inferior al margen mínimo de la línea.';
+        feedback.hidden=false;return;
+      }
       const dto={
         sku:sku.value.trim(),nombre:nombre.value.trim(),descripcion:descripcion.value.trim(),
         activo:activo.checked,
         clasificacion:classification,
         presentacion:{
           ...(producto?.presentacion?.id?{id:Number(producto.presentacion.id)}:{}),
-          nombre:presName.value.trim(),
-          // Preservar el código legado de presentación, no modificar su historial.
+          nombre:producto?.presentacion?.nombre||'Unidad',
+          // Mantener la presentación técnica heredada, ya no visible en Precios.
           codigoBarras:producto?.presentacion?.codigoBarras||null,
-          unidadesPorEnvase:units.value,precioNeto:price.value
+          unidadesPorEnvase:units.value,
+          precioNeto:prices.find(item=>item.list.es_base)?.price.value||'0'
         },
+        costoNeto:cost.value,
+        precios:prices.filter(item=>item.row.isConnected).map(item=>({
+          listaPrecioId:Number(item.list.id),
+          activo:item.list.es_base?true:item.active.checked,
+          ...(item.last==='margen'&&item.margin.value!==''?
+            {margenPorcentaje:item.margin.value}:{precioVenta:item.price.value})
+        })),
         codigosVenta:selectedBarcodes.filter(x=>x.row.isConnected).map(item=>({
           ...(item.id?{id:Number(item.id)}:{}),
           tipoCodigoBarraId:Number(item.type.value),
