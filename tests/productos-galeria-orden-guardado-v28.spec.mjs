@@ -301,3 +301,19 @@ test('galería limita la página de miniaturas a 25 fotografías sin perder nave
  await dialog.locator('.product-gallery-thumb').last().click();
  await expect(dialog.locator('.product-gallery-counter')).toHaveText('28 de 28');
 });
+
+
+test('ficha consulta resuelve nombres de clasificación aunque GET individual entregue solo IDs',async({page})=>{
+ await fixture(page);
+ const older={...product};
+ delete older.clasificacionNombres;
+ await page.route('**/api/v1/productos/9',route=>send(route,older));
+ await page.locator('#productosRealesListado').getByRole('button',{name:'Ver',exact:true}).click();
+ const dialog=page.locator('dialog.product-detail-dialog[open]');
+ const classification=dialog.locator('.product-detail-taxonomy');
+ for(const expected of ['Alimentos','Abarrotes','Conservas','Vegetales','Marca Norte','Tradicional']){
+  await expect(classification).toContainText(expected);
+ }
+ await expect(classification).not.toContainText('Asignado · ID 1');
+ await dialog.getByRole('button',{name:'Cerrar ficha',exact:true}).click();
+});
