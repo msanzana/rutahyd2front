@@ -40,7 +40,7 @@
   function done(){
     dialog?.remove();dialog=null;
     active=false;pending=null;
-    if(/^#recuperar(?:\?|$)/i.test(location.hash))history.replaceState(null,'','#inicio');
+    if(location.hash==='#recuperacion'||/^#recuperar(?:\?|$)/i.test(location.hash))history.replaceState(null,'',location.pathname+'#inicio');
     document.body.classList.remove('is-recovering');
     document.dispatchEvent(new Event('rutahd:recuperacion-finalizada'));
   }
@@ -109,7 +109,7 @@
         }else{
           await api().resetPassword(token,password.value,confirmation.value);
           password.value='';confirmation.value='';pending=null;completed=true;
-          if(/^#recuperar(?:\?|$)/i.test(location.hash))history.replaceState(null,'','#inicio');
+          if(location.hash==='#recuperacion'||/^#recuperar(?:\?|$)/i.test(location.hash))history.replaceState(null,'',location.pathname+'#inicio');
           status(note,'Contraseña actualizada correctamente. Ya puedes iniciar sesión.');
           send.hidden=true;
           cancel.textContent='Continuar al inicio de sesión';
