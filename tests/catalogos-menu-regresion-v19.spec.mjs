@@ -57,7 +57,7 @@ test('ocho módulos y subítems oficiales planos y ordenados',async({page})=>{
  expect((await page.locator('#adminSubnav .nav-sublink').allTextContents()).map(x=>x.trim()))
   .toEqual(['Tipos de unidad','Tipos de envasado','Condición tributaria','Tipos de códigos de barras','Usuarios','Perfiles y permisos']);
  expect((await page.locator('#productSubnav .nav-sublink').allTextContents()).map(x=>x.trim()))
-  .toEqual(['Listado de productos','Rubros','Departamentos','Familias','Líneas','Marcas','Modelos']);
+  .toEqual(['Listado de productos','Listas de precios','Rubros','Departamentos','Familias','Líneas','Marcas','Modelos']);
  expect((await page.locator('#providerSubnav .nav-sublink').allTextContents()).map(x=>x.trim()))
   .toEqual(['Listado de proveedores','Proveedores productos']);
  await page.locator('#toggleAdminSubnav').click();
@@ -134,7 +134,7 @@ for(const width of [1440,390]){
   await page.locator('#toggleProductSubnav').click();
   const positions=await page.locator('#productSubnav .nav-sublink:visible').evaluateAll(nodes=>
     nodes.map(el=>{const r=el.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width};}));
-  expect(positions).toHaveLength(7);
+  expect(positions).toHaveLength(8);
   for(let i=1;i<positions.length;i++){
     expect(positions[i].y).toBeGreaterThan(positions[i-1].y);
     expect(Math.abs(positions[i].x-positions[0].x)).toBeLessThan(2);
