@@ -154,3 +154,18 @@ test('permiso multiselección conserva checkbox nativo con esquinas redondeadas'
  expect(parseFloat(style.plain.width)).toBeLessThanOrEqual(24);
  expect(style.checked.checkmark).not.toBe('none');
 });
+
+
+test('página numérica 3 consulta el servidor y mantiene la selección violeta',async({page})=>{
+ const calls=await setup(page);
+ await page.locator('#toggleProductSubnav').click();
+ await page.locator('#productSubnav [data-nav="listas_precios"]').click();
+ const root=page.locator('#priceListsModule');
+ const pager=root.locator('.hd-numbered-pagination');
+ await expect(pager.getByRole('button',{name:'Página 1'})).toHaveAttribute('aria-current','page');
+ await pager.getByRole('button',{name:'Página 3',exact:true}).click();
+ await expect(root.locator('.catalog-table tbody tr:visible')).toHaveCount(3);
+ await expect(root.locator('.catalog-table tbody tr:visible').last()).toContainText('Tarifa 053');
+ await expect(pager.getByRole('button',{name:'Página 3',exact:true})).toHaveAttribute('aria-current','page');
+ expect(calls.some(x=>x.per===25&&x.page===3)).toBe(true);
+});
