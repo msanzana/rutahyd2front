@@ -409,6 +409,6 @@ test('consulta individual muestra promedio real devuelto por API, nunca lo recal
  await page.locator('#productosRealesListado').getByRole('button',{name:'Ver',exact:true}).click();
  const dlg=page.locator('dialog.product-detail-dialog[open]');
  await expect(dlg.getByText(/Costo promedio ponderado:/)).toBeVisible();
- await expect(dlg.getByText(/Costo promedio ponderado:/)).toContainText('74');
+ await expect(dlg.getByText(/Costo promedio ponderado:/)).toContainText('74,1250');
  await expect(dlg.getByText(/Costo neto:/)).toContainText('100');
 });
