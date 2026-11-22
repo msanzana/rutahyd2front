@@ -19,7 +19,9 @@
       id: Number.isSafeInteger(Number(usuario.id))&&Number(usuario.id)>0?Number(usuario.id):null,
       nombre: String(usuario.nombre || 'Usuario'),
       rol: usuario.rol,
-      permisos: new Set(usuario.permisos.filter(v => typeof v === 'string'))
+      permisos: new Set(usuario.permisos.filter(v => typeof v === 'string')),
+      submodulos: usuario.submodulos&&typeof usuario.submodulos==='object'?usuario.submodulos:null,
+      tema_interfaz: ['claro','oscuro'].includes(usuario.tema_interfaz)?usuario.tema_interfaz:null
     };
     actualizar();
   }
@@ -31,6 +33,19 @@
     if (!sesion) return false;
     return isAdmin() || sesion.permisos.has(code);
   }
+  function canSeeSubmodule(key,action='ver') {
+    if(!sesion)return false;
+    if(isAdmin())return true;
+    const grant=sesion.submodulos?.[key];
+    if(grant&&typeof grant==='object')return Boolean(grant[action]);
+    // Compatibilidad: mientras DDL23 no esté aplicado, solo rige el permiso general.
+    const base={
+      'productos.listado':'productos.gestionar',
+      'proveedores.listado':'compras.gestionar',
+      'proveedores.productos':'compras.gestionar'
+    };
+    return base[key]?has(base[key]):false;
+  }
   function canViewCatalog(key) {
     if (!catalogos.includes(key)) return false;
     return has('productos.catalogos.' + key + '.ver') ||
@@ -41,7 +56,7 @@
   }
   window.RutaHDAccesos = Object.freeze({
     catalogos, setSession, clear, authenticated, isAdmin, has,
-    canViewCatalog, canManageCatalog,
-    usuario: () => sesion && {id:sesion.id,nombre:sesion.nombre,rol:sesion.rol}
+    canViewCatalog, canManageCatalog, canSeeSubmodule,
+    usuario: () => sesion && {id:sesion.id,nombre:sesion.nombre,rol:sesion.rol,tema_interfaz:sesion.tema_interfaz}
   });
 })();
