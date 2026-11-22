@@ -33,11 +33,6 @@
   const list=el('div',undefined,'catalog-table-scroll');
   const pager=el('nav',undefined,'list-pagination price-lists-pagination');
   pager.setAttribute('aria-label','Páginas de listas de precios');
-  const previous=btn('Anterior',()=>{if(page>1){page--;void load();}});
-  const next=btn('Siguiente',()=>{if(page<lastPage){page++;void load();}});
-  const counter=el('span','','list-pagination-info');
-  counter.setAttribute('aria-live','polite');
-  pager.append(previous,counter,next);
   root.append(header,desc,note,toolbar,list,pager);parent.replaceChildren(root);
   let page=1,lastPage=1,requestVersion=0;
   if(!acl()?.authenticated()){note.textContent='Inicia sesión para consultar listas.';return;}
@@ -49,7 +44,6 @@
   async function load(){
    const request=++requestVersion;
    note.textContent='Consultando listas de precios…';
-   previous.disabled=next.disabled=true;
    try{
     const response=await api().priceLists(search.value.trim(),null,page,25);
     if(!root.isConnected||own!==revision||request!==requestVersion)return;
@@ -78,8 +72,11 @@
     table.append(body);list.append(table);
     const total=Number(response?.total??rows.length);
     note.textContent='Listas registradas: '+total+'. La Lista Base no puede eliminarse.';
-    counter.textContent='Página '+page+' de '+lastPage+' · '+total+' listas · máximo 25 por página';
-    pager.hidden=lastPage<=1;previous.disabled=page<=1;next.disabled=page>=lastPage;
+    window.RutaHDListUI?.renderPager(pager,{
+      page,pages:lastPage,total,label:'listas',
+      onPage:n=>{page=n;void load();}
+    });
+    pager.hidden=lastPage<=1;
     if(!rows.length)list.append(el('p','No existen listas con esos criterios.','catalog-footnote'));
    }catch(e){if(request===requestVersion)note.textContent=error(e);}
   }
