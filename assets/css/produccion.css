@@ -267,64 +267,178 @@ body.is-recovering .app-shell{visibility:hidden;pointer-events:none}
  .official-row-actions{white-space:normal;flex-wrap:wrap}
 }
 
-/* Hotfix visual del editor de productos existente, compatible con backend actual.
- * Los nuevos catálogos y códigos de barras permanecen en rama de integración. */
-.modal.catalog-dialog.product-legacy-editor-dialog{
-  box-sizing:border-box;width:min(1100px,calc(100vw - 28px));
-  max-width:min(1100px,calc(100vw - 28px));
-  max-height:calc(100dvh - 28px);overflow-x:hidden;overflow-y:auto;
-  border-radius:22px;box-shadow:0 26px 85px rgba(35,12,55,.32)
+/* Ruta H&D · Producto: formulario grande y responsivo (corrige el antiguo max-width:500px).
+ * Los componentes no producen scroll horizontal en móvil. */
+.modal.catalog-dialog.product-editor-dialog{
+  box-sizing:border-box;
+  display:none;
+  width:min(1120px,calc(100vw - 40px));
+  max-width:min(1120px,calc(100vw - 40px));
+  max-height:calc(100dvh - 42px);
+  margin:auto;
+  padding:0;
+  border:1px solid #e5d8f1;
+  border-radius:22px;
+  overflow-x:hidden;
+  overflow-y:auto;
+  background:#fff;
+  color:#2d193e;
+  box-shadow:0 32px 100px rgba(32,10,56,.34)
 }
-.product-legacy-editor-form{
-  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
-  gap:18px 24px;box-sizing:border-box;padding:clamp(18px,3vw,34px);
-  align-items:start;width:100%;min-width:0
+.modal.catalog-dialog.product-editor-dialog[open]{display:block}
+.product-editor-form{
+  box-sizing:border-box;display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:18px 26px;
+  width:100%;max-width:100%;min-width:0;
+  padding:clamp(18px,3vw,36px);
+  align-items:start;
 }
-.product-legacy-editor-form>*{min-width:0;max-width:100%}
-.product-legacy-editor-form>h2,
-.product-legacy-editor-form>h3,
-.product-legacy-editor-form>.catalog-footnote,
-.product-legacy-editor-form>.modal-footer,
-.product-legacy-editor-form>.form-error{grid-column:1/-1}
-.product-legacy-editor-form>h2{color:#3a1856;font-size:clamp(23px,2.6vw,31px);margin:0}
-.product-legacy-editor-form>h3{
-  color:#63378a;font-size:15px;margin:8px 0 0;
-  padding:13px 15px;background:#f4eefb;border-radius:10px
+.product-editor-form>*{min-width:0;max-width:100%}
+.product-editor-heading{
+  grid-column:1/-1;
+  padding-bottom:19px;
+  margin-bottom:0;
+  border-bottom:1px solid #e9e0f2;
+  display:grid;gap:8px;
 }
-.product-legacy-editor-form>.catalog-footnote{
-  color:#786989;line-height:1.6;padding:0;border:0;font-size:12px
+.product-editor-heading h2{
+  color:#37164f;font-size:clamp(24px,2.6vw,32px);margin:0;
+  line-height:1.15;letter-spacing:-.035em
 }
-.product-legacy-editor-form>.field{
-  box-sizing:border-box;display:grid;gap:7px;min-width:0;font-size:13px;
-  font-weight:700;color:#51345f
+.product-editor-heading p{max-width:75ch;font-size:13px;line-height:1.6;color:#766886;margin:0}
+.product-editor-section{
+  grid-column:1/-1;
+  margin:6px 0 0;
+  padding:12px 14px;
+  background:#f5effb;
+  border-left:4px solid #8650c0;border-radius:9px;
+  color:#4c2768;font-size:15px;line-height:1.3;
 }
-.product-legacy-editor-form>.field input:not([type="checkbox"]),
-.product-legacy-editor-form>.field select,.product-legacy-editor-form>.field textarea{
-  box-sizing:border-box;width:100%;max-width:100%;min-width:0;
-  padding:11px 13px;min-height:45px;border:1px solid #e1d3ed;
-  border-radius:11px;background:white;font:inherit;font-size:13px
+.product-editor-form .field{
+  display:grid;gap:7px;min-width:0;max-width:100%;
+  font-size:13px;font-weight:650;color:#4f3a65
 }
-.product-legacy-editor-form>.field:has(> input[type="checkbox"]){
-  display:flex;align-items:center;gap:12px;padding:12px 14px;
-  border:1px solid #e6ddec;border-radius:11px;background:#fbf8fe
+.product-editor-form .field span{font-size:12px;font-weight:750}
+.product-editor-form input:not([type="checkbox"]),
+.product-editor-form select,
+.product-editor-form textarea{
+  min-width:0;max-width:100%;width:100%;box-sizing:border-box;
+  min-height:46px;padding:11px 13px;border:1px solid #dbcee9;
+  border-radius:10px;color:#33194b;background:#fff;
+  font:inherit;font-size:13px
 }
-.product-legacy-editor-form>.field input[type="checkbox"]{
-  width:21px;height:21px;min-width:21px;accent-color:#8047b7
+.product-editor-form textarea{min-height:88px;resize:vertical}
+.product-editor-form input:focus,
+.product-editor-form select:focus,
+.product-editor-form textarea:focus{
+  border-color:#905bc4;outline:2px solid rgba(135,79,192,.22);outline-offset:0
 }
-.product-legacy-editor-form>.modal-footer{
-  margin:4px -7px -7px;padding:16px 7px 7px;
-  position:sticky;bottom:-1px;z-index:2;
-  background:rgba(255,255,255,.98);border-top:1px solid #eee5f5;
-  flex-wrap:wrap
+.product-editor-wide,.product-editor-form>.catalog-footnote,.product-editor-form>.form-error{
+  grid-column:1/-1
 }
-.product-legacy-editor-form>.modal-footer .button{min-height:43px}
+.product-editor-form>.catalog-footnote{padding:0;border:0;color:#6f5e81;line-height:1.65}
+.product-active-toggle{
+  box-sizing:border-box;display:flex;align-items:center;gap:12px;
+  padding:13px 16px;min-height:48px;
+  border:1px solid #e5dbef;border-radius:10px;background:#fcfaff;
+  color:#4b315f;font-size:13px;font-weight:700;cursor:pointer
+}
+.product-active-toggle input,
+.product-barcode-enabled input{
+  width:19px;height:19px;min-width:19px;accent-color:#7842b3
+}
+.product-barcodes-list{display:grid;gap:11px}
+.product-barcode-row{
+  display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1.7fr) minmax(0,.8fr) auto auto;
+  align-items:end;gap:10px;
+  background:#faf7fe;border:1px solid #e9e0f3;border-radius:12px;padding:13px;
+}
+.product-barcode-row>.field{min-width:0}
+.product-barcode-row .field input,.product-barcode-row .field select{min-height:42px}
+.product-barcode-enabled{display:flex;align-items:center;gap:7px;padding-bottom:11px;font-size:12px}
+.product-barcode-remove{min-height:42px;margin-bottom:0;white-space:nowrap}
+.product-editor-form>.product-add-barcode{grid-column:1/-1;justify-self:start}
+.product-editor-hint{font-size:12px;line-height:1.5;color:#7c678d}
+.product-editor-actions{grid-column:1/-1;position:sticky;bottom:-1px;
+  background:rgba(255,255,255,.97);backdrop-filter:blur(6px);
+  margin:4px -8px -8px;padding:17px 8px 8px;
+  border-top:1px solid #e9e0f3;z-index:2;gap:12px;flex-wrap:wrap
+}
+.product-editor-actions .button{min-height:43px;border-radius:10px}
+@media(max-width:900px){
+  .product-barcode-row{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .product-barcode-enabled,.product-barcode-remove{align-self:center}
+}
 @media(max-width:680px){
-  .modal.catalog-dialog.product-legacy-editor-dialog{
-    width:calc(100vw - 12px);max-width:calc(100vw - 12px);
-    max-height:calc(100dvh - 12px);border-radius:14px
+  .modal.catalog-dialog.product-editor-dialog{
+    width:calc(100vw - 18px);max-width:calc(100vw - 18px);
+    max-height:calc(100dvh - 18px);border-radius:15px
   }
-  .product-legacy-editor-form{
-    grid-template-columns:minmax(0,1fr);padding:18px 14px;gap:14px
-  }
-  .product-legacy-editor-form>*{grid-column:1}
+  .product-editor-form{grid-template-columns:minmax(0,1fr);padding:17px 14px;gap:14px}
+  .product-editor-form>.field,.product-editor-section,
+  .product-editor-heading,.product-editor-wide{grid-column:1}
+  .product-barcode-row{grid-template-columns:minmax(0,1fr);gap:10px}
+  .product-barcode-enabled{padding:3px 0}
+  .product-editor-actions{margin:0 -5px -5px}
+  .product-editor-actions .button{flex:1 1 120px}
+}
+
+/* Proveedores > Productos: relaciones de abastecimiento y códigos logísticos. */
+.supplier-products-module .panel-heading{display:flex;align-items:start;flex-wrap:wrap;gap:10px}
+.supplier-products-module .panel-heading p{font-size:12px;color:#756684;max-width:520px;margin:0}
+.supplier-search-bar,.official-search-bar{display:flex;align-items:center;flex-wrap:wrap;gap:10px;padding:15px 20px}
+.supplier-search-bar>input,.official-search-bar>input{
+  flex:1 1 300px;min-width:0;max-width:100%;
+  padding:11px 13px;background:#fff;color:#382149;
+  border:1px solid #e2d7ee;border-radius:10px;min-height:44px
+}
+.supplier-search-bar>button,.official-search-bar>button{min-height:42px}
+.supplier-products-table{min-width:950px}
+.supplier-row-actions{display:flex;flex-wrap:wrap;gap:6px;min-width:175px}
+.supplier-row-actions .button{font-size:11px;min-height:34px;padding:5px 9px}
+.modal.supplier-product-dialog{
+  box-sizing:border-box;width:min(840px,calc(100vw - 30px));
+  max-width:min(840px,calc(100vw - 30px));
+  max-height:calc(100dvh - 34px);padding:0;margin:auto;
+  overflow-x:hidden;overflow-y:auto;border-radius:20px;
+  border:1px solid #e6d9f0;background:white;color:#38204d
+}
+.supplier-dialog-body{padding:clamp(20px,3vw,34px);display:grid;gap:16px}
+.supplier-dialog-header{padding-bottom:15px;border-bottom:1px solid #e7daee;display:grid;gap:9px}
+.supplier-dialog-header h2{font-size:clamp(23px,2.5vw,30px);line-height:1.2;color:#4c276a;margin:0}
+.supplier-dialog-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 18px}
+.supplier-field{min-width:0;display:grid;gap:7px;color:#503666;font-size:12px;font-weight:750}
+.supplier-field>input:not([type="checkbox"]),.supplier-field>select{
+  width:100%;max-width:100%;min-width:0;min-height:44px;
+  padding:10px 12px;background:#fcfaff;border:1px solid #ded1ec;
+  border-radius:10px;color:#341a4b;font:inherit;font-size:13px
+}
+.supplier-field>input[type="checkbox"]{accent-color:#7b3db5;width:19px;height:19px}
+.supplier-dialog-form>.button{align-self:end;min-height:43px}
+.supplier-dialog-wide{grid-column:1/-1}
+.supplier-readonly{padding:12px;border-radius:10px;background:#f4eef9;color:#65477d;font-size:12px}
+.supplier-dialog-actions{display:flex;justify-content:flex-end;gap:10px;padding-top:12px;border-top:1px solid #ebe0f3}
+.supplier-dialog-actions .button{min-height:42px}
+.supplier-status{font-size:12px;line-height:1.6;color:#647184;margin:0}
+.supplier-status.is-error{color:#b52d48}
+.supplier-barcodes{display:grid;gap:12px}
+.supplier-barcode-item{
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  padding:13px;border:1px solid #e7dcee;border-radius:10px;background:#fcfaff
+}
+.supplier-barcode-item strong{color:#503078;overflow-wrap:anywhere}
+.supplier-barcode-item span{font-size:12px;flex:1 1 180px}
+.supplier-barcode-form{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;
+  padding:15px;border:1px solid #d6c0e8;border-radius:11px;background:#f7f2fc
+}
+.supplier-barcode-form .button{min-height:42px;justify-self:start}
+.supplier-dialog-add{justify-self:start}
+@media(max-width:680px){
+  .supplier-dialog-form{grid-template-columns:minmax(0,1fr)}
+  .supplier-barcode-form{grid-template-columns:minmax(0,1fr)}
+  .supplier-dialog-body{padding:19px 15px}
+  .supplier-search-bar>button,.official-search-bar>button{width:100%}
+  .modal.supplier-product-dialog{max-height:calc(100dvh - 12px)}
 }
