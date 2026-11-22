@@ -192,9 +192,15 @@
 
  const PAGE_SIZE=25;
  const paginationStates=new WeakMap(),pagerCallbacks=new WeakMap();
- // Un solo paginador accesible para todas las tablas: no mezcla paginación
- // local (filas cargadas) con páginas que todavía deben consultarse en Laravel.
- function renderPager(nav,{page=1,pages=1,total=null,label='registros',onPage}={}){
+ const pairedPagers=new WeakMap();
+ function scrollToPageTop(){
+  const main=document.querySelector('#workspaceView');
+  if(main?.isConnected)main.scrollIntoView({block:'start',behavior:'smooth'});
+  else window.scrollTo({top:0,behavior:'smooth'});
+  const scroller=document.scrollingElement;
+  if(scroller&&scroller.scrollTop>0)scroller.scrollTo({top:0,behavior:'smooth'});
+ }
+ function drawPager(nav,{page=1,pages=1,total=null,label='registros',onPage}={}){
   if(!nav)return;
   const last=Math.max(1,Math.trunc(Number(pages)||1));
   const now=Math.max(1,Math.min(last,Math.trunc(Number(page)||1)));
@@ -213,7 +219,10 @@
     control.setAttribute('aria-current','page');control.classList.add('is-current');
    }
    control.disabled=disabled;
-   if(!disabled)control.addEventListener('click',()=>pagerCallbacks.get(nav)?.(destination));
+   if(!disabled)control.addEventListener('click',()=>{
+    pagerCallbacks.get(nav)?.(destination);
+    scrollToPageTop();
+   });
    return control;
   };
   const numbers=document.createElement('span');numbers.className='hd-page-numbers';
@@ -232,7 +241,38 @@
   info.setAttribute('aria-live','polite');
   info.textContent=totalText+'Página '+now+' de '+last+' · máximo '+PAGE_SIZE+' por página';
   nav.replaceChildren(button('Anterior',now-1,'hd-page-arrow',now===1),
-    numbers,button('Siguiente',now+1,'hd-page-arrow',now===last),info);
+   numbers,button('Siguiente',now+1,'hd-page-arrow',now===last),info);
+ }
+ function syncTopPager(bottom,options){
+  if(!bottom.isConnected)return;
+  // Se monta ANTES del listado, fuera del scroll horizontal.
+  let target=bottom.closest('.catalog-table-scroll,.table-scroll,.permissions-table-scroll');
+  if(!target){
+   const siblings=[...bottom.parentElement.children],index=siblings.indexOf(bottom);
+   target=siblings.slice(0,index).reverse().find(element=>
+    element.matches?.('.catalog-table-scroll,.table-scroll,.permissions-table-scroll')||
+    Boolean(element.querySelector?.('table')));
+  }
+  if(!target||!target.parentElement)return;
+  const scope=bottom.closest('.surface-panel')||bottom.parentElement;
+  scope.querySelectorAll('.hd-page-top').forEach(old=>{
+   if(!old._sourcePager?.isConnected)old.remove();
+  });
+  let top=pairedPagers.get(bottom);
+  if(!top){
+   top=document.createElement('nav');top.className='list-pagination hd-page-top';
+   top.setAttribute('aria-label','Paginación superior de resultados');
+   top._sourcePager=bottom;pairedPagers.set(bottom,top);
+  }
+  if(top.nextElementSibling!==target)target.before(top);
+  top.hidden=bottom.hidden||Number(options.pages||1)<=1;
+  drawPager(top,options);
+ }
+ function renderPager(nav,options={}){
+  if(!nav)return;
+  drawPager(nav,options);
+  // Productos agrega el paginador inferior al DOM después de esta llamada.
+  queueMicrotask(()=>syncTopPager(nav,options));
  }
  function paginate(table,matchedRows=null){
   if(!table?.tBodies?.length)return;
