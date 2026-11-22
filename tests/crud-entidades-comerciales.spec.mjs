@@ -16,7 +16,7 @@ async function login(page,token=payload){
   await expect(page.locator('#loginDialog')).toBeHidden();
 }
 test('Clientes: lista real, alta, edición y baja lógica desde Laravel',async({page})=>{
-  const rows=[{id:8,codigo:'ANT-08',nombre:'Cliente anterior',rut:'11111111-1',
+  const rows=[{id:8,codigo:'ANT-08',nombre:'Cliente anterior',rut:'12345678-5',
     correo_electronico:null,telefono:null,direccion:null,comuna:'Temuco',
     sector:null,observaciones:null,activo:1}];
   const writes=[];
@@ -106,7 +106,7 @@ test('Permisos y whitelist: usuarios sin gestión no pueden crear registros',asy
     usuario:{id:7,nombre:'Operador CI',rol:'vendedor',permisos:['clientes.ver']}};
   await login(page,vendedor);
   await page.locator('.nav-link[data-nav="clientes"]').click();
-  await expect(page.locator('#workspaceContent')).toContainText('No existen registros');
+  await expect(page.locator('#workspaceContent')).toContainText('No hay registros para mostrar en esta página.');
   await expect(page.getByRole('button',{name:'Nuevo registro'})).toHaveCount(0);
   const rejected=await page.evaluate(async()=>{
     try{

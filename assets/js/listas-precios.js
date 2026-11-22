@@ -9,7 +9,7 @@
  };
  const error=e=>e?.userMessage||
    (e?.status===500
-     ? 'El servidor no pudo guardar la lista (HTTP 500). Se detectó un esquema antiguo sin listas_precios.codigo; revisa el DDL27 en phpMyAdmin antes de intentar nuevamente.'
+     ? 'No se pudo guardar la lista de precios. Comunícate con el administrador si el problema continúa.'
      : e?.status===409
        ? 'Ya existe una lista con ese código o la lista está en uso.'
        : e?.status===422
@@ -21,7 +21,7 @@
   const root=el('section',undefined,'surface-panel official-module price-lists-module');
   root.id='priceListsModule';
   const header=el('div',undefined,'panel-heading');
-  header.append(el('h2','Listas de precios'),el('span','Tarifas comerciales · Laravel / MariaDB','official-source'));
+  header.append(el('h2','Listas de precios'),el('span','Tarifas comerciales y condiciones de venta','official-source'));
   const desc=el('p','Una única LISTA BASE general y listas especiales para clientes. Una lista desactivada conserva sus precios históricos.','catalog-footnote');
   const note=el('p','', 'catalog-footnote');note.setAttribute('role','status');
   const toolbar=el('div',undefined,'workspace-actions normalized-toolbar');

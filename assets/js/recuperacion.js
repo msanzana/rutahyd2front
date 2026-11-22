@@ -58,7 +58,7 @@
     const logo=node('img','recovery-logo');
     logo.src='hd-branding/logo-hd-site.png';logo.alt='Logotipo oficial H&D';
     brand.append(logo,node('h2',null,'Protegemos tu acceso.'),node('p',null,
-      'Tu información comercial permanece en el servidor. Esta solicitud se procesa de forma cifrada mediante Laravel.'));
+      'Tus datos están protegidos. Recibirás las instrucciones para recuperar tu acceso por correo electrónico.'));
     const form=node('form','recovery-form');form.noValidate=true;
     form.append(node('div','recovery-step',reset?'PASO 2 DE 2 · NUEVA CONTRASEÑA':'PASO 1 DE 2 · VERIFICACIÓN POR CORREO'));
     form.append(node('span','recovery-eyebrow','SEGURIDAD DE LA CUENTA'),

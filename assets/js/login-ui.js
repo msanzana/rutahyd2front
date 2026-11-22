@@ -33,19 +33,19 @@
   async function verify(){
     if(checking)return;
     checking=true;
-    setState('pending','Comprobando API…','Consultando el estado del servidor Laravel de Ruta H&D2.');
+    setState('pending','Comprobando API…','Verificando el acceso al sistema.');
     try{
       api().configure(window.location.origin);
       const data=await api().status();
       if(data.disponible){
-        setState('ok','API conectada','API Laravel disponible. Puedes ingresar con tu cuenta autorizada.');
+        setState('ok','API conectada','Sistema disponible. Ingresa con tu cuenta autorizada.');
       }else{
         setState('blocked','API no habilitada',
           'La API respondió HTTP '+data.http+' ('+data.estado+'). El inicio de sesión remoto está bloqueado hasta habilitar el servidor y crear el administrador.');
       }
     }catch(_){
       setState('blocked','API sin conexión',
-        'No se pudo verificar el backend Laravel. No ingreses credenciales mientras la conexión esté indisponible.');
+        'No se pudo verificar la conexión. No ingreses credenciales hasta restablecer el servicio.');
     }finally{checking=false;}
   }
   function updateButton(){
@@ -98,7 +98,7 @@
     document.body.dataset.modo='demostracion';
     dialog.close();
     const footer=document.querySelector('.sidebar-footer small');
-    if(footer)footer.textContent='Exploración demostrativa: los registros locales no son datos de MariaDB.';
+    if(footer)footer.textContent='Modo de demostración, sin información comercial real.';
   });
   recover.addEventListener('click',()=>{
     dialog.close();
@@ -128,7 +128,7 @@
     }catch(ex){
       api().signOut();
       error.textContent=ex?.status===401?'Correo o contraseña incorrectos.':
-        'No se pudo autenticar con Laravel. Verifica el servidor e inténtalo nuevamente.';
+        'No fue posible iniciar sesión. Comprueba tus credenciales e inténtalo nuevamente.';
       error.hidden=false;
     }finally{
       submitting=false;

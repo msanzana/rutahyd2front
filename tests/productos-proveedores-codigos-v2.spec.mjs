@@ -33,6 +33,9 @@ async function intercept(page,cb=()=>false){
     }
     if(path==='/api/v1/productos'&&r.method()==='GET')
       return reply(route,{data:[],last_page:1,total:0});
+    if(path==='/api/v1/productos/buscador'&&r.method()==='GET')
+      return reply(route,{data:[{id:50,sku:'SKU-CI-V2',nombre:'Artículo local',activo:true,
+        clasificacion:{rubro_id:1,marca_id:5},codigosVenta:[]}],last_page:1,total:1});
     if(path==='/api/v1/recursos/proveedores'&&r.method()==='GET')
       return reply(route,{data:[{id:16,nombre:'Proveedor principal',rut:'12345678-5'}],
         total:1,last_page:1});
@@ -197,7 +200,7 @@ test('mix lista proveedores y permite asociar un producto con código de compra'
   await expect(relation).toBeHidden();
   await expect(panel).toContainText('Artículo local');
   expect(saved).toMatchObject({producto_id:50,proveedor_id:16,codigo_proveedor_producto:'P-CI-50'});
-  await panel.getByRole('button',{name:'Administrar códigos'}).click();
+  await panel.getByRole('button',{name:'Códigos de compra de Artículo local'}).click();
   const codes=page.locator('dialog.supplier-product-dialog[open]').last();
   await codes.getByRole('button',{name:'Añadir código de barras de compra'}).click();
   const form=codes.locator('form.supplier-barcode-form');

@@ -12,33 +12,18 @@
       ['sector','Sector','text',120,false],
       ['observaciones','Observaciones','textarea',10000,false]],
     proveedores:[
-      ['nombre','Nombre / identificación comercial','text',190,true],
+      ['nombre','Nombre comercial','text',190,true],
       ['razon_social','Razón social SII','text',190,false],
       ['nombre_fantasia','Nombre de fantasía','text',190,false],
       ['rut','RUT del proveedor','text',25,false],
-      ['giro','Giro o actividad principal','text',255,false],
-      ['actividad_economica_codigo','Código actividad económica SII','text',12,false],
       ['tipo_contribuyente','Tipo de contribuyente','select',40,false],
-      ['inicio_actividades','Fecha de inicio de actividades','date',10,false],
-      ['situacion_tributaria','Situación tributaria (dato declarado)','text',80,false],
-      ['direccion','Calle / dirección principal','text',255,false],
+      ['actividad_economica_codigo','Código SII','text',6,false],
+      ['giro','Giro / actividad económica SII','text',255,false],
+      ['direccion','Dirección','text',255,false],
       ['direccion_numero','Número','text',30,false],
-      ['direccion_detalle','Oficina, local o referencia','text',120,false],
-      ['codigo_postal','Código postal','text',16,false],
-      ['correo_electronico','Correo de contacto','email',190,false],
-      ['correo_dte','Correo para documentos tributarios DTE','email',190,false],
-      ['telefono','Teléfono principal','text',50,false],
-      ['telefono_secundario','Teléfono secundario','text',50,false],
-      ['sitio_web','Sitio web','url',255,false],
-      ['representante_legal','Representante legal','text',190,false],
-      ['representante_rut','RUT del representante','text',25,false],
-      ['contacto_nombre','Contacto comercial','text',190,false],
-      ['contacto_cargo','Cargo del contacto','text',120,false],
-      ['contacto_telefono','Teléfono del contacto','text',50,false],
-      ['contacto_correo','Correo del contacto','email',190,false],
-      ['moneda_preferida','Moneda preferida (ISO 4217)','text',3,false],
-      ['plazo_pago_dias','Plazo de pago (días)','number',5,false],
-      ['observaciones','Observaciones comerciales','textarea',10000,false]
+      ['correo_electronico','Correo electrónico','email',190,false],
+      ['telefono','Teléfono','text',50,false],
+      ['plazo_pago_dias','Plazo de pago (días)','number',5,false]
     ],
     bodegas:[
       ['codigo','Código','text',30,true],['nombre','Nombre','text',130,true],
@@ -52,8 +37,8 @@
   const PROVIDER_SECTIONS={
     nombre:'Identificación y datos SII',
     direccion:'Domicilio tributario',
-    correo_electronico:'Comunicación y responsables',
-    moneda_preferida:'Condiciones comerciales'
+    correo_electronico:'Contacto',
+    plazo_pago_dias:'Condiciones comerciales'
   };
   const SELECT_OPTIONS={
     tipo_contribuyente:[
@@ -101,7 +86,7 @@
     heading.append(create('span','RUTA H&D · GESTIÓN COMERCIAL','official-editor-eyebrow'),
       create('h2',(editing?'Editar ':'Nuevo registro · ')+cfg.title));
     heading.append(create('p',cfg.resource==='proveedores'?
-      'Completa los datos tributarios, domicilio, representantes y condiciones comerciales.' :
+      'Identificación tributaria, giro SII, dirección, contacto y condiciones comerciales.' :
       'Mantén la información de esta entidad actualizada y validada.',
       'official-editor-description'));
     const close=action('×',()=>dialog.close(),'crud-close');close.setAttribute('aria-label','Cerrar ventana');
@@ -131,6 +116,37 @@
       field.append(caption,input);
       if(type==='textarea')field.classList.add('official-editor-wide');
       grid.append(field);inputs[key]=input;
+      if(key==='rut')window.RutaHDRut?.bind(input);
+    }
+    if(cfg.resource==='proveedores'){
+      // El código oficial de 6 dígitos determina la glosa del giro.
+      const code=inputs.actividad_economica_codigo;
+      const giro=inputs.giro;
+      code.readOnly=true;code.placeholder='Seleccionar catálogo SII';
+      giro.readOnly=true;giro.placeholder='Se completa al seleccionar el código';
+      const original=code.closest('label');
+      const wrap=create('div',undefined,'hd-giro-row');
+      const select=action('Buscar giro SII',async()=>{
+        try{
+          const elegido=await window.RutaHDGirosSii?.open({
+            title:'Buscar giro del proveedor',
+            buscar:code.value||giro.value||''
+          });
+          if(elegido){
+            code.value=elegido.codigo;
+            giro.value=elegido.descripcion;
+            const meta=wrap.querySelector('.hd-giro-selected');
+            if(meta)meta.textContent='Actividad seleccionada · Código '+elegido.codigo;
+          }
+        }catch(error){
+          const meta=wrap.querySelector('.hd-giro-selected');
+          if(meta)meta.textContent='No fue posible consultar el catálogo SII.';
+        }
+      },'ghost');
+      original.replaceWith(wrap);
+      wrap.append(original,select,
+        create('p',code.value?'Código SII seleccionado: '+code.value:
+          'Selecciona el giro desde el catálogo oficial.','hd-giro-selected'));
     }
     let location=null;
     if(['clientes','proveedores','bodegas'].includes(cfg.resource)){
@@ -164,7 +180,7 @@
         }catch(error){
           if(error?.status===404){
             // Compatibilidad con API antigua, sin inventar IDs de listas.
-            label.append(create('p','El servidor aún no tiene habilitada la selección de listas. Los datos del cliente siguen editables.','catalog-footnote'));
+            label.append(create('p','La selección de listas de precios no está disponible. Puedes seguir editando los datos del cliente.','catalog-footnote'));
           }else throw error;
         }
       }else{
@@ -188,6 +204,7 @@
     footer.append(cancel,submit);form.append(footer);
     form.addEventListener('submit',async event=>{
       event.preventDefault();
+      if(window.RutaHDRut&&!window.RutaHDRut.validateIn(form))return;
       if(!form.reportValidity())return;
       const datos={};
       for(const [key,,, ,required] of definition){
@@ -198,7 +215,7 @@
       if(inputs.activo)datos.activo=inputs.activo.checked;
       if(clientPriceList&&clientPriceList.value)datos.lista_precio_id=Number(clientPriceList.value);
       submit.disabled=true;cancel.disabled=true;
-      note.textContent='Guardando en el servidor…';note.classList.remove('is-error');
+      note.textContent='Guardando cambios…';note.classList.remove('is-error');
       try {
         if(editing)await api().updateResource(cfg.resource,row.id,datos);
         else await api().createResource(cfg.resource,datos);
@@ -259,7 +276,7 @@
       return;
     }
     if(!cfg.resource){
-      notice.textContent='El backend no tiene todavía un contrato comprobado de cuentas corrientes. No se mostrarán saldos estimados.';
+      notice.textContent='Este módulo aún no está disponible. No se mostrarán saldos estimados.';
       return;
     }
     const editable=Boolean(FIELDS[cfg.resource]&&(access()?.isAdmin()||access()?.has(cfg.permission)));
@@ -322,7 +339,9 @@
             }
             if(editable){
               const cell=create('td',undefined,'official-row-actions');
-              cell.append(action('Editar',()=>openEditor(cfg,row,load),'ghost'));
+              cell.append(window.RutaHDListUI?.action('Editar '+(row.nombre||row.codigo),
+                ()=>openEditor(cfg,row,load),{kind:'editar'})||
+                action('Editar',()=>openEditor(cfg,row,load),'ghost'));
               tr.append(cell);
             }
             body.append(tr);
@@ -330,7 +349,7 @@
           table.append(body);content.append(table);
           notice.textContent='';
         }else{
-          notice.textContent='No existen registros para esta página de la base de datos.';
+          notice.textContent='No hay registros para mostrar en esta página.';
         }
         window.RutaHDListUI?.renderPager(pager,{
           page,pages:Number(response.last_page||1),total:Number(response.total||rows.length),

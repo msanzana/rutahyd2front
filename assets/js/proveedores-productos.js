@@ -58,7 +58,7 @@
     try{
       const [suppliers,products]=await Promise.all([
         fixedSupplier?Promise.resolve({data:[fixedSupplier]}):api().resources('proveedores',1,'',100),
-        api().products(1,'')
+        api().buscarProductos({page:1})
       ]);
       const providerRows=(suppliers.data||[]).map(v=>({id:v.id,label:v.nombre+' · '+(v.rut||'Sin RUT')}));
       const productRows=(products.data||[]).map(v=>({id:v.id,label:(v.sku||'Sin SKU')+' · '+v.nombre}));
@@ -83,10 +83,23 @@
         provider.replaceChildren(new Option('Seleccionar proveedor',''));
         (res.data||[]).forEach(row=>provider.append(new Option(row.nombre+' · '+(row.rut||'Sin RUT'),String(row.id))));
       });
-      const searchProduct=button('Buscar producto',async()=>{
-        const res=await api().products(1,productSearch.value.trim());
-        product.replaceChildren(new Option('Seleccionar producto',''));
-        (res.data||[]).forEach(row=>product.append(new Option((row.sku||'Sin SKU')+' · '+row.nombre,String(row.id))));
+      const searchProduct=button('Buscar en catálogo de productos',async()=>{
+        try{
+          const picked=await window.RutaHDBuscadorProductos?.openSingle({
+            title:'Seleccionar producto para '+(fixedSupplier?.nombre||'el proveedor'),
+            initialSearch:productSearch.value.trim(),
+            lockedFilters:fixedSupplier?{solo_sin_proveedor_id:fixedSupplier.id}:{}
+          });
+          if(picked){
+            const id=String(picked.id);
+            if(![...product.options].some(opt=>opt.value===id))
+              product.append(new Option((picked.sku||'Sin SKU')+' · '+picked.nombre,id));
+            product.value=id;
+          }
+        }catch(error){
+          message.textContent=errorText(error);message.classList.add('is-error');
+          box.append(message);
+        }
       });
       if(record||fixedSupplier)searchProvider.disabled=true;
       if(record)searchProduct.disabled=true;
@@ -123,7 +136,7 @@
           activo:active.checked
         };
         if(!record){data.proveedor_id=Number(provider.value);data.producto_id=Number(product.value);}
-        save.disabled=true;status.textContent='Guardando en Laravel…';
+        save.disabled=true;status.textContent='Guardando cambios…';
         try{
           if(record)await api().updateProductSupplier(record.id,data);
           else await api().createProductSupplier(data);
@@ -240,8 +253,7 @@
             const tr=e('tr');
             tr.append(e('td',(item.codigo_producto||'—')+' · '+item.producto),
               e('td',item.codigo_proveedor_producto||'—'),e('td',money(item.costo_proveedor)));
-            const codeCell=e('td');
-            codeCell.append(button('Administrar códigos',()=>barcodes(item)));
+            const codeCell=e('td','Consulta desde Acciones','supplier-codes-summary');
             tr.append(codeCell);
             const stateCell=e('td',null,'catalog-status-cell');
             const switchControl=window.RutaHDListUI?.statusSwitch(
@@ -252,7 +264,14 @@
             stateCell.append(switchControl||e('span',item.activo?'Activo':'Inactivo'));
             tr.append(stateCell);
             const actions=e('td',null,'supplier-row-actions');
-            actions.append(button('Editar',()=>editRelation(item,refresh,supplier)));
+            actions.append(
+              window.RutaHDListUI?.action('Editar producto '+item.producto,
+                ()=>editRelation(item,refresh,supplier),{kind:'editar'})||
+                button('Editar',()=>editRelation(item,refresh,supplier)),
+              window.RutaHDListUI?.action('Códigos de compra de '+item.producto,
+                ()=>barcodes(item),{kind:'barras'})||
+                button('Códigos de compra',()=>barcodes(item))
+            );
             tr.append(actions);body.append(tr);
           }
           table.append(body);list.append(table);
@@ -295,7 +314,7 @@
     let page=1,query='',loading=false;
     async function load(){
       if(loading)return;
-      loading=true;status.textContent='Cargando directorio de proveedores desde Laravel…';
+      loading=true;status.textContent='Cargando directorio de proveedores…';
       try{
         const data=await api().supplierMix(page,query);
         if(current!==marker||!root.isConnected)return;
@@ -329,7 +348,9 @@
           const count=e('td',null,'supplier-mix-count');
           count.append(e('span',Number(row.cantidad_productos_mix||0),'supplier-mix-badge'));
           const actions=e('td',null,'supplier-row-actions');
-          const edit=button('Editar',()=>mixEditor(row,load),'button primary');
+          const edit=window.RutaHDListUI?.action('Editar mix de '+row.nombre,
+            ()=>mixEditor(row,load),{kind:'editar'})||
+            button('Editar',()=>mixEditor(row,load),'button ghost');
           edit.setAttribute('aria-label','Editar mix de '+row.nombre);
           actions.append(edit);tr.append(count,actions);body.append(tr);
         }
