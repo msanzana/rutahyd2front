@@ -57,9 +57,13 @@ test('Clientes: lista real, alta, edición y baja lógica desde Laravel',async({
   await edit.locator('[name="nombre"]').fill('Cliente actualizado real');
   await edit.getByRole('button',{name:'Guardar cambios'}).click();
   await expect(page.locator('#workspaceContent')).toContainText('Cliente actualizado real');
-  page.once('dialog',dialog=>dialog.accept());
   await page.locator('#workspaceContent tbody tr').filter({hasText:'Cliente actualizado real'})
     .getByRole('checkbox',{name:'Desactivar Cliente actualizado real'}).uncheck();
+  const confirmation=page.locator('dialog.hd-status-confirm[open]');
+  await expect(confirmation).toBeVisible();
+  await expect(confirmation).toContainText('Cliente actualizado real');
+  await expect(confirmation.getByRole('heading',{name:'¿Desactivar registro?'})).toBeVisible();
+  await confirmation.getByRole('button',{name:'Sí, desactivar'}).click();
   await expect(page.locator('#workspaceContent tbody tr')
     .filter({hasText:'Cliente actualizado real'})).toContainText('Inactivo');
   expect(writes.some(x=>x.method==='POST'&&x.data.nombre==='Cliente nuevo real')).toBe(true);
