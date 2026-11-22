@@ -73,7 +73,7 @@
     const tools=el('div','workspace-actions');tools.style.flexWrap='wrap';
     const search=el('input');search.type='search';search.placeholder='Buscar SKU o nombre';search.setAttribute('aria-label','Buscar productos reales');
     search.maxLength=120;
-    const searchBtn=button('Buscar',()=>guarded(async()=>{selectedPage=1;query=search.value.trim();await loadProducts();}));
+    const searchBtn=button('Buscar',()=>guarded(async()=>{selectedPage=1;query=search.value.trim();await loadProducts();}),'button ghost');
     const create=button('Nuevo producto real',()=>guarded(()=>editProduct(null)),'button primary');
     const refresh=button('Actualizar',()=>guarded(loadProducts));
     add(tools,search,searchBtn,create,refresh);
@@ -145,6 +145,7 @@
       const actions=el('td','catalog-actions');
       actions.appendChild(button('Ver',()=>guarded(()=>detailProduct(prod.id)),'catalog-small-button'));
       actions.appendChild(button('Editar',()=>guarded(()=>editProduct(prod.id)),'catalog-small-button'));
+      actions.appendChild(button('Códigos de barras',()=>guarded(()=>editProduct(prod.id,true)),'catalog-small-button'));
       if(prod.activo)actions.appendChild(button('Desactivar',()=>deactivate(prod),'catalog-small-button danger-text'));
       row.appendChild(actions);body.appendChild(row);
     });
@@ -206,7 +207,7 @@
     if(options.maxLength)field.maxLength=options.maxLength;
     wrapper.appendChild(field);parent.appendChild(wrapper);return field;
   }
-  async function editProduct(id){
+  async function editProduct(id,focusBarcodes=false){
     if(!canManage())throw Error('No autorizado');
     try{await loadCatalogs();}
     catch(error){catalogErrorDialog(error);return;}
@@ -277,7 +278,8 @@
     if(producto)form.appendChild(el('p','catalog-footnote',
       'Presentación principal ID '+(producto.presentacion?.id??'sin asignar')+
       ' · Existencias actuales: '+producto.stock+' (solo lectura).'));
-    form.appendChild(el('h3','product-editor-section','Códigos de barras de venta'));
+    const barcodeHeading=el('h3','product-editor-section','Códigos de barras de venta');
+    form.appendChild(barcodeHeading);
     form.appendChild(el('p','catalog-footnote product-editor-wide',
       'Cada código identifica una cantidad de unidades para venta. No se ingresa aquí código ni costo de proveedor.'));
     const barcodeRows=el('div','product-barcodes-list product-editor-wide');
@@ -299,8 +301,10 @@
       selectedBarcodes.push({row,type,code,quantity,checked,id:data.id||null});
     }
     (producto?.codigosVenta||[]).forEach(addBarcode);
-    form.append(barcodeRows,button('Añadir código de venta',()=>addBarcode(),
-      'button ghost product-add-barcode'));
+    const addCode=button('Agregar código de barras',()=>addBarcode(),
+      'button ghost product-add-barcode');
+    addCode.setAttribute('aria-label','Agregar código de barras al producto');
+    form.append(addCode,barcodeRows);
     form.appendChild(el('p','product-editor-hint product-editor-wide',
       'Puedes registrar EAN-13, DUN-14, Code 39, Code 128 y otros tipos. Cada código debe ser único y tener unidades mayores que cero.'));
     const feedback=el('p','form-error','');feedback.hidden=true;form.appendChild(feedback);
@@ -349,6 +353,7 @@
     document.body.appendChild(modal);
     modal.addEventListener('close',()=>modal.remove(),{once:true});
     modal.showModal();
+    if(focusBarcodes){barcodeHeading.scrollIntoView({block:'start',behavior:'instant'});addCode.focus();}
   }
   function deactivate(product){
     const modal=el('dialog','modal catalog-dialog');
