@@ -99,7 +99,8 @@
  };
 
  const actionKinds={editar:'editar',desactivar:'desactivar',eliminar:'desactivar',
-   ver:'ver','códigos de compra':'barras','enviar recuperación':'ver'};
+   ver:'ver','codigos de compra':'barras','codigos de barras':'barras',
+   'enviar recuperacion':'ver'};
  const modules='#adminRemoto,#productosReales,#usersCrud,#rolesCatalogos,.official-module,.supplier-products-module';
  let activeRoot=null;const states=new WeakMap();
  const normalize=x=>String(x??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('es-CL');
