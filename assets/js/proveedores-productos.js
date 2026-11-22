@@ -203,7 +203,9 @@
     const create=button('Asociar producto a proveedor',()=>editRelation(null,load),'button primary');
     toolbar.append(search,submit,create);
     const content=e('div',null,'catalog-table-scroll');
-    root.append(head,status,toolbar,content);parent.replaceChildren(root);
+    const pager=e('nav',null,'list-pagination');
+    pager.setAttribute('aria-label','Páginas de productos por proveedor');
+    root.append(head,status,toolbar,content,pager);parent.replaceChildren(root);
     if(!acl()?.authenticated()||!(acl().isAdmin()||acl().has('compras.gestionar'))){
       toolbar.remove();status.textContent='Tu perfil no tiene autorización de compras para administrar productos de proveedores.';
       return;
@@ -239,12 +241,12 @@
         }
         table.append(body);content.replaceChildren(table);
         if(!rows.length)content.append(e('p','No hay relaciones proveedor-producto en esta búsqueda.','catalog-footnote'));
-        const nav=e('div',null,'workspace-actions');
-        const prev=button('Anterior',()=>{page--;void load()});
-        const next=button('Siguiente',()=>{page++;void load()});
-        prev.disabled=page<=1;next.disabled=page>=Number(data.last_page||1);
-        nav.append(prev,e('span','Página '+page+' de '+(data.last_page||1)),next);
-        content.append(nav);status.textContent='Relaciones leídas desde MariaDB · '+(data.total||0)+' registros.';
+        window.RutaHDListUI?.renderPager(pager,{
+          page,pages:Number(data.last_page||1),total:Number(data.total||0),
+          label:'relaciones',onPage:n=>{page=n;void load();}
+        });
+        pager.hidden=Number(data.last_page||1)<=1;
+        status.textContent='Relaciones leídas desde MariaDB · '+(data.total||0)+' registros.';
       }catch(err){status.textContent=errorText(err);}
       finally{loading=false;}
     }
