@@ -42,9 +42,9 @@
    event.preventDefault();if(globalSearch?.root?.isConnected)globalSearch.fn(event.target.value,{commit:true});
   }
  });
- function advanced(fields,onApply,{title='Búsqueda avanzada',hint='Los filtros adicionales se aplican sobre los registros cargados de la página actual.'}={}){
+ function advanced(fields,onApply,{title='Búsqueda avanzada',hint='Los filtros adicionales se aplican sobre los registros cargados de la página actual.',validate=null}={}){
   const dialog=document.createElement('dialog');dialog.className='modal catalog-dialog crud-dialog advanced-search-dialog';
-  const form=document.createElement('form');form.className='crud-shell';form.noValidate=true;
+  const form=document.createElement('form');form.className='crud-shell';form.noValidate=false;
   const heading=document.createElement('div');heading.className='crud-heading';
   const copy=document.createElement('div');copy.className='crud-heading-copy';
   copy.innerHTML='<span class="crud-kicker">RUTA H&D · LISTADOS</span>';
@@ -96,7 +96,16 @@
   const send=document.createElement('button');send.type='submit';send.className='button primary';send.textContent='Aplicar filtros';
   footer.append(clear,send);form.append(footer);
   form.addEventListener('submit',event=>{
-   event.preventDefault();onApply(Object.fromEntries(Object.entries(controls).map(([key,input])=>[key,input.value.trim()])));dialog.close();
+   event.preventDefault();
+   if(!form.reportValidity())return;
+   const values=Object.fromEntries(Object.entries(controls).map(([key,input])=>[key,input.value.trim()]));
+   const issue=typeof validate==='function'?validate(values):null;
+   if(issue){
+    const field=controls[issue.field]||Object.values(controls)[0];
+    window.RutaHDValidacion?.mostrar(field,issue.message||'Revisa los valores ingresados.');
+    return;
+   }
+   onApply(values);dialog.close();
   });
   dialog.append(form);document.body.append(dialog);
   dialog.addEventListener('close',()=>dialog.remove(),{once:true});
