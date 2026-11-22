@@ -323,12 +323,13 @@ test('switch de producto desactiva y reactiva sin botón Eliminar',async({page})
  const table=page.locator('#productosRealesListado .product-index-table');
  await expect(table.getByRole('button',{name:/Eliminar|Desactivar/})).toHaveCount(0);
  const row=table.locator('tbody tr').first();
- page.once('dialog',dialog=>dialog.accept());
- await row.getByRole('checkbox',{name:'Desactivar Conserva del Sur'}).uncheck();
+ await row.getByRole('checkbox',{name:'Desactivar Conserva del Sur'}).click();
+ await page.locator('dialog.hd-status-confirm[open]').getByRole('button',{name:'Sí, desactivar'}).click();
  await expect(row.getByRole('checkbox',{name:'Activar Conserva del Sur'})).not.toBeChecked();
  await expect.poll(()=>state.calls.findLast(c=>c.p==='/api/v1/productos/9'&&c.m==='PUT')?.dto)
    .toMatchObject({activo:false});
- await row.getByRole('checkbox',{name:'Activar Conserva del Sur'}).check();
+ await row.getByRole('checkbox',{name:'Activar Conserva del Sur'}).click();
+ await page.locator('dialog.hd-status-confirm[open]').getByRole('button',{name:'Sí, activar'}).click();
  await expect(row.getByRole('checkbox',{name:'Desactivar Conserva del Sur'})).toBeChecked();
  await expect.poll(()=>state.calls.findLast(c=>c.p==='/api/v1/productos/9'&&c.m==='PUT')?.dto)
    .toMatchObject({activo:true});
