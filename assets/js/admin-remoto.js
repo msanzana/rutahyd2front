@@ -292,7 +292,8 @@
       const option=el('option','',config.titulo);option.value=key;selection.appendChild(option);
     });
     const results=el('div','catalog-table-scroll');
-    const pagination=el('p','catalog-footnote','');
+    const pagination=el('nav','list-pagination','');
+    pagination.setAttribute('aria-label','Páginas de consultas MySQL');
     let pageNumber=1,lastPage=1;
     const load=async()=>{
       const key=selection.value,definition=REMOTE_RESOURCES[key];
@@ -316,16 +317,20 @@
       });
       table.appendChild(body);
       results.replaceChildren(table);
-      pagination.textContent='Página '+pageNumber+' de '+lastPage+' · Registros: '+Number(response.total||0);
-      prev.disabled=pageNumber<=1;next.disabled=pageNumber>=lastPage;
+      window.RutaHDListUI?.renderPager(pagination,{
+        page:pageNumber,pages:lastPage,total:Number(response.total||0),
+        label:'registros',onPage:n=>guarded(async()=>{pageNumber=n;await load();})
+      });
+      pagination.hidden=lastPage<=1;
       status('Datos consultados desde Laravel/MySQL. Solo lectura; no se modificó ningún registro.');
     };
     const consult=button('Consultar MySQL',()=>guarded(load));
-    const prev=button('Anterior',()=>guarded(async()=>{if(pageNumber>1){pageNumber--;await load();}}));
-    const next=button('Siguiente',()=>guarded(async()=>{if(pageNumber<lastPage){pageNumber++;await load();}}));
-    prev.disabled=true;next.disabled=true;
-    selection.addEventListener('change',()=>{pageNumber=1;lastPage=1;prev.disabled=true;next.disabled=true;results.replaceChildren();pagination.textContent='';});
-    add(bar,selection,consult,prev,next);
+    selection.addEventListener('change',()=>{
+      pageNumber=1;lastPage=1;results.replaceChildren();
+      pagination.replaceChildren();pagination.hidden=true;
+      delete pagination.dataset.pagerKey;
+    });
+    add(bar,selection,consult);
     add(panel,bar,results,pagination);
     root.appendChild(panel);
   }
