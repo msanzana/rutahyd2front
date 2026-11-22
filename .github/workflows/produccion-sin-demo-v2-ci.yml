@@ -34,7 +34,7 @@ jobs:
           grep -Fq 'galeria-productos.js?v=20261122-page33' index.html
           grep -Fq 'productos-densidad-v28.css?v=20261122-v31' index.html
           grep -Fq 'productos-remotos.js?v=20261122-status34' index.html
-          grep -Fq 'switches-v32.css?v=20261122-page33' index.html
+          grep -Fq 'switches-v32.css?v=20261122-status34' index.html
           test -s assets/css/switches-v32.css
           test -s assets/css/controles-v33.css
           grep -Fq 'productos-estados-v34.css?v=20261122-status34' index.html
