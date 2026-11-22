@@ -144,13 +144,14 @@
         for(const row of entries){
           const item=e('div',null,'supplier-barcode-item');
           item.append(e('strong',row.codigo_barras),
-            e('span',row.tipo_nombre+' · '+row.unidades_por_codigo+' unidades · '+(row.activo?'Activo':'Inactivo')));
+            e('span',row.tipo_nombre+' · '+row.unidades_por_codigo+' unidades'));
           item.append(button('Editar',()=>editCode(row)));
-          if(row.activo)item.append(button('Desactivar',async()=>{
-            if(!confirm('¿Desactivar este código de compra sin borrar historial?'))return;
-            try{await api().deactivatePurchaseBarcode(record.id,row.id);await reload();}
-            catch(err){message.textContent=errorText(err);}
-          }));
+          const toggle=window.RutaHDListUI?.statusSwitch('Código '+row.codigo_barras,
+            Boolean(row.activo),async active=>{
+              await api().updatePurchaseBarcode(record.id,row.id,{activo:active});
+              await reload();
+            });
+          if(toggle)item.append(toggle);
           list.append(item);
         }
       };
@@ -227,16 +228,18 @@
           const tr=e('tr');
           tr.append(e('td',record.proveedor),e('td',record.producto+' · '+(record.codigo_producto||'—')),
             e('td',record.codigo_proveedor_producto||'—'),e('td',money(record.costo_proveedor)),
-            e('td',record.fecha_ultima_recepcion||'Sin recepciones'),
-            e('td',record.activo?'Activo':'Inactivo'));
+            e('td',record.fecha_ultima_recepcion||'Sin recepciones'));
+          const stateCell=e('td',null,'catalog-status-cell');
+          const toggle=window.RutaHDListUI?.statusSwitch(record.producto+' / '+record.proveedor,
+            Boolean(record.activo),async active=>{
+              await api().updateProductSupplier(record.id,{activo:active});
+              await load();
+            });
+          stateCell.append(toggle||e('span',record.activo?'Activo':'Inactivo'));
+          tr.append(stateCell);
           const cell=e('td',null,'supplier-row-actions');
           cell.append(button('Editar',()=>editRelation(record,load)));
           cell.append(button('Códigos de compra',()=>barcodes(record)));
-          if(record.activo)cell.append(button('Desactivar',async()=>{
-            if(!confirm('¿Desactivar el vínculo sin eliminar códigos ni compras históricas?'))return;
-            try{await api().deactivateProductSupplier(record.id);await load();}
-            catch(err){status.textContent=errorText(err);}
-          }));
           tr.append(cell);body.append(tr);
         }
         table.append(body);content.replaceChildren(table);
@@ -246,7 +249,7 @@
           label:'relaciones',onPage:n=>{page=n;void load();}
         });
         pager.hidden=Number(data.last_page||1)<=1;
-        status.textContent='Relaciones leídas desde MariaDB · '+(data.total||0)+' registros.';
+        status.textContent='';
       }catch(err){status.textContent=errorText(err);}
       finally{loading=false;}
     }
