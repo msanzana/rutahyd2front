@@ -247,6 +247,24 @@
     saveRoleCatalogPermissions: (roleId, modulos, submodulos=null) =>
       send('/perfiles/' + id(roleId) + '/catalogos','PUT',
         submodulos?{modulos,submodulos}:{modulos}),
+    // Ubicaciones geográficas: CRUD JWT y una única FK ciudad_id en entidades.
+    locations: (tipo,{padreId=null,buscar='',page=1,perPage=100,incluirInactivos=false}={})=>{
+      const allowed=new Set(['paises','regiones','provincias','comunas','ciudades']);
+      if(!allowed.has(tipo))throw Error('Catálogo de ubicación inválido');
+      const q=new URLSearchParams({page:String(page),por_pagina:String(perPage)});
+      if(padreId!=null)q.set('padre_id',id(padreId));
+      if(buscar)q.set('buscar',String(buscar).slice(0,120));
+      if(incluirInactivos)q.set('incluye_inactivos','1');
+      return send('/ubicaciones/'+tipo+'?'+q);
+    },
+    locationPath: ciudadId=>send('/ubicaciones/jerarquia/'+id(ciudadId)),
+    createLocation: (tipo,datos)=>send('/ubicaciones/'+encodeURIComponent(tipo),'POST',datos),
+    updateLocation: (tipo,geoId,datos)=>
+      send('/ubicaciones/'+encodeURIComponent(tipo)+'/'+id(geoId),'PUT',datos),
+    deactivateLocation: (tipo,geoId)=>
+      send('/ubicaciones/'+encodeURIComponent(tipo)+'/'+id(geoId),'DELETE'),
+    supplierMix: (page=1,buscar='')=>send('/proveedores/mix?'+
+      new URLSearchParams({page:String(page),por_pagina:'25',buscar:String(buscar).slice(0,120)})),
     resources: (recurso, pagina = 1, buscar = '', perPage=25) => {
       if (!RESOURCES.has(recurso)) throw new Error('Recurso remoto no permitido.');
       if (!Number.isSafeInteger(pagina) || pagina < 1 || pagina > 10000 ||

@@ -9,20 +9,62 @@
       ['codigo','Código','text',50,false],['nombre','Nombre o razón social','text',190,true],
       ['rut','RUT','text',25,false],['correo_electronico','Correo electrónico','email',190,false],
       ['telefono','Teléfono','text',50,false],['direccion','Dirección','text',255,false],
-      ['comuna','Comuna','text',100,false],['sector','Sector','text',120,false],
+      ['sector','Sector','text',120,false],
       ['observaciones','Observaciones','textarea',10000,false]],
     proveedores:[
-      ['nombre','Razón social / Nombre','text',190,true],
-      ['rut','RUT','text',25,false],['correo_electronico','Correo electrónico','email',190,false],
-      ['telefono','Teléfono','text',50,false],['direccion','Dirección','text',255,false]],
+      ['nombre','Nombre / identificación comercial','text',190,true],
+      ['razon_social','Razón social SII','text',190,false],
+      ['nombre_fantasia','Nombre de fantasía','text',190,false],
+      ['rut','RUT del proveedor','text',25,false],
+      ['giro','Giro o actividad principal','text',255,false],
+      ['actividad_economica_codigo','Código actividad económica SII','text',12,false],
+      ['tipo_contribuyente','Tipo de contribuyente','select',40,false],
+      ['inicio_actividades','Fecha de inicio de actividades','date',10,false],
+      ['situacion_tributaria','Situación tributaria (dato declarado)','text',80,false],
+      ['direccion','Calle / dirección principal','text',255,false],
+      ['direccion_numero','Número','text',30,false],
+      ['direccion_detalle','Oficina, local o referencia','text',120,false],
+      ['codigo_postal','Código postal','text',16,false],
+      ['correo_electronico','Correo de contacto','email',190,false],
+      ['correo_dte','Correo para documentos tributarios DTE','email',190,false],
+      ['telefono','Teléfono principal','text',50,false],
+      ['telefono_secundario','Teléfono secundario','text',50,false],
+      ['sitio_web','Sitio web','url',255,false],
+      ['representante_legal','Representante legal','text',190,false],
+      ['representante_rut','RUT del representante','text',25,false],
+      ['contacto_nombre','Contacto comercial','text',190,false],
+      ['contacto_cargo','Cargo del contacto','text',120,false],
+      ['contacto_telefono','Teléfono del contacto','text',50,false],
+      ['contacto_correo','Correo del contacto','email',190,false],
+      ['moneda_preferida','Moneda preferida (ISO 4217)','text',3,false],
+      ['plazo_pago_dias','Plazo de pago (días)','number',5,false],
+      ['observaciones','Observaciones comerciales','textarea',10000,false]
+    ],
     bodegas:[
       ['codigo','Código','text',30,true],['nombre','Nombre','text',130,true],
       ['tipo','Tipo','text',40,false]]
   };
+  const PROVIDER_COLUMNS=Object.freeze([
+    ['nombre','Nombre / razón social'],['rut','RUT'],['giro','Giro'],
+    ['direccion','Dirección'],['ciudad','Ciudad'],['comuna_nombre','Comuna'],
+    ['telefono','Teléfono'],['correo_electronico','Correo'],['activo','Estado']
+  ]);
+  const PROVIDER_SECTIONS={
+    nombre:'Identificación y datos SII',
+    direccion:'Domicilio tributario',
+    correo_electronico:'Comunicación y responsables',
+    moneda_preferida:'Condiciones comerciales'
+  };
+  const SELECT_OPTIONS={
+    tipo_contribuyente:[
+      ['','No especificado'],['PERSONA_NATURAL','Persona natural'],
+      ['PERSONA_JURIDICA','Persona jurídica'],['EXTRANJERO','Proveedor extranjero']
+    ]
+  };
   const CONFIG=Object.freeze({
     compras:{resource:'ordenes_compra',title:'Órdenes de compra',fields:[['id','ID'],['numero','Número'],['estado','Estado'],['total_bruto','Total bruto']]},
     ventas:{resource:'ventas',title:'Ventas',fields:[['id','ID'],['numero','Número'],['estado','Estado'],['total_bruto','Total bruto']]},
-    proveedores:{resource:'proveedores',title:'Proveedores',permission:'compras.gestionar',fields:[['id','ID'],['nombre','Razón social'],['rut','RUT'],['correo_electronico','Correo'],['activo','Estado']]},
+    proveedores:{resource:'proveedores',title:'Proveedores',permission:'compras.gestionar',fields:PROVIDER_COLUMNS},
     clientes:{resource:'clientes',title:'Clientes',permission:'clientes.gestionar',fields:[['id','ID'],['codigo','Código'],['nombre','Nombre'],['rut','RUT'],['lista_precio_nombre','Lista de precios'],['activo','Estado']]},
     bodega:{resource:'bodegas',title:'Bodegas',permission:'inventario.gestionar',fields:[['id','ID'],['codigo','Código'],['nombre','Nombre'],['tipo','Tipo'],['activo','Estado']]},
     cuentas_corrientes:{resource:null,title:'Cuentas corrientes',fields:[]}
@@ -58,22 +100,45 @@
     const heading=create('div',undefined,'official-editor-heading');
     heading.append(create('span','RUTA H&D · GESTIÓN COMERCIAL','official-editor-eyebrow'),
       create('h2',(editing?'Editar ':'Nuevo registro · ')+cfg.title));
-    heading.append(create('p','Los cambios se guardan directamente en Laravel y MariaDB.','official-editor-description'));
+    heading.append(create('p',cfg.resource==='proveedores'?
+      'Completa los datos tributarios, domicilio, representantes y condiciones comerciales.' :
+      'Mantén la información de esta entidad actualizada y validada.',
+      'official-editor-description'));
     const close=action('×',()=>dialog.close(),'crud-close');close.setAttribute('aria-label','Cerrar ventana');
     heading.append(close);form.append(heading);
     const grid=create('div',undefined,'official-editor-grid'),inputs={};
     for(const [key,label,type,max,required] of definition){
+      if(cfg.resource==='proveedores' && PROVIDER_SECTIONS[key]){
+        grid.append(create('h3',PROVIDER_SECTIONS[key],
+          'official-editor-section official-editor-wide'));
+      }
       const field=create('label',undefined,'field');
       const caption=create('span',label+(required?' *':''));
-      const input=create(type==='textarea'?'textarea':'input');
-      if(type!=='textarea')input.type=type;
-      input.name=key;input.maxLength=max;input.required=required;
+      const input=create(type==='textarea'?'textarea':type==='select'?'select':'input');
+      if(type!=='textarea'&&type!=='select')input.type=type;
+      if(type==='select'){
+        for(const [value,name] of SELECT_OPTIONS[key]||[]){
+          const option=create('option',name);option.value=value;input.append(option);
+        }
+      }
+      input.name=key;
+      if(type==='number'){input.min='0';input.step='1';}
+      else if(type!=='select'&&type!=='date')input.maxLength=max;
+      input.required=required;
       if(required)input.minLength=key==='nombre'?2:1;
       if(type==='email')input.autocomplete='email';
       if(editing&&row[key]!==null&&row[key]!==undefined)input.value=String(row[key]);
       field.append(caption,input);
       if(type==='textarea')field.classList.add('official-editor-wide');
       grid.append(field);inputs[key]=input;
+    }
+    let location=null;
+    if(['clientes','proveedores','bodegas'].includes(cfg.resource)){
+      const group=create('div',undefined,'official-editor-wide supplier-location-section');
+      group.append(create('h3','Ubicación geográfica','official-editor-section'),
+        create('p','Selecciona país, región, provincia, comuna y ciudad. Se guardará únicamente ciudad_id.','official-editor-description'));
+      location=await window.RutaHDUbicaciones?.mountSelector(group,row?.ciudad_id||null);
+      grid.append(group);
     }
     form.append(grid);
     let clientPriceList=null;
@@ -118,7 +183,7 @@
     note.setAttribute('aria-live','polite');form.append(note);
     const footer=create('div',undefined,'official-editor-actions');
     const cancel=action('Cancelar',()=>dialog.close(),'ghost');
-    const submit=create('button',editing?'Guardar cambios':'Crear registro','button primary');
+    const submit=create('button','Guardar','button primary');
     submit.type='submit';
     footer.append(cancel,submit);form.append(footer);
     form.addEventListener('submit',async event=>{
@@ -129,6 +194,7 @@
         const v=inputs[key].value.trim();
         datos[key]=v===''&&!required?null:v;
       }
+      if(location)datos.ciudad_id=location.value();
       if(inputs.activo)datos.activo=inputs.activo.checked;
       if(clientPriceList&&clientPriceList.value)datos.lista_precio_id=Number(clientPriceList.value);
       submit.disabled=true;cancel.disabled=true;
@@ -145,7 +211,7 @@
     dialog.append(form);document.body.append(dialog);
     dialog.addEventListener('close',()=>dialog.remove(),{once:true});
     dialog.showModal();
-    inputs.nombre?.focus()||inputs.codigo?.focus();
+    (inputs.nombre||inputs.codigo)?.focus();
   }
 
   function confirmDeactivate(cfg,row,onSaved){
@@ -182,7 +248,7 @@
     const root=create('section',undefined,'surface-panel official-module');
     const header=create('div',undefined,'panel-heading');
     header.append(create('h2',cfg.title),
-      create('span','Datos en vivo · Laravel y MariaDB','official-source'));
+      create('span','Directorio comercial protegido','official-source'));
     const notice=create('p','', 'catalog-footnote');
     notice.setAttribute('role','status');
     root.append(header,notice);parent.append(root);
@@ -280,5 +346,6 @@
     }
     void load();
   }
+  window.RutaHDProveedorColumns=PROVIDER_COLUMNS;
   window.RutaHDOficial=Object.freeze({mount});
 })();

@@ -48,14 +48,14 @@ test('Clientes: lista real, alta, edición y baja lógica desde Laravel',async({
   await editor.locator('[name="codigo"]').fill('CLI-009');
   await editor.locator('[name="nombre"]').fill('Cliente nuevo real');
   await editor.locator('[name="correo_electronico"]').fill('nuevo@example.invalid');
-  await editor.getByRole('button',{name:'Crear registro'}).click();
+  await editor.getByRole('button',{name:'Guardar',exact:true}).click();
   await expect(editor).toBeHidden();
   await expect(page.locator('#workspaceContent')).toContainText('Cliente nuevo real');
   await page.locator('#workspaceContent tbody tr').filter({hasText:'Cliente nuevo real'})
     .getByRole('button',{name:'Editar'}).click();
   const edit=page.getByRole('dialog',{name:'Editar Clientes'});
   await edit.locator('[name="nombre"]').fill('Cliente actualizado real');
-  await edit.getByRole('button',{name:'Guardar cambios'}).click();
+  await edit.getByRole('button',{name:'Guardar',exact:true}).click();
   await expect(page.locator('#workspaceContent')).toContainText('Cliente actualizado real');
   await page.locator('#workspaceContent tbody tr').filter({hasText:'Cliente actualizado real'})
     .getByRole('checkbox',{name:'Desactivar Cliente actualizado real'}).click();
@@ -89,7 +89,7 @@ test('Proveedores y Bodegas administran solo sus campos autorizados',async({page
     await page.getByRole('button',{name:'Nuevo registro'}).click();
     const dlg=page.getByRole('dialog',{name:'Crear '+(nav==='bodega'?'Bodegas':'Proveedores')});
     for(const [key,value] of Object.entries(values))await dlg.locator('[name="'+key+'"]').fill(value);
-    await dlg.getByRole('button',{name:'Crear registro'}).click();
+    await dlg.getByRole('button',{name:'Guardar',exact:true}).click();
     await expect(dlg).toBeHidden();
   }
   expect(calls.map(v=>v.path)).toEqual([

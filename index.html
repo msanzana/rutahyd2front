@@ -21,6 +21,7 @@
   <link rel="stylesheet" href="assets/css/navegacion-v35.css?v=20261122-nav35">
   <link rel="stylesheet" href="assets/css/dialogo-estados-v36.css?v=20261122-modal36">
   <link rel="stylesheet" href="assets/css/productos-costo-promedio-v37.css?v=20261122-cost37">
+  <link rel="stylesheet" href="assets/css/proveedores-ubicaciones-v38.css?v=20261122-geo38">
 </head>
 <body>
   <svg class="svg-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -75,6 +76,19 @@
             <button type="button" data-admin-catalog="tipos_envasado" class="nav-sublink" role="menuitem"><span>Tipos de envasado</span></button>
             <button type="button" data-admin-catalog="condiciones_tributarias" class="nav-sublink" role="menuitem"><span>Condición tributaria</span></button>
             <button type="button" data-admin-catalog="tipos_codigos_barras" class="nav-sublink" role="menuitem"><span>Tipos de códigos de barras</span></button>
+            <div class="hd-location-menu" id="ubicacionesMenu">
+              <button type="button" class="nav-sublink hd-location-parent" id="toggleUbicacionesSubnav"
+                aria-controls="ubicacionesSubnav" aria-expanded="false" hidden>
+                <span>Ubicaciones</span><svg class="icon small" aria-hidden="true"><use href="#i-chevron"/></svg>
+              </button>
+              <div id="ubicacionesSubnav" class="hd-tertiary-subnav" aria-label="Catálogos de ubicaciones" hidden>
+                <button type="button" data-nav="ubicaciones.paises" class="nav-sublink hd-tertiary-link"><span>Países</span></button>
+                <button type="button" data-nav="ubicaciones.regiones" class="nav-sublink hd-tertiary-link"><span>Regiones</span></button>
+                <button type="button" data-nav="ubicaciones.provincias" class="nav-sublink hd-tertiary-link"><span>Provincias</span></button>
+                <button type="button" data-nav="ubicaciones.comunas" class="nav-sublink hd-tertiary-link"><span>Comunas</span></button>
+                <button type="button" data-nav="ubicaciones.ciudades" class="nav-sublink hd-tertiary-link"><span>Ciudades</span></button>
+              </div>
+            </div>
             <button type="button" data-nav="usuarios" class="nav-sublink" id="navUsuarios" role="menuitem" hidden><span>Usuarios</span></button>
             <button type="button" data-nav="perfiles" class="nav-sublink" id="navPerfiles" role="menuitem" hidden><span>Perfiles y permisos</span></button>
           </div>
@@ -195,12 +209,12 @@
   <script src="assets/js/listados-ui.js?v=20261122-modal36" defer></script>
   <script src="assets/js/validacion-ui.js?v=20261122-filters22" defer></script>
   <script src="assets/js/menu-usuario.js?v=20261122-ui20" defer></script>
-  <script src="assets/js/catalogos-api.js?v=20261122-v31" defer></script>
+  <script src="assets/js/catalogos-api.js?v=20261122-geo38" defer></script>
   <script src="assets/js/admin-remoto.js?v=20261122-nav35" defer></script>
   <script src="assets/js/perfiles.js?v=20261122-ui20" defer></script>
   <script src="assets/js/galeria-productos.js?v=20261122-page33" defer></script>
   <script src="assets/js/productos-remotos.js?v=20261122-cost37" defer></script>
-  <script src="assets/js/usuarios.js?v=20261122-nav35" defer></script>
+  <script src="assets/js/usuarios.js?v=20261122-geo38" defer></script>
   <script src="assets/js/recuperacion.js" defer></script>
   <dialog id="loginDialog" class="modal login-modal" aria-labelledby="loginDialogTitle">
     <form id="loginForm" class="login-form" novalidate>
@@ -221,9 +235,10 @@
   </dialog>
   <script src="assets/js/listas-precios.js?v=20261122-nav35" defer></script>
   <script src="assets/js/ventas-precios.js?v=20261122-v31" defer></script>
-  <script src="assets/js/modulos-oficiales.js?v=20261122-nav35" defer></script>
-  <script src="assets/js/proveedores-productos.js?v=20261122-nav35" defer></script>
+  <script src="assets/js/ubicaciones.js?v=20261122-geo38" defer></script>
+  <script src="assets/js/modulos-oficiales.js?v=20261122-geo38" defer></script>
+  <script src="assets/js/proveedores-productos.js?v=20261122-geo38" defer></script>
   <script src="assets/js/login-produccion.js?v=20261122-ui20" defer></script>
-  <script src="assets/js/app-produccion.js?v=20261122-nav35" defer></script>
+  <script src="assets/js/app-produccion.js?v=20261122-geo38" defer></script>
 </body>
 </html>

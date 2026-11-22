@@ -51,13 +51,13 @@
     return {dialog,box};
   }
 
-  async function editRelation(record,refresh){
+  async function editRelation(record,refresh,fixedSupplier=null){
     const {dialog,box}=openDialog(record?'Editar producto del proveedor':'Relacionar proveedor y producto');
     const message=e('p','Cargando proveedores y productos…','supplier-status');
     box.append(message);
     try{
       const [suppliers,products]=await Promise.all([
-        api().resources('proveedores',1,'',100),
+        fixedSupplier?Promise.resolve({data:[fixedSupplier]}):api().resources('proveedores',1,'',100),
         api().products(1,'')
       ]);
       const providerRows=(suppliers.data||[]).map(v=>({id:v.id,label:v.nombre+' · '+(v.rut||'Sin RUT')}));
@@ -69,13 +69,15 @@
       const form=e('form',null,'supplier-dialog-form crud-supplier-form');
       const providerSearch=field('search','',120);
       providerSearch.placeholder='Nombre o RUT del proveedor…';
-      const provider=selection(providerRows,'Seleccionar proveedor',record?.proveedor_id);
+      const provider=selection(providerRows,'Seleccionar proveedor',
+        record?.proveedor_id??fixedSupplier?.id);
       provider.required=true;
       const productSearch=field('search','',120);
       productSearch.placeholder='Nombre o SKU del producto…';
       const product=selection(productRows,'Seleccionar producto',record?.producto_id);
       product.required=true;
-      if(record){provider.disabled=true;product.disabled=true;providerSearch.disabled=true;productSearch.disabled=true;}
+      if(record||fixedSupplier){provider.disabled=true;providerSearch.disabled=true;}
+      if(record){product.disabled=true;productSearch.disabled=true;}
       const searchProvider=button('Buscar proveedor',async()=>{
         const res=await api().resources('proveedores',1,providerSearch.value.trim(),100);
         provider.replaceChildren(new Option('Seleccionar proveedor',''));
@@ -86,9 +88,15 @@
         product.replaceChildren(new Option('Seleccionar producto',''));
         (res.data||[]).forEach(row=>product.append(new Option((row.sku||'Sin SKU')+' · '+row.nombre,String(row.id))));
       });
-      if(record){searchProvider.disabled=true;searchProduct.disabled=true;}
-      form.append(labeled('Buscar proveedor',providerSearch),searchProvider,
-        labeled('Proveedor *',provider),labeled('Buscar producto',productSearch),
+      if(record||fixedSupplier)searchProvider.disabled=true;
+      if(record)searchProduct.disabled=true;
+      if(fixedSupplier){
+        const badge=e('div',fixedSupplier.nombre+' · '+(fixedSupplier.rut||'Sin RUT'),
+          'supplier-linked-provider supplier-dialog-wide');
+        form.append(badge);
+      }else form.append(labeled('Buscar proveedor',providerSearch),searchProvider,
+        labeled('Proveedor *',provider));
+      form.append(labeled('Buscar producto',productSearch),
         searchProduct,labeled('Producto del catálogo *',product));
       const supplierCode=field('text',record?.codigo_proveedor_producto||'',80);
       const cost=field('number',record?.costo_proveedor??'',40);
@@ -104,7 +112,7 @@
       const status=e('p','', 'supplier-status supplier-dialog-wide');status.setAttribute('role','status');
       const actions=e('div',null,'supplier-dialog-actions supplier-dialog-wide');
       const cancel=button('Cancelar',()=>dialog.close());
-      const save=e('button',record?'Guardar cambios':'Crear vínculo','button primary');save.type='submit';
+      const save=e('button','Guardar','button primary');save.type='submit';
       actions.append(cancel,save);form.append(status,actions);message.remove();box.append(form);
       form.addEventListener('submit',async event=>{
         event.preventDefault();
@@ -190,71 +198,155 @@
     box.append(button('Cerrar',()=>dialog.close(),'button ghost supplier-dialog-dismiss'));
   }
 
+  /**
+   * El mantenedor principal muestra PROVEEDORES (no vínculos individuales).
+   * Cada fila abre su mix con las relaciones y los códigos de compra ya existentes.
+   */
+  function mixEditor(supplier,refreshDirectory){
+    const {dialog,box}=openDialog('Mix de productos · '+supplier.nombre);
+    dialog.classList.add('supplier-mix-dialog');
+    const summary=e('div',null,'supplier-mix-summary');
+    summary.append(e('strong',supplier.razon_social||supplier.nombre),
+      e('span',(supplier.rut||'Sin RUT')+' · '+(supplier.giro||'Giro no informado')));
+    const tools=e('div',null,'supplier-mix-tools');
+    const status=e('p','Consultando productos del proveedor…','supplier-status');
+    const list=e('div',null,'catalog-table-scroll supplier-mix-list');
+    const pager=e('nav',null,'list-pagination');
+    pager.setAttribute('aria-label','Páginas del mix '+supplier.nombre);
+    let page=1,loading=false;
+    const refresh=async()=>{await load();await refreshDirectory();};
+    tools.append(button('Añadir producto al mix',()=>editRelation(null,refresh,supplier),
+      'button primary'),button('Actualizar mix',()=>void load()));
+    box.append(summary,tools,status,list,pager);
+    async function load(){
+      if(loading)return;
+      loading=true;
+      status.textContent='Consultando relaciones reales del proveedor…';
+      try{
+        const result=await api().productSuppliers(page,{proveedor_id:supplier.id});
+        if(!dialog.open)return;
+        const rows=result.data||[];
+        list.replaceChildren();
+        if(!rows.length){
+          list.append(e('p','Aún no existen productos asociados. Añade un producto del catálogo para registrar su código de compra.','supplier-status'));
+        }else{
+          const table=e('table',null,'catalog-table supplier-mix-table');
+          const head=e('tr');
+          ['SKU / producto','Código del proveedor','Costo neto','Códigos de compra','Estado','Acciones']
+            .forEach(label=>head.append(e('th',label)));
+          const thead=e('thead');thead.append(head);table.append(thead);
+          const body=e('tbody');
+          for(const item of rows){
+            const tr=e('tr');
+            tr.append(e('td',(item.codigo_producto||'—')+' · '+item.producto),
+              e('td',item.codigo_proveedor_producto||'—'),e('td',money(item.costo_proveedor)));
+            const codeCell=e('td');
+            codeCell.append(button('Administrar códigos',()=>barcodes(item)));
+            tr.append(codeCell);
+            const stateCell=e('td',null,'catalog-status-cell');
+            const switchControl=window.RutaHDListUI?.statusSwitch(
+              item.producto+' · '+supplier.nombre,Boolean(item.activo),async active=>{
+                await api().updateProductSupplier(item.id,{activo:active});
+                await refresh();
+              });
+            stateCell.append(switchControl||e('span',item.activo?'Activo':'Inactivo'));
+            tr.append(stateCell);
+            const actions=e('td',null,'supplier-row-actions');
+            actions.append(button('Editar',()=>editRelation(item,refresh,supplier)));
+            tr.append(actions);body.append(tr);
+          }
+          table.append(body);list.append(table);
+        }
+        status.textContent=(result.total||0)+' vínculos registrados para este proveedor.';
+        window.RutaHDListUI?.renderPager(pager,{
+          page,pages:Number(result.last_page||1),total:Number(result.total||0),
+          label:'productos',onPage:n=>{page=n;void load();}
+        });
+        pager.hidden=Number(result.last_page||1)<=1;
+      }catch(e){status.textContent=errorText(e);status.classList.add('is-error');}
+      finally{loading=false;}
+    }
+    box.append(button('Cerrar panel',()=>dialog.close(),'button ghost supplier-dialog-dismiss'));
+    void load();
+  }
+
   function mount(parent){
     const current=++marker;
     const root=e('section',null,'surface-panel supplier-products-module');
     const head=e('div',null,'panel-heading');
-    head.append(e('h2','Productos de proveedores'),
-      e('p','SKU, proveedor, código propio del proveedor, costos y códigos de barras para compras.'));
-    const status=e('p','Consultando relaciones…','catalog-footnote');
+    head.append(e('h2','Proveedores · Mix de productos'),
+      e('p','Directorio de proveedores y cantidad real de artículos asociados. Edítalos desde su ficha de mix.'));
+    const status=e('p','Consultando proveedores…','catalog-footnote');
     const toolbar=e('form',null,'workspace-actions supplier-search-bar');
     const search=field('search','',120);
-    search.placeholder='Buscar proveedor, SKU, producto o código del proveedor';
+    search.placeholder='Buscar proveedor por razón social, RUT o correo';
+    search.setAttribute('aria-label','Buscar proveedor en directorio de mix');
     const submit=e('button','Buscar','button primary');submit.type='submit';
-    const create=button('Asociar producto a proveedor',()=>editRelation(null,load),'button primary');
-    create.classList.add('hd-list-create-action');
-    toolbar.append(search,submit,create);
+    toolbar.append(search,submit);
     const content=e('div',null,'catalog-table-scroll');
     const pager=e('nav',null,'list-pagination');
-    pager.setAttribute('aria-label','Páginas de productos por proveedor');
+    pager.setAttribute('aria-label','Páginas del mix de proveedores');
     root.append(head,status,toolbar,content,pager);parent.replaceChildren(root);
     if(!acl()?.authenticated()||!(acl().isAdmin()||acl().has('compras.gestionar'))){
-      toolbar.remove();status.textContent='Tu perfil no tiene autorización de compras para administrar productos de proveedores.';
+      toolbar.remove();
+      status.textContent='Tu perfil no tiene autorización para consultar el mix de proveedores.';
       return;
     }
     let page=1,query='',loading=false;
     async function load(){
-      if(loading)return;loading=true;status.textContent='Cargando relaciones de Laravel…';
+      if(loading)return;
+      loading=true;status.textContent='Cargando directorio de proveedores desde Laravel…';
       try{
-        const data=await api().productSuppliers(page,{buscar:query});
+        const data=await api().supplierMix(page,query);
         if(current!==marker||!root.isConnected)return;
         const rows=data?.data||[];
+        const columns=window.RutaHDProveedorColumns||[
+          ['nombre','Nombre / razón social'],['rut','RUT'],['giro','Giro'],
+          ['direccion','Dirección'],['ciudad','Ciudad'],['comuna_nombre','Comuna'],
+          ['telefono','Teléfono'],['correo_electronico','Correo'],['activo','Estado']
+        ];
         const table=e('table',null,'catalog-table supplier-products-table');
-        const h=e('tr');
-        ['Proveedor','Producto / SKU','Código proveedor','Costo neto','Última recepción','Estado','Acciones']
-          .forEach(x=>h.append(e('th',x)));
-        const thead=e('thead');thead.append(h);table.append(thead);
+        const head=e('tr');
+        columns.forEach(([,label])=>head.append(e('th',label)));
+        head.append(e('th','Productos en mix'),e('th','Acciones'));
+        const thead=e('thead');thead.append(head);table.append(thead);
         const body=e('tbody');
-        for(const record of rows){
+        for(const row of rows){
           const tr=e('tr');
-          tr.append(e('td',record.proveedor),e('td',record.producto+' · '+(record.codigo_producto||'—')),
-            e('td',record.codigo_proveedor_producto||'—'),e('td',money(record.costo_proveedor)),
-            e('td',record.fecha_ultima_recepcion||'Sin recepciones'));
-          const stateCell=e('td',null,'catalog-status-cell');
-          const toggle=window.RutaHDListUI?.statusSwitch(record.producto+' / '+record.proveedor,
-            Boolean(record.activo),async active=>{
-              await api().updateProductSupplier(record.id,{activo:active});
-              await load();
-            });
-          stateCell.append(toggle||e('span',record.activo?'Activo':'Inactivo'));
-          tr.append(stateCell);
-          const cell=e('td',null,'supplier-row-actions');
-          cell.append(button('Editar',()=>editRelation(record,load)));
-          cell.append(button('Códigos de compra',()=>barcodes(record)));
-          tr.append(cell);body.append(tr);
+          for(const [key] of columns){
+            const cell=e('td');
+            if(key==='activo'){
+              const toggle=window.RutaHDListUI?.statusSwitch(row.nombre,Boolean(row.activo),
+                async active=>{
+                  await api().updateResource('proveedores',row.id,{activo:active});
+                  await load();
+                });
+              cell.className='catalog-status-cell';
+              cell.append(toggle||e('span',row.activo?'Activo':'Inactivo'));
+            }else cell.textContent=String(row[key]??'—');
+            tr.append(cell);
+          }
+          const count=e('td',null,'supplier-mix-count');
+          count.append(e('span',Number(row.cantidad_productos_mix||0),'supplier-mix-badge'));
+          const actions=e('td',null,'supplier-row-actions');
+          const edit=button('Editar',()=>mixEditor(row,load),'button primary');
+          edit.setAttribute('aria-label','Editar mix de '+row.nombre);
+          actions.append(edit);tr.append(count,actions);body.append(tr);
         }
         table.append(body);content.replaceChildren(table);
-        if(!rows.length)content.append(e('p','No hay relaciones proveedor-producto en esta búsqueda.','catalog-footnote'));
+        if(!rows.length)content.append(e('p','No hay proveedores registrados para esta búsqueda.','catalog-footnote'));
         window.RutaHDListUI?.renderPager(pager,{
           page,pages:Number(data.last_page||1),total:Number(data.total||0),
-          label:'relaciones',onPage:n=>{page=n;void load();}
+          label:'proveedores',onPage:n=>{page=n;void load();}
         });
         pager.hidden=Number(data.last_page||1)<=1;
         status.textContent='';
-      }catch(err){status.textContent=errorText(err);}
+      }catch(error){status.textContent=errorText(error);}
       finally{loading=false;}
     }
-    toolbar.addEventListener('submit',event=>{event.preventDefault();query=search.value.trim();page=1;void load();});
+    toolbar.addEventListener('submit',event=>{
+      event.preventDefault();query=search.value.trim();page=1;void load();
+    });
     void load();
   }
   window.RutaHDProveedoresProductos=Object.freeze({mount});
