@@ -16,6 +16,7 @@
   badInput:'Revisa el valor ingresado.'
  };
  const formState=new WeakMap();
+ let bubbleSequence=0;
  const tracked=new WeakSet();
  const owner=input=>input.closest('form')||input.closest('dialog');
  const fieldName=input=>{
@@ -49,6 +50,37 @@
   else form.prepend(summary);
   return summary;
  }
+ function ensureFieldBubble(input,message){
+  const container=input.closest('.field,.crud-field,.supplier-field,.official-editor-field')
+   ||input.parentElement;
+  if(!container)return;
+  let bubble=[...container.children].find(node=>node.classList?.contains('hd-validation-bubble'));
+  if(!bubble){
+   bubble=document.createElement('span');
+   bubble.className='hd-validation-bubble';
+   bubble.id='hd-validation-bubble-'+(++bubbleSequence);
+   bubble.setAttribute('role','alert');
+   bubble.setAttribute('aria-live','polite');
+   container.append(bubble);
+  }
+  bubble.textContent=message;
+  bubble.hidden=false;
+  const ids=new Set((input.getAttribute('aria-describedby')||'').split(/\s+/).filter(Boolean));
+  ids.add(bubble.id);
+  input.setAttribute('aria-describedby',[...ids].join(' '));
+ }
+ function clearFieldBubble(input){
+  const container=input.closest('.field,.crud-field,.supplier-field,.official-editor-field')
+   ||input.parentElement;
+  const bubble=[...((container?.children)||[])].find(node=>node.classList?.contains('hd-validation-bubble'));
+  if(!bubble)return;
+  bubble.hidden=true;
+  bubble.textContent='';
+  const described=(input.getAttribute('aria-describedby')||'').split(/\s+/)
+   .filter(id=>id&&id!==bubble.id);
+  if(described.length)input.setAttribute('aria-describedby',described.join(' '));
+  else input.removeAttribute('aria-describedby');
+ }
  function show(input){
   const form=owner(input);if(!form)return;
   const summary=ensureSummary(form);
@@ -58,6 +90,7 @@
   summary.hidden=false;
   input.classList.add('hd-field-invalid');
   input.setAttribute('aria-invalid','true');
+  ensureFieldBubble(input,errorFor(input));
   input.closest('.field,.crud-field,.supplier-field')?.classList.add('hd-field-error');
   const state=formState.get(form)||{first:null};
   if(!state.first||!state.first.isConnected||state.first.validity?.valid)state.first=input;
@@ -71,6 +104,7 @@
     if(!input.validity?.valid)return;
     input.classList.remove('hd-field-invalid');
     input.removeAttribute('aria-invalid');
+    clearFieldBubble(input);
     input.closest('.field,.crud-field,.supplier-field')?.classList.remove('hd-field-error');
     if(!form.querySelector('.hd-field-invalid')){
       summary.hidden=true;formState.delete(form);
@@ -93,7 +127,7 @@
  document.addEventListener('invalid',event=>{
   const input=event.target;
   if(!(input instanceof HTMLInputElement||input instanceof HTMLSelectElement||input instanceof HTMLTextAreaElement))return;
-  if(input.closest('.login-modal,.recovery-dialog'))return;
+  // Incluso login y recuperación: suprimir tooltip nativo, respetar validación HTML5.
   event.preventDefault();
   show(input);
  },true);
