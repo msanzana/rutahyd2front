@@ -489,11 +489,17 @@
         const margin=Number(entry.margin.value||0);
         entry.price.value=amount(costo*(1+margin/100));
       }else{
-        entry.margin.value=costo>0?amount(((price-costo)/costo)*100):'';
+        const derivado=costo>0?((price-costo)/costo)*100:null;
+        entry.margin.value=derivado===null?'':amount(Math.max(0,derivado));
       }
       const margen=Number(entry.margin.value);
       const active=entry.active.checked;
-      const invalid=active&&costo>0&&(!Number.isFinite(margen)||margen<Number(minimum.value));
+      const actualPrice=Number(entry.price.value||0),minimumMargin=Number(minimum.value||0);
+      const invalid=active&&costo>0&&(
+        !Number.isFinite(actualPrice)||
+        actualPrice+0.0001<costo*(1+minimumMargin/100)||
+        !Number.isFinite(margen)||margen<minimumMargin
+      );
       entry.row.classList.toggle('price-margin-invalid',invalid);
       entry.error.hidden=!invalid;
       entry.error.textContent=invalid?
@@ -510,10 +516,14 @@
       costDisplay.className='price-readonly';costDisplay.value=cost.value||'0';
       const costCell=el('td');costCell.append(costDisplay);row.appendChild(costCell);
       const margin=el('input');margin.type='number';margin.min='0';margin.step='0.0001';
-      const suppliedPrice=data.precioVenta??(!producto&&list.es_base?'0':null);
-      const initialPrice=suppliedPrice??(list.es_base?producto?.presentacion?.precioNeto:'0')??'0';
+      const suppliedPrice=data.precioVenta;
+      const historical=list.es_base?producto?.presentacion?.precioNeto:null;
+      const initialPrice=suppliedPrice??historical??'0';
       const initialMargin=data.margenPorcentaje;
-      margin.value=initialMargin==null?'':String(initialMargin);
+      const isNewRow=!producto||fresh||(suppliedPrice==null&&historical==null);
+      // La Línea define el margen inicial. Nunca derivar -100% desde un precio nuevo de 0.
+      margin.value=isNewRow?String(Number(minimum.value||0)):
+        (initialMargin==null?'':String(Math.max(0,Number(initialMargin))));
       margin.placeholder='0.00';
       const marginCell=el('td');marginCell.append(margin);row.appendChild(marginCell);
       const price=el('input');price.type='number';price.min='0';price.step='0.0001';price.required=true;
@@ -521,7 +531,8 @@
       const priceCell=el('td');priceCell.append(price);row.appendChild(priceCell);
       const actionCell=el('td');
       const error=el('small','price-margin-warning','');error.hidden=true;
-      const entry={list,row,active:state,costDisplay,margin,price,error,last:'precio'};
+      const entry={list,row,active:state,costDisplay,margin,price,error,
+        last:isNewRow?'margen':'precio'};
       if(!list.es_base){
         const remove=button('Quitar',()=>{
           if(fresh){row.remove();entry.errorRow.remove();prices.splice(prices.indexOf(entry),1);refreshSelector();}
@@ -537,7 +548,7 @@
       margin.addEventListener('input',()=>{entry.last='margen';compute(entry,'margen');});
       price.addEventListener('input',()=>{entry.last='precio';compute(entry,'precio');});
       state.addEventListener('change',()=>compute(entry,entry.last));
-      compute(entry,initialMargin!=null?'precio':'precio');
+      compute(entry,entry.last);
     }
     const existing=producto?.precios||[];
     const originalBase=existing.find(x=>String(x.listaPrecioId)===String(baseList.id));
@@ -568,11 +579,21 @@
     cost.addEventListener('input',()=>{
       for(const entry of prices){
         entry.costDisplay.value=cost.value;
+        if(Number(entry.price.value||0)===0&&entry.margin.value===''&&
+          Number(cost.value||0)>0){
+          entry.margin.value=minimum.value||'0';entry.last='margen';
+        }
         compute(entry,entry.last);
       }
     });
     minimum.addEventListener('change',()=>prices.forEach(x=>compute(x,x.last)));
-    controls.lineaId.addEventListener('change',()=>prices.forEach(x=>compute(x,x.last)));
+    controls.lineaId.addEventListener('change',()=>{
+      for(const entry of prices){
+        if(entry.last==='margen'&&Number(entry.margin.value)<Number(minimum.value))
+          entry.margin.value=minimum.value;
+        compute(entry,entry.last);
+      }
+    });
     refreshSelector();
     if(producto)form.appendChild(el('p','catalog-footnote',
       'Presentación principal ID '+(producto.presentacion?.id??'sin asignar')+
@@ -614,7 +635,11 @@
     form.addEventListener('submit',async(event)=>{
       event.preventDefault();
       if(busy)return;
-      if(!form.reportValidity())return;
+      if(!form.reportValidity()){
+        form.querySelector(':invalid')?.scrollIntoView({behavior:'smooth',block:'center'});
+        feedback.textContent='Revisa los campos obligatorios y valores indicados antes de guardar.';
+        feedback.hidden=false;return;
+      }
       const classification=Object.fromEntries(ATTRS.map(([field])=>[field,Number(controls[field].value)]));
       if(Object.values(classification).some(x=>!Number.isSafeInteger(x)||x<1)){
         feedback.textContent='Completa todas las clasificaciones antes de guardar.';
@@ -629,7 +654,9 @@
       });
       if(invalidPrice){
         invalidPrice.price.focus();
-        feedback.textContent='Una lista tiene un precio inferior al margen mínimo de la línea.';
+        invalidPrice.price.scrollIntoView({behavior:'smooth',block:'center'});
+        feedback.textContent='La lista «'+invalidPrice.list.nombre+
+          '» está por debajo del margen mínimo de '+minimum.value+' % para la línea seleccionada.';
         feedback.hidden=false;return;
       }
       const dto={
@@ -648,7 +675,7 @@
         precios:prices.filter(item=>item.row.isConnected&&item.list.id!==null).map(item=>({
           listaPrecioId:Number(item.list.id),
           activo:item.list.es_base?true:item.active.checked,
-          ...(item.last==='margen'&&item.margin.value!==''?
+          ...(Number(cost.value)>0&&item.last==='margen'&&item.margin.value!==''?
             {margenPorcentaje:item.margin.value}:{precioVenta:item.price.value})
         })),
         codigosVenta:selectedBarcodes.filter(x=>x.row.isConnected).map(item=>({
@@ -667,6 +694,7 @@
         message(producto?'Producto actualizado en MariaDB.':'Producto creado en MariaDB.');
       }catch(e){
         feedback.textContent=errorMessage(e);feedback.hidden=false;
+        feedback.scrollIntoView({behavior:'smooth',block:'center'});
       }finally{busy=false;submit.disabled=false;}
     });
     document.body.appendChild(modal);
