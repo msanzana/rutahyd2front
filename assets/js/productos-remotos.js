@@ -44,7 +44,7 @@
     return 'No se pudo completar la operación con Laravel.';
   }
   async function guarded(fn){
-    if(busy)return;
+    if(busy){message('Terminando la consulta anterior. Intenta nuevamente.',true);return;}
     busy=true;
     try{await fn();}
     catch(e){message(errorMessage(e),true);}
@@ -81,20 +81,46 @@
     result=el('div','catalog-table-scroll');
     result.id='productosRealesListado';
     root.appendChild(result);
-    guarded(async()=>{
-      await loadCatalogs();
-      await loadProducts();
-    });
+    // El listado no depende de que todos los catálogos estén disponibles.
+    // Cada catálogo se consulta solamente cuando se abre el editor.
+    guarded(loadProducts);
   }
   async function loadCatalogs(){
-    const res=await Promise.all(ATTRS.map(([,cat])=>api().list(cat)));
-    const barcodeTypes=await api().list('tipos_codigos_barras');
-    if(!Array.isArray(barcodeTypes?.items))throw Error('Tipos de código de barras no disponibles');
-    cache.tipos_codigos_barras=barcodeTypes.items;
-    ATTRS.forEach(([,cat],index)=>{
-      if(!Array.isArray(res[index]?.items))throw new Error('Catálogos incompletos');
-      cache[cat]=res[index].items;
+    const names=[...ATTRS.map(([,catalog])=>catalog),'tipos_codigos_barras'];
+    const outcome=await Promise.allSettled(names.map(name=>api().list(name)));
+    const failed=[];
+    outcome.forEach((entry,index)=>{
+      const name=names[index];
+      if(entry.status==='fulfilled'&&Array.isArray(entry.value?.items)){
+        cache[name]=entry.value.items;
+      }else{
+        cache[name]=[];
+        failed.push(name);
+      }
     });
+    if(failed.length){
+      const error=new Error('No se pudieron cargar los catálogos '+failed.join(', ')+'. Revisa permisos o conectividad y vuelve a intentarlo.');
+      error.catalogs=failed;
+      throw error;
+    }
+  }
+  function catalogErrorDialog(error){
+    const dialog=el('dialog','modal catalog-dialog crud-dialog');
+    const form=el('div','crud-shell');
+    const heading=el('div','crud-heading');
+    const label=el('div','crud-heading-copy');
+    label.append(el('span','crud-kicker','RUTA H&D · CATÁLOGOS'),
+      el('h2','','No se puede completar la carga del producto'),
+      el('p','crud-intro','El editor requiere las clasificaciones del servidor para guardar un artículo válido.'));
+    const close=button('×',()=>dialog.close(),'crud-close');
+    close.setAttribute('aria-label','Cerrar ventana');heading.append(label,close);
+    const info=el('p','catalog-footnote',error?.message||'No se recibieron los catálogos necesarios.');
+    info.setAttribute('role','alert');
+    const actions=el('div','modal-footer crud-footer');
+    actions.append(button('Cerrar',()=>dialog.close(),'button ghost'),
+      button('Reintentar',()=>{dialog.close();void guarded(()=>editProduct(null));},'button primary'));
+    form.append(heading,info,actions);dialog.append(form);document.body.append(dialog);
+    dialog.addEventListener('close',()=>dialog.remove(),{once:true});dialog.showModal();
   }
   function money(price){
     return new Intl.NumberFormat('es-CL',{style:'currency',currency:'CLP',maximumFractionDigits:2}).format(Number(price)||0);
@@ -123,7 +149,7 @@
       row.appendChild(actions);body.appendChild(row);
     });
     table.appendChild(body);
-    if(!data.data.length)result.appendChild(el('p','catalog-footnote','No hay productos en esta consulta.'));
+    if(!data.data.length)result.appendChild(el('p','catalog-footnote','No hay productos registrados para esta búsqueda. Puedes crear el primero con «Nuevo producto».'));
     else result.appendChild(table);
     const footer=el('div','workspace-actions');
     const previous=button('Anterior',()=>guarded(async()=>{selectedPage--;await loadProducts();}));
@@ -182,7 +208,8 @@
   }
   async function editProduct(id){
     if(!canManage())throw Error('No autorizado');
-    await loadCatalogs();
+    try{await loadCatalogs();}
+    catch(error){catalogErrorDialog(error);return;}
     const producto=id?await api().getProduct(id):null;
     const modal=el('dialog','modal catalog-dialog product-editor-dialog crud-product-dialog');
     const form=el('form','form-grid product-editor-form');
