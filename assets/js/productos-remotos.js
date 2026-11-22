@@ -340,23 +340,110 @@
   async function detailProduct(id){
     const producto=await api().getProduct(id);
     const modal=el('dialog','modal catalog-dialog crud-dialog product-detail-dialog');
-    const box=el('div','form-grid');
-    const lines=[
-      ['SKU',producto.sku||'—'],['Nombre',producto.nombre],
-      ['Descripción',producto.descripcion||'—'],
-      ['Precio neto',producto.presentacion?money(producto.presentacion.precioNeto):'Sin presentación'],
-      ['IVA',producto.presentacion?producto.presentacion.tasaIva+' %':'—'],
-      ['Stock en bodegas (solo lectura)',producto.stock],
-    ];
-    for(const [field,cat,label] of ATTRS) {
-      const item=cache[cat]?.find(x=>Number(x.id)===Number(producto.clasificacion[field]));
-      lines.push([label,item?.nombre||'Sin clasificar']);
+    modal.setAttribute('aria-label','Ficha de consulta del producto '+producto.nombre);
+    const shell=el('div','product-detail-shell');
+    const header=el('header','product-detail-header');
+    const heading=el('div','product-detail-heading');
+    heading.append(el('span','overline','RUTA H&D · FICHA DE CONSULTA'),
+      el('h2','',producto.nombre||'Producto sin nombre'));
+    const identity=el('div','product-detail-identifiers');
+    identity.append(el('span','product-detail-sku',producto.sku||'SKU no informado'),
+      el('span','product-detail-status '+(producto.activo?'is-active':'is-inactive'),
+        producto.activo?'Activo':'Inactivo'));
+    heading.append(identity);
+    const closeTop=button('×',()=>modal.close(),'crud-close');
+    closeTop.setAttribute('aria-label','Cerrar ficha de producto');
+    header.append(heading,closeTop);shell.append(header);
+    const content=el('div','product-detail-content');
+    const info=el('section','product-detail-section');
+    info.append(el('h3','','Información comercial'));
+    const summary=el('dl','product-detail-fields');
+    const item=(target,label,value)=>{
+      const field=el('div','product-detail-field');
+      field.append(el('dt','',label),el('dd','',value===null||value===undefined||value===''?'—':value));
+      target.append(field);
+    };
+    item(summary,'Descripción',producto.descripcion||'Sin descripción');
+    item(summary,'Presentación',producto.presentacion?.nombre||'Sin presentación');
+    item(summary,'Unidades por envase',producto.presentacion?.unidadesPorEnvase??'—');
+    item(summary,'Tipo de impuesto',Number(producto.presentacion?.tasaIva)===0?'Exento':'Afecto');
+    item(summary,'IVA',producto.presentacion?.tasaIva!=null?producto.presentacion.tasaIva+' %':'—');
+    item(summary,'Stock en bodegas · lectura',producto.stock??'0');
+    info.append(summary);content.append(info);
+    const classification=el('section','product-detail-section');
+    classification.append(el('h3','','Clasificación del producto'));
+    const taxonomy=el('dl','product-detail-taxonomy');
+    for(const [field,catalog,label] of ATTRS){
+      const selected=cache[catalog]?.find(x=>Number(x.id)===Number(producto.clasificacion?.[field]));
+      item(taxonomy,label,producto.clasificacionNombres?.[field]||selected?.nombre||'Sin clasificar');
     }
-    lines.forEach(([label,val])=>box.appendChild(add(el('p','catalog-footnote'),
-      el('strong','',label+': '),el('span','',val))));
-    modal.appendChild(add(el('div'),el('h2','','Ficha de producto'),box,
-      button('Cerrar',()=>modal.close())));
-    document.body.appendChild(modal);
+    classification.append(taxonomy);content.append(classification);
+    const pricesSection=el('section','product-detail-section product-detail-wide');
+    pricesSection.append(el('h3','','Precios por lista'));
+    const cost=Number(producto.costoNeto||0);
+    const priceIntro=el('div','product-detail-price-summary');
+    priceIntro.append(el('span','','Costo neto: '+money(cost)),
+      el('span','','Margen mínimo línea: '+Number(producto.minimoMargenPrecioVenta||0).toFixed(2)+' %'));
+    pricesSection.append(priceIntro);
+    const prices=Array.isArray(producto.precios)?producto.precios:[];
+    if(prices.length){
+      const table=el('table','product-detail-table');
+      const head=el('thead'),tr=el('tr');
+      ['Lista','Estado','Costo neto','Margen','Precio venta neto'].forEach(x=>tr.append(el('th','',x)));
+      head.append(tr);table.append(head);
+      const body=el('tbody');
+      prices.forEach(price=>{
+        const row=el('tr');
+        const name=el('td');
+        name.append(el('strong','',price.listaNombre||'Lista de precio'));
+        if(price.esBase)name.append(el('span','product-detail-base','Base'));
+        row.append(name);
+        row.append(el('td','',price.activo===false?'Inactiva':'Activa'),
+          el('td','',money(price.costo??cost)),
+          el('td','',price.margenPorcentaje==null?'Sin cálculo':Number(price.margenPorcentaje).toFixed(2)+' %'));
+        const amount=el('td');
+        amount.append(el('span','product-detail-amount',money(price.precioVenta)));
+        row.append(amount);body.append(row);
+      });
+      table.append(body);
+      const scroll=el('div','product-detail-table-scroll');scroll.append(table);pricesSection.append(scroll);
+    }else if(producto.presentacion){
+      const notice=el('p','product-detail-empty','Precio general de presentación: '+money(producto.presentacion.precioNeto)+
+        '. No hay listas de precios detalladas registradas.');
+      pricesSection.append(notice);
+    }else pricesSection.append(el('p','product-detail-empty','No hay precios por lista registrados.'));
+    content.append(pricesSection);
+    const codesSection=el('section','product-detail-section product-detail-wide');
+    codesSection.append(el('h3','','Códigos de barras de venta'));
+    const codes=Array.isArray(producto.codigosVenta)?producto.codigosVenta:[];
+    if(codes.length){
+      const table=el('table','product-detail-table product-detail-barcodes'),head=el('thead'),tr=el('tr');
+      ['Tipo','Código de barras','Unidades por código','Estado'].forEach(x=>tr.append(el('th','',x)));
+      head.append(tr);table.append(head);
+      const body=el('tbody');
+      codes.forEach(code=>{
+        const type=(cache.tipos_codigos_barras||[]).find(x=>Number(x.id)===Number(code.tipoCodigoBarraId));
+        const row=el('tr');
+        row.append(el('td','',code.tipoNombre||type?.nombre||'Tipo '+String(code.tipoCodigoBarraId||'—')));
+        const cell=el('td');
+        cell.append(el('code','product-detail-barcode',code.codigoBarras||'—'));
+        row.append(cell,el('td','',code.unidadesPorCodigo??'1'),
+          el('td','',code.activo===false?'Inactivo':'Activo'));
+        body.append(row);
+      });
+      table.append(body);
+      const scroll=el('div','product-detail-table-scroll');scroll.append(table);codesSection.append(scroll);
+    }else if(producto.presentacion?.codigoBarras){
+      codesSection.append(el('p','product-detail-empty',
+        'Código de barras de presentación: '+producto.presentacion.codigoBarras));
+    }else codesSection.append(el('p','product-detail-empty','No hay códigos de barras registrados.'));
+    content.append(codesSection);
+    shell.append(content);
+    const footer=el('footer','product-detail-footer');
+    footer.append(el('span','product-detail-readonly','Solo consulta · No modifica inventario ni precios'),
+      button('Cerrar ficha',()=>modal.close(),'button primary'));
+    shell.append(footer);modal.append(shell);
+    document.body.append(modal);
     modal.addEventListener('close',()=>modal.remove(),{once:true});
     modal.showModal();
   }
