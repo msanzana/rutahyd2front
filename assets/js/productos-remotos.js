@@ -137,7 +137,7 @@
   }
   async function detailProduct(id){
     const producto=await api().getProduct(id);
-    const modal=el('dialog','modal catalog-dialog');
+    const modal=el('dialog','modal catalog-dialog crud-dialog product-detail-dialog');
     const box=el('div','form-grid');
     const lines=[
       ['SKU',producto.sku||'—'],['Nombre',producto.nombre],
@@ -184,7 +184,7 @@
     if(!canManage())throw Error('No autorizado');
     await loadCatalogs();
     const producto=id?await api().getProduct(id):null;
-    const modal=el('dialog','modal catalog-dialog product-editor-dialog');
+    const modal=el('dialog','modal catalog-dialog product-editor-dialog crud-product-dialog');
     const form=el('form','form-grid product-editor-form');
     form.noValidate=false;
     modal.appendChild(form);
@@ -192,7 +192,8 @@
     heading.append(el('span','overline','RUTA H&D · CATÁLOGO DE PRODUCTOS'),
       el('h2','',producto?'Editar producto':'Nuevo producto'),
       el('p','','Clasifica el artículo por jerarquía, registra su presentación y añade los códigos de venta para cada unidad logística.'));
-    form.appendChild(heading);
+    const close=button('×',()=>modal.close(),'crud-close');close.setAttribute('aria-label','Cerrar ventana');
+    heading.append(close);form.appendChild(heading);
     form.appendChild(el('h3','product-editor-section','Información del producto'));
     const sku=inputField('SKU / Código','text',form,producto?.sku,{required:true,maxLength:80});
     const nombre=inputField('Nombre del producto','text',form,producto?.nombre,{required:true,maxLength:190});
