@@ -105,6 +105,7 @@
 
   async function send(path, method = 'GET', body) {
     if (!endpoint || !bearer) throw new Error('La API requiere configuración y sesión autenticada.');
+    const sessionBearer = bearer;
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 15000);
     let response;
@@ -112,7 +113,7 @@
       response = await fetch(endpoint + path, {
         method,
         headers: {
-          Authorization: 'Bearer ' + bearer,
+          Authorization: 'Bearer ' + sessionBearer,
           Accept: 'application/json',
           ...(body !== undefined ? {'Content-Type':'application/json'} : {})
         },
@@ -127,7 +128,8 @@
       error.status = response.status;
       // Un 401 revoca la sesión de toda la aplicación (no solo del módulo abierto).
       // Un 403 conserva la sesión y únicamente deniega la operación solicitada.
-      if (response.status === 401 && path !== '/sesion') {
+      if (response.status === 401 && path !== '/sesion' && bearer === sessionBearer) {
+        // Una respuesta tardía de una sesión anterior nunca puede cerrar la actual.
         bearer = null;
         window.RutaHDAccesos?.clear();
       }
