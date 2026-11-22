@@ -119,9 +119,10 @@
     ]},
     {title:'Compras',children:[]},
     {title:'Ventas',children:[]},
-    {title:'Proveedores',children:[[null,'Listado de proveedores'],[null,'Proveedores productos']]},
+    {title:'Proveedores',children:[['proveedores.listado','Listado de proveedores'],
+     ['proveedores.productos','Proveedores productos']]},
     {title:'Clientes',children:[]},
-    {title:'Productos',children:[[null,'Listado de productos'],
+    {title:'Productos',children:[['productos.listado','Listado de productos'],
       ['rubros','Rubros'],['departamentos','Departamentos'],['familias','Familias'],
       ['lineas','Líneas'],['marcas','Marcas'],['modelos','Modelos']]},
     {title:'Bodega',children:[]},
@@ -149,8 +150,8 @@
     if(!role){root.appendChild(form);return;}
     const intro=el('p','catalog-footnote',
       'Árbol de permisos por módulo. Los catálogos permiten configurar Ver y Gestionar. '+
-      'Las demás opciones se muestran como permisos generales heredados: '+
-      'no se habilitan controles sin soporte de autorización independiente en Laravel.');
+      'Los listados de Productos y Proveedores tienen permisos independientes '+
+      'cuando Laravel incluye el esquema DDL23. Las demás opciones heredan permisos generales.');
     form.appendChild(intro);
     const tree=el('div','permission-tree');tree.id='permissionTree';
     const heading=el('div','permission-tree-head');
@@ -161,13 +162,18 @@
       const current=role.modulos?.[key]||{ver:false,gestionar:false};
       changes[key]={ver:Boolean(current.ver),gestionar:Boolean(current.gestionar)};
     }
+    const navChanges=role.submodulos&&typeof role.submodulos==='object'?
+      Object.fromEntries(['productos.listado','proveedores.listado','proveedores.productos'].map(k=>
+        [k,{ver:Boolean(role.submodulos?.[k]?.ver),
+             gestionar:Boolean(role.submodulos?.[k]?.gestionar)}])):null;
     const editable=Boolean(role.editable);
     for(const group of TREE){
       const details=el('details','permission-tree-group');
       details.open=group.title==='Productos'||group.title==='Administración';
       const summary=el('summary','permission-tree-summary');
       summary.append(el('span','',group.title));
-      const configurable=group.children.filter(([key])=>key&&Object.prototype.hasOwnProperty.call(changes,key)).length;
+      const configurable=group.children.filter(([key])=>key&&
+        (Object.prototype.hasOwnProperty.call(changes,key)||navChanges&&key in navChanges)).length;
       summary.append(el('small','',configurable?
         configurable+' permisos independientes':'Permiso general'));
       details.appendChild(summary);
@@ -175,20 +181,21 @@
         const children=el('div','permission-tree-children');
         for(const [key,label] of group.children){
           const row=el('div','permission-tree-row');
-          row.dataset.modulo=key||label.toLocaleLowerCase('es-CL').replace(/ /g,'_');
+          row.dataset.modulo=key?key.replace(/\./g,'_'):label.toLocaleLowerCase('es-CL').replace(/ /g,'_');
           row.append(el('span','',label));
-          if(key&&changes[key]){
+          const rights=key?(changes[key]||navChanges?.[key]):null;
+          if(rights){
             const check=(action)=>{
               const wrapper=el('label');
               const c=el('input');c.type='checkbox';c.dataset.permission=action;
               c.setAttribute('aria-label',(action==='ver'?'Ver ':'Gestionar ')+label);
-              c.checked=changes[key][action];c.disabled=!editable;
+              c.checked=rights[action];c.disabled=!editable;
               c.addEventListener('change',()=>{
-                changes[key][action]=c.checked;
+                rights[action]=c.checked;
                 const view=row.querySelector('input[data-permission="ver"]');
                 const manage=row.querySelector('input[data-permission="gestionar"]');
-                if(action==='ver'&&!c.checked){changes[key].gestionar=false;if(manage)manage.checked=false;}
-                if(action==='gestionar'&&c.checked){changes[key].ver=true;if(view)view.checked=true;}
+                if(action==='ver'&&!c.checked){rights.gestionar=false;if(manage)manage.checked=false;}
+                if(action==='gestionar'&&c.checked){rights.ver=true;if(view)view.checked=true;}
               });
               wrapper.append(c);return wrapper;
             };
@@ -216,7 +223,7 @@
       event.preventDefault();if(!editable||busy)return;
       busy=true;
       try{
-        await api().saveRoleCatalogPermissions(role.id,changes);
+        await api().saveRoleCatalogPermissions(role.id,changes,navChanges);
         status('Permisos de submódulos guardados en el perfil '+role.nombre+'.');
         await load();
       }catch(error){
