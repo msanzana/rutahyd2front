@@ -27,6 +27,11 @@ jobs:
           node --check tests/filtros-productos-validacion-v22.spec.mjs
           node --check tests/listas-precios-flujo-integral-v25.spec.mjs
           node --check tests/login-foto-v26.spec.mjs
+          node --check tests/productos-galeria-orden-guardado-v28.spec.mjs
+          node --check assets/js/galeria-productos.js
+          node --check assets/js/productos-remotos.js
+          grep -Fq 'galeria-productos.js?v=20261122-photos28' index.html
+          grep -Fq 'productos-densidad-v28.css?v=20261122-photos28' index.html
           grep -Fq 'login-foto-v26.css?v=20261122-login26' index.html
           grep -Fq 'data:image/webp;base64,' assets/css/login-foto-v26.css
           grep -Fq 'app-produccion.js' index.html
@@ -59,7 +64,7 @@ jobs:
           npm install --no-audit --no-fund
           npx playwright install --with-deps chromium
       - name: Pruebas de producción con API simulada y sin credenciales reales
-        run: npx playwright test tests/produccion-sin-demo.spec.mjs tests/crud-entidades-comerciales.spec.mjs tests/producto-modal-hotfix.spec.mjs tests/productos-proveedores-codigos-v2.spec.mjs tests/crud-estilo-v18.spec.mjs tests/catalogos-menu-regresion-v19.spec.mjs tests/ui-v20-listados-perfil.spec.mjs tests/filtros-productos-validacion-v22.spec.mjs tests/listas-precios-flujo-integral-v25.spec.mjs tests/login-foto-v26.spec.mjs
+        run: npx playwright test tests/produccion-sin-demo.spec.mjs tests/crud-entidades-comerciales.spec.mjs tests/producto-modal-hotfix.spec.mjs tests/productos-proveedores-codigos-v2.spec.mjs tests/crud-estilo-v18.spec.mjs tests/catalogos-menu-regresion-v19.spec.mjs tests/ui-v20-listados-perfil.spec.mjs tests/filtros-productos-validacion-v22.spec.mjs tests/listas-precios-flujo-integral-v25.spec.mjs tests/login-foto-v26.spec.mjs tests/productos-galeria-orden-guardado-v28.spec.mjs
       - name: Guardar diagnóstico si falla
         if: failure()
         uses: actions/upload-artifact@v4
