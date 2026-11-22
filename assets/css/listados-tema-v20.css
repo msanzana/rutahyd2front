@@ -237,3 +237,72 @@ html[data-theme=oscuro] .product-advanced-dialog .crud-field :is(input,select){
   .hd-validation-summary:not([hidden]){margin:12px 14px;padding:14px 14px 14px 50px}
   .hd-validation-summary:not([hidden])::before{left:12px;top:14px}
 }
+
+
+/* Ruta H&D V2 · Tarifarios: panel corporativo responsivo */
+.price-list-editor{margin:12px 0 20px;overflow-x:auto;max-width:100%;min-width:0}
+.product-price-table{width:100%;min-width:750px;border-collapse:collapse}
+.product-price-table th{font-size:11px;white-space:nowrap;text-align:left}
+.product-price-table td{padding:11px 9px;vertical-align:middle}
+.product-price-table td:first-child{font-weight:780;color:#442064;min-width:160px}
+.product-price-table :is(input[type=number],input[type=text]){
+  width:100%;min-width:95px;padding:10px 10px;border-radius:10px;
+  border:1px solid #d8c6ed;background:#fff;color:#34214f
+}
+.product-price-table input[type=checkbox]{accent-color:#813bc3;width:18px;height:18px;cursor:pointer}
+.product-price-table .price-readonly, .product-editor-form input.price-readonly{
+  color:#776587;background:#f5f1f9!important;cursor:default
+}
+.product-price-table .price-margin-invalid input[type=number]:not([readonly]){
+  border-color:#ca4167!important;box-shadow:0 0 0 3px rgba(194,48,83,.09)
+}
+.product-price-table .price-validation-row:has([hidden]){display:none}
+.price-validation-row td{color:#ab2c51;padding:0 12px 9px 12px!important;font-size:11px}
+.price-editor-toolbar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;
+  padding:17px 13px;background:#f8f3fc;border:1px solid #e8d8f4;border-radius:0 0 13px 13px}
+.price-editor-toolbar select{flex:1 1 220px;min-width:0;min-height:42px;border:1px solid #d9c9ee;
+  border-radius:10px;padding:8px 12px;color:#3b2458;background:#fff}
+.price-editor-toolbar button{flex:0 0 auto}
+.price-base-tag{display:inline-flex;border-radius:100px;padding:6px 10px;
+  background:#eee2fa;color:#7031a7;font-size:11px;font-weight:790}
+.price-deactivated{opacity:.6}
+.price-lists-module .official-row-actions{display:flex;gap:8px;justify-content:flex-end}
+.price-list-dialog{width:min(670px,calc(100vw - 28px));max-height:calc(100dvh - 30px)}
+.price-list-dialog .price-list-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;padding:25px}
+.price-list-dialog .price-list-fields label{display:grid;gap:8px;font-size:12px;color:#4b2967}
+.price-list-dialog .price-list-fields input:not([type=checkbox]){width:100%;padding:12px;border:1px solid #dacdea;border-radius:10px}
+.price-list-dialog .price-list-active{display:flex!important;align-items:center;flex-direction:row!important}
+.official-customer-price-field{margin:0 30px 15px;display:grid;gap:9px}
+.official-customer-price-field select{width:100%;min-height:46px;border:1px solid #d9c9eb;
+  border-radius:10px;padding:11px 12px;background:#fff;color:#40255f}
+.sale-price-module{margin-bottom:20px}
+.sale-price-form{display:grid;gap:18px;padding:14px 6px 22px}
+.sale-price-fields{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:15px 17px}
+.sale-price-fields label{display:grid;gap:7px;font-size:12px;font-weight:720;color:#4b2d68;min-width:0}
+.sale-price-fields :is(input,select){width:100%;min-width:0;min-height:44px;padding:9px 11px;border:1px solid #d8c6ea;
+  border-radius:9px;background:#fff;color:#35204c}
+.sale-effective-price{padding:14px 18px;background:#f2e9fa;border-left:4px solid #7c3bbf;
+  border-radius:12px;color:#482469;font-size:13px;font-weight:720}
+.sale-lines-list{max-width:100%;overflow-x:auto}
+.sale-cart-table{min-width:640px}
+.sale-cart-total{font-size:14px;font-weight:800;text-align:right;color:#41205f}
+.sale-price-actions{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:12px}
+html[data-theme=oscuro] .product-price-table td:first-child,
+html[data-theme=oscuro] .sale-cart-total{color:#e4cdf8}
+html[data-theme=oscuro] .price-editor-toolbar,html[data-theme=oscuro] .sale-effective-price{
+ background:#382946;color:#e2cdfa;border-color:#6c5284}
+html[data-theme=oscuro] .price-list-dialog .price-list-fields input,
+html[data-theme=oscuro] .price-editor-toolbar select,
+html[data-theme=oscuro] .sale-price-fields :is(input,select),
+html[data-theme=oscuro] .product-price-table input[type=number]{
+  background:#342740;color:#f4eafa;border-color:#71578a}
+html[data-theme=oscuro] .official-customer-price-field select{background:#342740;color:#f4eafa}
+@media(max-width:1100px){.sale-price-fields{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:640px){
+ .sale-price-fields,.price-list-dialog .price-list-fields{grid-template-columns:minmax(0,1fr)}
+ .price-editor-toolbar{flex-direction:column;align-items:stretch}
+ .price-editor-toolbar button{width:100%}
+ .sale-price-actions{flex-direction:column}
+ .sale-price-actions button{width:100%}
+ .official-customer-price-field{margin:0 18px 13px}
+}
