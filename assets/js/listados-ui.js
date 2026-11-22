@@ -11,7 +11,11 @@
   barras:'<path d="M3 5v14M6 5v14M10 5v14M12 5v14M16 5v14M20 5v14M22 5v14"/>',
   fotos:'<rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="8.2" cy="9" r="1.6"/><path d="m4.5 17 4.8-4.5 3.1 2.5 3.3-4L20 15"/>',
   buscar:'<circle cx="10.8" cy="10.8" r="7.5"/><path d="m16.5 16.5 5 5"/>',
-  filtros:'<path d="M4 7h16M7 12h10M10 17h4"/>'};
+  filtros:'<path d="M4 7h16M7 12h10M10 17h4"/>',
+  seleccionar:'<path d="m5 12 4 4 10-10"/><circle cx="12" cy="12" r="10"/>',
+  correo:'<rect x="2" y="4" width="20" height="16" rx="3"/><path d="m3 6 9 7 9-7"/>',
+  quitar:'<path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6M10 10v7m4-7v7"/>',
+  accion:'<path d="M5 12h14m-6-6 6 6-6 6"/>'};
  const icon=(key)=>'<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">'+(SVG[key]||SVG.ver)+'</svg>';
  const action=(text,click,{kind='editar',danger=false}={})=>{
   const b=document.createElement('button');b.type='button';
@@ -356,8 +360,10 @@
 
  const actionKinds={editar:'editar',desactivar:'desactivar',eliminar:'desactivar',
    ver:'ver',fotos:'fotos','codigos de compra':'barras','codigos de barras':'barras',
-   'enviar recuperacion':'ver'};
- const modules='#adminRemoto,#productosReales,#usersCrud,#rolesCatalogos,.official-module,.supplier-products-module';
+   'administrar codigos':'barras','administrar codigos de barras':'barras',
+   'enviar recuperacion':'correo','seleccionar':'seleccionar',
+   'elegir':'seleccionar','quitar':'quitar','retirar':'quitar'};
+ const modules='#adminRemoto,#productosReales,#usersCrud,#rolesCatalogos,.official-module,.supplier-products-module,.location-module,.sale-price-module';
  let activeRoot=null;const states=new WeakMap();
  const normalize=x=>String(x??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('es-CL');
  const current=root=>root.querySelector('.catalog-table,.data-table,.permissions-table');
@@ -372,17 +378,25 @@
    state.columns=[...table.querySelectorAll('thead tr:first-child th')].map((n,index)=>({
     key:'col'+index,label:n.textContent.trim(),index
    })).filter(v=>v.label&&v.label!=='Acciones');
-   table.querySelectorAll('td.catalog-actions,td.official-row-actions,td.supplier-row-actions,td.row-actions').forEach(cell=>{
+   const actionIndex=[...table.querySelectorAll('thead tr:first-child th')]
+     .findIndex(th=>normalize(th.textContent.trim())==='acciones');
+   const cells=actionIndex>=0?
+     [...table.querySelectorAll('tbody tr')].map(tr=>tr.children[actionIndex]).filter(Boolean):
+     [...table.querySelectorAll('td.catalog-actions,td.official-row-actions,td.supplier-row-actions,td.row-actions,td.location-row-actions')];
+   cells.forEach(cell=>{
     cell.classList.add('list-action-cell');
     cell.querySelectorAll('button').forEach(b=>{
-     if(b.dataset.normalizedIcon)return;
-     const label=(b.textContent||'').trim(),kind=actionKinds[normalize(label)];
-     // Los listados nunca muestran acciones destructivas directas.
-     if(['eliminar','borrar'].includes(normalize(label))){b.remove();return;}
-     if(!kind)return;
+     if(b.dataset.normalizedIcon || b.classList.contains('list-icon-action'))return;
+     const label=(b.getAttribute('aria-label')||b.textContent||'').trim();
+     const normalized=normalize(label);
+     if(['eliminar','borrar'].includes(normalized)){b.remove();return;}
+     const prefix=Object.keys(actionKinds).find(k=>normalized===k||
+       normalized.startsWith(k+' '));
+     const kind=prefix?actionKinds[prefix]:'accion';
      b.dataset.normalizedIcon='true';b.dataset.tip=label;
-     b.setAttribute('aria-label',label);
-     b.classList.add('list-icon-action');if(kind==='desactivar')b.classList.add('is-danger');
+     b.setAttribute('title',label);b.setAttribute('aria-label',label);
+     b.classList.add('list-icon-action');
+     if(kind==='desactivar')b.classList.add('is-danger');
      b.innerHTML=icon(kind);
     });
    });
