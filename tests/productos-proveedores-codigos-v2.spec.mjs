@@ -74,6 +74,7 @@ for(const width of [1440,820,390]){
   await page.setViewportSize({width,height:900});
   await intercept(page);
   await login(page);
+  if(width<1000)await page.locator('#menuToggle').click();
   await page.locator('.nav-link[data-nav="productos"]').click();
   await page.getByRole('button',{name:'Nuevo producto real'}).click();
   const dlg=page.locator('dialog.product-editor-dialog[open]');
@@ -126,7 +127,7 @@ test('nuevo producto envía códigos de venta sin proveedor ni gramajes',async({
   await dlg.getByRole('button',{name:'Añadir código de venta'}).click();
   const barcode=dlg.locator('.product-barcode-row');
   await barcode.getByLabel('Tipo de código de barras').selectOption('11');
-  await barcode.getByLabel('Código de barras').fill('7801234567890');
+  await barcode.getByLabel('Código de barras',{exact:true}).fill('7801234567890');
   await barcode.getByLabel('Unidades por código').fill('12');
   await dlg.getByRole('button',{name:'Guardar en MySQL'}).click();
   await expect(dlg).toBeHidden();
