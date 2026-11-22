@@ -11,6 +11,7 @@
   const retry=$('loginRetry'),recover=$('loginRecover');
   let online=false,busy=false,checking=false,recovering=false;
   const signed=()=>Boolean(acl()?.authenticated());
+  const recoveringNow=()=>Boolean(window.RutaHDRecuperacion?.isActive());
   function report(type,title,description){
     online=type==='ok';
     state.dataset.state=type;state.textContent=description;
@@ -36,7 +37,7 @@
     return online;
   }
   function show(){
-    if(signed())return;
+    if(signed()||recoveringNow())return;
     error.hidden=true;error.textContent='';pass.value='';
     document.body.dataset.loginStart='true';
     document.body.classList.remove('is-authenticated');
@@ -108,12 +109,12 @@
     if(signed())loggedIn();
     else {
       loginButton.textContent='Iniciar sesión';
-      if(!recovering)show();
+      if(!recovering&&!recoveringNow())show();
     }
   });
   document.addEventListener('DOMContentLoaded',()=>{
     api().configure(location.origin);
-    if(/^#recuperar\?token=[a-f0-9]{64}$/.test(location.hash)){
+    if(recoveringNow()){
       recovering=true;
       void check();
     }else show();
