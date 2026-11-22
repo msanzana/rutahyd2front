@@ -336,7 +336,7 @@
         query.set(key,value);
       }
       if(sort&&sort.key){
-        if(!['sku','nombre','rubro','departamento','familia','linea','marca','modelo','activo']
+        if(!['sku','nombre','rubro','departamento','familia','linea','marca','modelo','activo','precios','codigos']
           .includes(sort.key))throw Error('Columna de ordenación inválida');
         if(!['asc','desc'].includes(sort.direction))throw Error('Dirección de ordenación inválida');
         query.set('orden',sort.key);query.set('direccion',sort.direction);
