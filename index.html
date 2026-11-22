@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="assets/css/menu-oficial.css?v=20261121-2">
   <link rel="stylesheet" href="assets/css/produccion.css?v=20261121-2">
   <link rel="stylesheet" href="assets/css/crud-v18.css?v=20261122-fix19">
+  <link rel="stylesheet" href="assets/css/listados-tema-v20.css?v=20261122-ui20">
 </head>
 <body>
   <svg class="svg-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -90,7 +91,7 @@
         <button type="button" data-nav="cuentas_corrientes" class="nav-link"><svg class="icon"><use href="#i-orders"/></svg><span>Cuentas corrientes</span></button>
       </nav>
       <div class="sidebar-footer">
-        <span class="sidebar-status-dot"></span> Ruta H&amp;D2 · Gestión
+        Ruta H&amp;D2 · Gestión
         <small>Servidor Laravel · Acceso JWT protegido</small>
       </div>
     </aside>
@@ -104,9 +105,19 @@
         <div class="topbar-right">
           <label class="search" for="globalSearch"><svg class="icon"><use href="#i-search"/></svg><input id="globalSearch" type="search" autocomplete="off" placeholder="Buscar registros..."><kbd>Ctrl K</kbd></label>
           <button type="button" class="icon-button notification-button" id="notificationButton" aria-label="Información sobre el entorno"><svg class="icon"><use href="#i-bell"/></svg><span class="notification-dot"></span></button>
-          <span class="api-state" id="apiStatus" role="status" aria-live="polite">Comprobando API…</span>
-          <div class="profile"><span class="avatar">HD</span><span class="profile-label"><b>Comercializadora H&amp;D</b><small>Sin sesión</small></span></div>
-          <button type="button" class="button primary auth-trigger" id="authButton" aria-haspopup="dialog" aria-controls="loginDialog">Iniciar sesión</button>
+          <div class="user-menu-anchor" id="userMenuAnchor" hidden>
+            <button type="button" class="user-menu-trigger" id="userMenuTrigger" aria-label="Abrir menú del usuario" aria-haspopup="menu" aria-expanded="false" aria-controls="userMenuPopup">
+              <span class="profile"><span class="avatar">HD</span><span class="profile-label"><b>Usuario</b><small>Perfil</small></span></span>
+              <svg class="icon small user-menu-chevron"><use href="#i-chevron"/></svg>
+            </button>
+            <div class="user-menu-popup" id="userMenuPopup" role="menu" aria-label="Opciones de usuario" hidden>
+              <div class="user-menu-heading"><strong id="menuUserName">Usuario</strong><small id="menuUserRole">Sesión iniciada</small></div>
+              <button type="button" id="menuProfile" role="menuitem">Mi perfil</button>
+              <button type="button" id="menuPermissions" role="menuitem" hidden>Perfiles y permisos</button>
+              <label class="user-theme-switch" for="menuDarkMode"><span>Modo oscuro</span><input type="checkbox" id="menuDarkMode" role="switch" aria-label="Modo oscuro"><span class="switch-track" aria-hidden="true"></span></label>
+              <button type="button" id="menuSignOut" class="menu-signout" role="menuitem">Cerrar sesión</button>
+            </div>
+          </div>
         </div>
       </header>
       <main class="page">
@@ -117,7 +128,7 @@
               <span class="eyebrow">PLATAFORMA COMERCIAL Y OPERATIVA</span>
               <h1>Tu operación, en un solo lugar.</h1>
               <p>Administra compras, ventas, clientes, proveedores, productos, bodega y cuentas corrientes desde un único entorno.</p>
-              <div class="hero-actions"><button type="button" class="button light" id="heroLogin" data-action="login"><svg class="icon"><use href="#i-users"/></svg> Iniciar sesión</button><button type="button" class="button outline-light" data-nav="productos">Abrir Productos <svg class="icon"><use href="#i-chevron"/></svg></button></div>
+              <div class="hero-actions"><button type="button" class="button outline-light" data-nav="productos">Abrir Productos <svg class="icon"><use href="#i-chevron"/></svg></button></div>
             </div>
             <div class="hero-logo-wrap"><img src="assets/img/prueba-rutahd2.webp" alt="H&D, confianza y calidad" class="hero-logo"></div>
           </div>
@@ -159,7 +170,9 @@
     <div class="modal-footer centered"><button type="button" class="button primary" id="infoClose">Entendido</button></div>
   </dialog>
   <div id="toastRegion" class="toast-region" role="status" aria-live="polite" aria-atomic="false"></div>
-  <script src="assets/js/accesos.js?v=20261122-fix19" defer></script>
+  <script src="assets/js/accesos.js?v=20261122-ui20" defer></script>
+  <script src="assets/js/listados-ui.js?v=20261122-ui20" defer></script>
+  <script src="assets/js/menu-usuario.js?v=20261122-ui20" defer></script>
   <script src="assets/js/catalogos-api.js" defer></script>
   <script src="assets/js/admin-remoto.js?v=20261122-fix19" defer></script>
   <script src="assets/js/perfiles.js" defer></script>
@@ -172,7 +185,7 @@
       <div class="login-body">
         <div class="login-identity"><img src="assets/img/prueba-rutahd2.webp" alt="Logotipo H&amp;D"><div><strong>Ruta H&amp;D V2</strong><span>Gestión comercial y operativa</span></div></div>
         <p class="login-description">Accede con tu cuenta autorizada. La aplicación comprueba la conexión Laravel antes de enviar tus credenciales.</p>
-        <div class="login-server-status" id="loginServerStatus" role="status" aria-live="polite">Verificando disponibilidad del servidor…</div>
+        <p class="login-server-status" id="loginServerStatus" role="alert" hidden></p>
         <label class="field"><span>Correo electrónico</span><input type="email" id="loginEmail" autocomplete="username" maxlength="190" placeholder="usuario@empresa.cl" required></label>
         <label class="field"><span>Contraseña</span><input type="password" id="loginPassword" autocomplete="current-password" required></label>
         <p class="form-error" id="loginError" role="alert" hidden></p>
@@ -185,7 +198,7 @@
   </dialog>
   <script src="assets/js/modulos-oficiales.js?v=20261122-crud18" defer></script>
   <script src="assets/js/proveedores-productos.js?v=20261122-crud18" defer></script>
-  <script src="assets/js/login-produccion.js" defer></script>
+  <script src="assets/js/login-produccion.js?v=20261122-ui20" defer></script>
   <script src="assets/js/app-produccion.js?v=20261122-fix19" defer></script>
 </body>
 </html>
