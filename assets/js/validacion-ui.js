@@ -65,6 +65,9 @@
   if(!tracked.has(input)){
    tracked.add(input);
    const clear=()=>{
+    // Al modificar un campo con error personalizado, hay que levantar primero
+    // setCustomValidity; si no, validity.valid sigue falso y el aviso nunca desaparece.
+    if(input.validity?.customError)input.setCustomValidity('');
     if(!input.validity?.valid)return;
     input.classList.remove('hd-field-invalid');
     input.removeAttribute('aria-invalid');
