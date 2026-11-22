@@ -175,5 +175,5 @@ test('Switch de estado: error del servidor devuelve el interruptor a su estado o
   await toggle.click();
   await page.locator('dialog.hd-status-confirm[open]').getByRole('button',{name:'Sí, desactivar'}).click();
   await expect(toggle).toBeChecked();
-  await expect(page.getByRole('alert')).toContainText('No autorizado');
+  await expect(page.getByRole('alert')).toContainText('Error HTTP 403');
 });
