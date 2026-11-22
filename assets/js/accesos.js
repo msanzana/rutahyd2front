@@ -40,9 +40,9 @@
     if(grant&&typeof grant==='object')return Boolean(grant[action]);
     // Compatibilidad: mientras DDL23 no esté aplicado, solo rige el permiso general.
     const base={
-      'productos.listado':'productos.gestionar',
-      'proveedores.listado':'compras.gestionar',
-      'proveedores.productos':'compras.gestionar'
+      'productos_listado':'productos.gestionar',
+      'proveedores_listado':'compras.gestionar',
+      'proveedores_productos':'compras.gestionar'
     };
     return base[key]?has(base[key]):false;
   }
