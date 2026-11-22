@@ -47,6 +47,8 @@
     if(providerList)providerList.hidden=!logged()||!acl().canSeeSubmodule('proveedores_listado');
     const productList=$('#productSubnav [data-nav="productos"]');
     if(productList)productList.hidden=!logged()||!acl().canSeeSubmodule('productos_listado');
+    const priceList=$('#productSubnav [data-nav="listas_precios"]');
+    if(priceList)priceList.hidden=!logged()||!acl().canSeeSubmodule('productos_listado');
     $$('#productSubnav [data-catalog-key]').forEach(btn=>{
       btn.hidden=!logged()||!acl().canViewCatalog(btn.dataset.catalogKey);
     });
@@ -123,7 +125,7 @@
     });
     if(section.startsWith('catalogos.'))expand(categoryOrigin);
     else if(['administracion','usuarios','perfiles'].includes(section))expand('administracion');
-    else if(section==='productos')expand('productos');
+    else if(section==='productos'||section==='listas_precios')expand('productos');
     else if(section==='proveedores'||section==='proveedores_productos')expand('proveedores');
     else collapse();
     if(!isHome)renderWorkspace(section);
