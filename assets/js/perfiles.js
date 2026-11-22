@@ -122,7 +122,7 @@
     {title:'Proveedores',children:[['proveedores_listado','Listado de proveedores'],
      ['proveedores_productos','Proveedores productos']]},
     {title:'Clientes',children:[]},
-    {title:'Productos',children:[['productos_listado','Listado de productos'],
+    {title:'Productos',children:[['productos_listado','Listado de productos'],[null,'Listas de precios'],
       ['rubros','Rubros'],['departamentos','Departamentos'],['familias','Familias'],
       ['lineas','Líneas'],['marcas','Marcas'],['modelos','Modelos']]},
     {title:'Bodega',children:[]},
