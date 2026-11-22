@@ -191,7 +191,8 @@
     note=document.createElement('p');note.className='list-filter-note';
     table.closest('.catalog-table-scroll,.permissions-table-scroll,.table-scroll')?.before(note);
    }
-   note.textContent='Filtros: '+visible+' de '+rows.length+' registros de esta página. Para más resultados utiliza la paginación.';
+   const summary='Filtros: '+visible+' de '+rows.length+' registros de esta página. Para más resultados utiliza la paginación.';
+   if(note.textContent!==summary)note.textContent=summary;
   }else if(note)note.remove();
  }
  let pending=false;
