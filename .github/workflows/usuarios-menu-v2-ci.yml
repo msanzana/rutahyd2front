@@ -18,18 +18,22 @@ jobs:
       - name: Sintaxis JS y composición de menú
         run: |
           node --check assets/js/accesos.js
-          node --check assets/js/app.js
+          node --check assets/js/app-produccion.js
+          node --check assets/js/login-produccion.js
+          node --check assets/js/proveedores-productos.js
           node --check assets/js/catalogos-api.js
           node --check assets/js/admin-remoto.js
           node --check assets/js/productos-remotos.js
           node --check assets/js/usuarios.js
           node --check assets/js/recuperacion.js
-          test "$(grep -o 'data-admin-catalog=' index.html | wc -l)" -eq 10
-          test "$(grep -o 'data-catalog-key=' index.html | wc -l)" -eq 10
+          test "$(grep -o 'data-admin-catalog=' index.html | wc -l)" -eq 4
+          test "$(grep -o 'data-catalog-key=' index.html | wc -l)" -eq 6
           grep -Fq 'id="navUsuarios"' index.html
+          grep -Fq 'id="providerSubnav"' index.html
+          ! grep -Fq 'id="loginDemo"' index.html
       - name: Instalar Chromium para pruebas aisladas
         run: |
           npm install --no-audit --no-fund
           npx playwright install --with-deps chromium
       - name: Pruebas automáticas sin credenciales reales
-        run: npm test
+        run: npx playwright test tests/produccion-sin-demo.spec.mjs tests/productos-proveedores-codigos-v2.spec.mjs
