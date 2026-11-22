@@ -114,8 +114,6 @@
         method,
         headers: {
           Authorization: 'Bearer ' + sessionBearer,
-          // InfinityFree elimina Authorization en PHP. Header alternativo mismo-origen.
-          'X-RutaHD-Token': sessionBearer,
           Accept: 'application/json',
           ...(body !== undefined ? {'Content-Type':'application/json'} : {})
         },
