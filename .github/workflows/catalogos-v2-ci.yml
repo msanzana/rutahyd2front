@@ -23,13 +23,17 @@ jobs:
           node --check assets/js/admin-remoto.js
           node --check assets/js/app-produccion.js
           node --check assets/js/proveedores-productos.js
+          node --check assets/js/ubicaciones.js
+          node --check assets/js/modulos-oficiales.js
           node --check tests/productos-proveedores-codigos-v2.spec.mjs
           node --check tests/crud-entidades-comerciales.spec.mjs
           test "$(grep -o 'data-admin-catalog=' index.html | wc -l)" -eq 4
           test "$(grep -o 'data-catalog-key=' index.html | wc -l)" -eq 6
+          test -s assets/css/proveedores-ubicaciones-v38.css
+          grep -Fq 'id="ubicacionesSubnav"' index.html
       - name: Instalar pruebas Chromium
         run: |
           npm install --no-audit --no-fund
           npx playwright install --with-deps chromium
       - name: Pruebas locales y API simulada sin acceso a InfinityFree
-        run: npx playwright test tests/productos-proveedores-codigos-v2.spec.mjs tests/crud-entidades-comerciales.spec.mjs
+        run: npx playwright test tests/productos-proveedores-codigos-v2.spec.mjs tests/crud-entidades-comerciales.spec.mjs tests/ubicaciones-proveedores-v38.spec.mjs
