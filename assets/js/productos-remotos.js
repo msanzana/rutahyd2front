@@ -93,7 +93,8 @@
     const refresh=button('Actualizar',()=>guarded(loadProducts));
     const advanced=button('Búsqueda avanzada',()=>guarded(openAdvancedSearch),'button ghost advanced-filter-trigger');
     advanced.innerHTML=window.RutaHDListUI?.icon('filtros')+'<span>Búsqueda avanzada</span>';
-    add(tools,search,searchBtn,advanced,create,refresh);
+    create.classList.add('hd-list-create-action');
+    add(tools,search,searchBtn,advanced,refresh,create);
     root.appendChild(tools);
     result=el('div','catalog-table-scroll');
     result.id='productosRealesListado';
