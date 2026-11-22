@@ -459,8 +459,8 @@
       const entry={list,row,active:state,costDisplay,margin,price,error,last:'precio'};
       if(!list.es_base){
         const remove=button('Quitar',()=>{
-          if(fresh){row.remove();prices.splice(prices.indexOf(entry),1);}
-          else{state.checked=false;row.classList.add('price-deactivated');}
+          if(fresh){row.remove();entry.errorRow.remove();prices.splice(prices.indexOf(entry),1);refreshSelector();}
+          else{state.checked=false;row.classList.add('price-deactivated');compute(entry,entry.last);}
         },'button ghost');
         actionCell.append(remove);
       }else actionCell.append(el('span','price-base-tag','Obligatoria'));
