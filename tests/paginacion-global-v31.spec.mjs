@@ -102,3 +102,55 @@ test('usuarios conserva todas las cuentas con paginación local de 25',async({pa
  await expect(rows).toHaveCount(2);
  await expect(rows.last()).toContainText('Persona 052');
 });
+
+
+test('paginador violeta muestra números circulares y permite ir directo a página 3',async({page})=>{
+ await setup(page);
+ await page.locator('#toggleProductSubnav').click();
+ await page.locator('#productSubnav [data-nav="catalogos.rubros"]').click();
+ const root=page.locator('#adminRemoto');
+ const pager=root.locator('.hd-numbered-pagination');
+ await expect(pager).toBeVisible();
+ const first=pager.getByRole('button',{name:'Página 1',exact:true});
+ await expect(first).toHaveAttribute('aria-current','page');
+ const circle=await first.evaluate(el=>{
+  const st=getComputedStyle(el);
+  return {width:parseFloat(st.width),height:parseFloat(st.height),
+   radius:st.borderRadius,bg:st.backgroundColor};
+ });
+ expect(circle.width).toBeGreaterThanOrEqual(34);
+ expect(circle.width).toBeLessThanOrEqual(45);
+ expect(circle.radius).not.toBe('0px');
+ expect(circle.bg).toMatch(/^rgb/);
+ await pager.getByRole('button',{name:'Página 3',exact:true}).click();
+ const selected=pager.getByRole('button',{name:'Página 3',exact:true});
+ await expect(selected).toHaveAttribute('aria-current','page');
+ await expect(root.locator('.catalog-table tbody tr:visible')).toHaveCount(6);
+ await expect(root.locator('.catalog-table tbody tr:visible').first()).toContainText('Rubro 051');
+ await expect(pager.getByRole('button',{name:'Siguiente'})).toBeDisabled();
+ await pager.getByRole('button',{name:'Página 1',exact:true}).click();
+ await expect(root.locator('.catalog-table tbody tr:visible')).toHaveCount(25);
+});
+test('permiso multiselección conserva checkbox nativo con esquinas redondeadas',async({page})=>{
+ await setup(page);
+ const style=await page.evaluate(()=>{
+  const row=document.createElement('div');row.className='permission-tree-row';
+  const chk=document.createElement('input');chk.type='checkbox';
+  chk.setAttribute('aria-label','Permiso de prueba visual');
+  row.append(chk);document.body.append(row);
+  const before=getComputedStyle(chk);
+  const plain={radius:before.borderRadius,width:before.width,height:before.height,
+   appearance:before.appearance};
+  chk.checked=true;
+  const after=getComputedStyle(chk);
+  const checked={background:after.backgroundColor,corner:after.borderRadius,
+   checkmark:getComputedStyle(chk,'::after').content};
+  row.remove();
+  return {plain,checked};
+ });
+ expect(style.plain.appearance).toBe('none');
+ expect(parseFloat(style.plain.radius)).toBeGreaterThanOrEqual(5);
+ expect(parseFloat(style.plain.radius)).toBeLessThanOrEqual(9);
+ expect(parseFloat(style.plain.width)).toBeLessThanOrEqual(24);
+ expect(style.checked.checkmark).not.toBe('none');
+});
