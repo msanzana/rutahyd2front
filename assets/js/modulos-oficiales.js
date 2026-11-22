@@ -213,7 +213,9 @@
       });
       root.append(searchBar);
     }
-    root.append(bar,content);
+    const pager=create('nav',undefined,'list-pagination');
+    pager.setAttribute('aria-label','Páginas de '+cfg.title);
+    root.append(bar,content,pager);
     let page=1,loading=false,searchTerm='';
     async function load(){
       if(loading)return;
@@ -255,9 +257,11 @@
         }else{
           notice.textContent='No existen registros para esta página de la base de datos.';
         }
-        const prev=page>1,next=Number(response.last_page||1)>page;
-        if(prev)bar.append(action('Anterior',()=>{page--;void load()},'ghost'));
-        if(next)bar.append(action('Siguiente',()=>{page++;void load()},'ghost'));
+        window.RutaHDListUI?.renderPager(pager,{
+          page,pages:Number(response.last_page||1),total:Number(response.total||rows.length),
+          label:'registros',onPage:n=>{page=n;void load();}
+        });
+        pager.hidden=Number(response.last_page||1)<=1;
         bar.append(action('Actualizar',()=>void load(),'ghost'));
       }catch(error){
         if(current!==currentId||!root.isConnected)return;
