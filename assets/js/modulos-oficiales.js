@@ -1,13 +1,30 @@
-/* Módulos oficiales respaldados por Laravel: solo lectura hasta cerrar los CRUD.
-   Sin JWT NUNCA se muestran filas locales como si procedieran de MariaDB. */
+/* Ruta H&D V2 - Módulos oficiales con datos exclusivos del backend.
+ * CRUD para clientes, proveedores y bodegas; resto en solo lectura.
+ * Nunca se usan localStorage ni listas ficticias de producción.
+ */
 (() => {
   'use strict';
+  const FIELDS={
+    clientes:[
+      ['codigo','Código','text',50,false],['nombre','Nombre o razón social','text',190,true],
+      ['rut','RUT','text',25,false],['correo_electronico','Correo electrónico','email',190,false],
+      ['telefono','Teléfono','text',50,false],['direccion','Dirección','text',255,false],
+      ['comuna','Comuna','text',100,false],['sector','Sector','text',120,false],
+      ['observaciones','Observaciones','textarea',10000,false]],
+    proveedores:[
+      ['nombre','Razón social / Nombre','text',190,true],
+      ['rut','RUT','text',25,false],['correo_electronico','Correo electrónico','email',190,false],
+      ['telefono','Teléfono','text',50,false],['direccion','Dirección','text',255,false]],
+    bodegas:[
+      ['codigo','Código','text',30,true],['nombre','Nombre','text',130,true],
+      ['tipo','Tipo','text',40,false]]
+  };
   const CONFIG=Object.freeze({
-    compras:{resource:'ordenes_compra',title:'Órdenes de compra',fields:[['id','ID'],['numero','Número'],['fecha','Fecha'],['estado','Estado'],['total','Total']]},
-    ventas:{resource:'ventas',title:'Ventas',fields:[['id','ID'],['numero','Número'],['fecha','Fecha'],['estado','Estado'],['total','Total']]},
-    proveedores:{resource:'proveedores',title:'Proveedores',fields:[['id','ID'],['rut','RUT'],['razon_social','Razón social'],['nombre','Nombre'],['activo','Activo']]},
-    clientes:{resource:'clientes',title:'Clientes',fields:[['id','ID'],['rut','RUT'],['razon_social','Razón social'],['nombre','Nombre'],['activo','Activo']]},
-    bodega:{resource:'bodegas',title:'Bodegas',fields:[['id','ID'],['codigo','Código'],['nombre','Nombre'],['ubicacion','Ubicación'],['activo','Activo']]},
+    compras:{resource:'ordenes_compra',title:'Órdenes de compra',fields:[['id','ID'],['numero','Número'],['estado','Estado'],['total_bruto','Total bruto']]},
+    ventas:{resource:'ventas',title:'Ventas',fields:[['id','ID'],['numero','Número'],['estado','Estado'],['total_bruto','Total bruto']]},
+    proveedores:{resource:'proveedores',title:'Proveedores',permission:'compras.gestionar',fields:[['id','ID'],['nombre','Razón social'],['rut','RUT'],['correo_electronico','Correo'],['activo','Estado']]},
+    clientes:{resource:'clientes',title:'Clientes',permission:'clientes.gestionar',fields:[['id','ID'],['codigo','Código'],['nombre','Nombre'],['rut','RUT'],['activo','Estado']]},
+    bodega:{resource:'bodegas',title:'Bodegas',permission:'inventario.gestionar',fields:[['id','ID'],['codigo','Código'],['nombre','Nombre'],['tipo','Tipo'],['activo','Estado']]},
     cuentas_corrientes:{resource:null,title:'Cuentas corrientes',fields:[]}
   });
   const create=(tag,text,cls)=>{
@@ -16,35 +33,137 @@
     if(cls)e.className=cls;
     return e;
   };
-  const action=(title,callback)=>{
-    const button=create('button',title,'button primary');
+  const action=(title,callback,style='primary')=>{
+    const button=create('button',title,'button '+style);
     button.type='button';button.addEventListener('click',callback);return button;
   };
   let currentId=0;
+  const api=()=>window.RutaHDApiCatalogos;
+  const access=()=>window.RutaHDAccesos;
+  const statusText=(e)=>{
+    if(e?.status===409)return 'Ya existe el código o la entidad tiene una relación que impide modificarla.';
+    if(e?.status===422)return 'Revisa los datos obligatorios y sus formatos.';
+    if(e?.status===403)return 'Tu perfil no tiene permisos para realizar esta operación.';
+    if(e?.status===401)return 'La sesión fue revocada. Debes iniciar sesión nuevamente.';
+    return 'No se pudo completar la solicitud (HTTP '+(e?.status||'sin respuesta')+').';
+  };
+
+  function openEditor(cfg,row,onSaved){
+    const editing=Boolean(row),definition=FIELDS[cfg.resource];
+    if(!definition)return;
+    const dialog=create('dialog',undefined,'modal official-editor');
+    dialog.setAttribute('aria-label',(editing?'Editar ':'Crear ')+cfg.title);
+    const form=create('form',undefined,'official-editor-form');
+    form.noValidate=true;
+    const heading=create('div',undefined,'official-editor-heading');
+    heading.append(create('span','RUTA H&D · GESTIÓN COMERCIAL','official-editor-eyebrow'),
+      create('h2',(editing?'Editar ':'Nuevo registro · ')+cfg.title));
+    heading.append(create('p','Los cambios se guardan directamente en Laravel y MariaDB.','official-editor-description'));
+    form.append(heading);
+    const grid=create('div',undefined,'official-editor-grid'),inputs={};
+    for(const [key,label,type,max,required] of definition){
+      const field=create('label',undefined,'field');
+      const caption=create('span',label+(required?' *':''));
+      const input=create(type==='textarea'?'textarea':'input');
+      if(type!=='textarea')input.type=type;
+      input.name=key;input.maxLength=max;input.required=required;
+      if(required)input.minLength=key==='nombre'?2:1;
+      if(type==='email')input.autocomplete='email';
+      if(editing&&row[key]!==null&&row[key]!==undefined)input.value=String(row[key]);
+      field.append(caption,input);
+      if(type==='textarea')field.classList.add('official-editor-wide');
+      grid.append(field);inputs[key]=input;
+    }
+    form.append(grid);
+    if(editing){
+      const field=create('label',undefined,'official-active-field');
+      const input=create('input');input.type='checkbox';input.checked=Boolean(row.activo);
+      field.append(input,create('span','Registro activo (desmarcar para desactivar)'));
+      form.append(field);
+      inputs.activo=input;
+    }
+    const note=create('p','', 'official-editor-status');note.setAttribute('role','status');
+    note.setAttribute('aria-live','polite');form.append(note);
+    const footer=create('div',undefined,'official-editor-actions');
+    const cancel=action('Cancelar',()=>dialog.close(),'ghost');
+    const submit=create('button',editing?'Guardar cambios':'Crear registro','button primary');
+    submit.type='submit';
+    footer.append(cancel,submit);form.append(footer);
+    form.addEventListener('submit',async event=>{
+      event.preventDefault();
+      if(!form.reportValidity())return;
+      const datos={};
+      for(const [key,,, ,required] of definition){
+        const v=inputs[key].value.trim();
+        datos[key]=v===''&&!required?null:v;
+      }
+      if(inputs.activo)datos.activo=inputs.activo.checked;
+      submit.disabled=true;cancel.disabled=true;
+      note.textContent='Guardando en el servidor…';note.classList.remove('is-error');
+      try {
+        if(editing)await api().updateResource(cfg.resource,row.id,datos);
+        else await api().createResource(cfg.resource,datos);
+        dialog.close();
+        await onSaved();
+      }catch(error){
+        note.textContent=statusText(error);note.classList.add('is-error');
+      }finally{submit.disabled=false;cancel.disabled=false;}
+    });
+    dialog.append(form);document.body.append(dialog);
+    dialog.addEventListener('close',()=>dialog.remove(),{once:true});
+    dialog.showModal();
+    inputs.nombre?.focus()||inputs.codigo?.focus();
+  }
+
+  function confirmDeactivate(cfg,row,onSaved){
+    const dialog=create('dialog',undefined,'modal official-confirm');
+    dialog.setAttribute('aria-label','Confirmar desactivación');
+    const panel=create('div',undefined,'official-confirm-panel');
+    panel.append(create('span','RUTA H&D · CONFIRMACIÓN','official-editor-eyebrow'),
+      create('h2','Desactivar registro'),
+      create('p','Se desactivará «'+String(row.nombre||row.codigo)+'». No se borrará su historial comercial.'));
+    const note=create('p','', 'official-editor-status');note.setAttribute('role','status');
+    panel.append(note);
+    const buttons=create('div',undefined,'official-editor-actions');
+    const cancel=action('Cancelar',()=>dialog.close(),'ghost');
+    const deactivate=action('Sí, desactivar',async()=>{
+      deactivate.disabled=true;cancel.disabled=true;
+      note.textContent='Desactivando…';
+      try{
+        await api().deactivateResource(cfg.resource,row.id);
+        dialog.close();
+        await onSaved();
+      }catch(error){
+        note.textContent=statusText(error);note.classList.add('is-error');
+      }finally{deactivate.disabled=false;cancel.disabled=false;}
+    });
+    buttons.append(cancel,deactivate);panel.append(buttons);dialog.append(panel);
+    document.body.append(dialog);
+    dialog.addEventListener('close',()=>dialog.remove(),{once:true});dialog.showModal();
+  }
+
   function mount(parent,key){
     if(!parent)return;
-    const cfg=CONFIG[key];
-    parent.replaceChildren();
-    if(!cfg){parent.appendChild(create('p','Módulo inexistente.','catalog-footnote'));return;}
+    const cfg=CONFIG[key];parent.replaceChildren();
+    if(!cfg){parent.append(create('p','Módulo inexistente.','catalog-footnote'));return;}
     const root=create('section',undefined,'surface-panel official-module');
     const header=create('div',undefined,'panel-heading');
-    const title=create('h2',cfg.title);
-    const badge=create('span','Conexión Laravel/MySQL','official-source');
-    header.append(title,badge);
-    const notice=create('p',undefined,'catalog-footnote');
+    header.append(create('h2',cfg.title),
+      create('span','Datos en vivo · Laravel y MariaDB','official-source'));
+    const notice=create('p','', 'catalog-footnote');
     notice.setAttribute('role','status');
     root.append(header,notice);parent.append(root);
-    const id=++currentId;
-    const access=window.RutaHDAccesos;
-    if(!access?.authenticated()){
-      notice.textContent='Este módulo requiere autenticación. No se mostrarán registros locales como si fueran información de la empresa.';
-      root.appendChild(action('Abrir inicio de sesión',()=>window.RutaHDLogin?.show()));
+    const current=++currentId;
+    if(!access()?.authenticated()){
+      notice.textContent='Se requiere una sesión autorizada para consultar registros.';
+      root.append(action('Iniciar sesión',()=>window.RutaHDLogin?.show()));
       return;
     }
     if(!cfg.resource){
-      notice.textContent='El backend todavía no dispone de un endpoint validado para Cuentas corrientes. No se muestran saldos inventados.';
+      notice.textContent='El backend no tiene todavía un contrato comprobado de cuentas corrientes. No se mostrarán saldos estimados.';
       return;
     }
+    const editable=Boolean(FIELDS[cfg.resource]&&(access()?.isAdmin()||access()?.has(cfg.permission)));
     const bar=create('div',undefined,'workspace-actions');
     const content=create('div',undefined,'catalog-table-scroll');
     root.append(bar,content);
@@ -54,44 +173,49 @@
       loading=true;bar.replaceChildren();content.replaceChildren();
       notice.textContent='Consultando registros reales…';
       try{
-        const response=await window.RutaHDApiCatalogos.resources(cfg.resource,page);
-        if(id!==currentId)return;
-        if(!response||!Array.isArray(response.data))throw Error('La API no devolvió una lista válida');
+        const response=await api().resources(cfg.resource,page);
+        if(current!==currentId||!root.isConnected)return;
+        if(!response||!Array.isArray(response.data))throw Error('Lista remota inválida');
         const rows=response.data;
-        if(!rows.length){
-          notice.textContent='No existen registros en esta página de la base de datos.';
-        }else{
-          const columns=cfg.fields.filter(([field])=>rows.some(row=>Object.prototype.hasOwnProperty.call(row,field)));
-          if(!columns.length){notice.textContent='La API devolvió registros, pero no hay columnas públicas configuradas.';return;}
+        if(editable)bar.append(action('Nuevo registro',()=>openEditor(cfg,null,load)));
+        if(rows.length){
+          const columns=cfg.fields.filter(([f])=>rows.some(v=>Object.prototype.hasOwnProperty.call(v,f)));
           const table=create('table',undefined,'catalog-table official-table');
-          const thead=create('thead'),tr=create('tr');
-          columns.forEach(([,label])=>tr.appendChild(create('th',label)));
-          thead.appendChild(tr);table.appendChild(thead);
+          const thead=create('thead'),head=create('tr');
+          columns.forEach(([,label])=>head.append(create('th',label)));
+          if(editable)head.append(create('th','Acciones'));
+          thead.append(head);table.append(thead);
           const body=create('tbody');
           rows.forEach(row=>{
             const tr=create('tr');
-            columns.forEach(([field])=>{
-              const value=row[field];
-              const text=value===null||value===undefined?'—':typeof value==='boolean'?(value?'Sí':'No'):String(value);
-              tr.appendChild(create('td',text));
-            });
-            body.appendChild(tr);
+            for(const [field] of columns){
+              let value=row[field];
+              if(field==='activo')value=Boolean(value)?'Activo':'Inactivo';
+              else if(value===undefined||value===null)value='—';
+              tr.append(create('td',String(value)));
+            }
+            if(editable){
+              const cell=create('td',undefined,'official-row-actions');
+              cell.append(action('Editar',()=>openEditor(cfg,row,load),'ghost'));
+              if(Boolean(row.activo))cell.append(
+                action('Desactivar',()=>confirmDeactivate(cfg,row,load),'ghost'));
+              tr.append(cell);
+            }
+            body.append(tr);
           });
-          table.appendChild(body);content.appendChild(table);
-          notice.textContent='Registros obtenidos del servidor · Página '+page+'.';
+          table.append(body);content.append(table);
+          notice.textContent='Registros cargados desde la base de datos · Página '+page+'.';
+        }else{
+          notice.textContent='No existen registros para esta página de la base de datos.';
         }
-        const next=Number(response.last_page||1)>page;
-        const prev=page>1;
-        if(prev)bar.appendChild(action('Anterior',()=>{page--;void load()}));
-        if(next)bar.appendChild(action('Siguiente',()=>{page++;void load()}));
-        bar.appendChild(action('Actualizar',()=>void load()));
-      }catch(e){
-        if(id!==currentId)return;
-        if(e?.status===401){window.RutaHDApiCatalogos.signOut();window.RutaHDAccesos?.clear();}
-        notice.textContent=e?.status===403?'El perfil no tiene permisos para consultar este módulo.':
-          e?.status===401?'La sesión venció. Inicia sesión de nuevo.':
-          'No se pudo consultar la API Laravel (HTTP '+(e?.status||'sin respuesta')+').';
-        bar.appendChild(action('Reintentar',()=>void load()));
+        const prev=page>1,next=Number(response.last_page||1)>page;
+        if(prev)bar.append(action('Anterior',()=>{page--;void load()},'ghost'));
+        if(next)bar.append(action('Siguiente',()=>{page++;void load()},'ghost'));
+        bar.append(action('Actualizar',()=>void load(),'ghost'));
+      }catch(error){
+        if(current!==currentId||!root.isConnected)return;
+        notice.textContent=statusText(error);
+        bar.append(action('Reintentar',()=>void load()));
       }finally{loading=false;}
     }
     void load();
