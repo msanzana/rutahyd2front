@@ -16,7 +16,7 @@ const users=Array.from({length:52},(_,i)=>({
  correo_electronico:'persona'+(i+1)+'@example.invalid',
  perfil:'Vendedor',rol_id:2,rol_codigo:'vendedor',activo:true
 }));
-async function setup(page){
+async function setup(page,initialRoute='inicio'){
  const priceCalls=[];
  await page.route('**/api/v1/**',route=>{
   const req=route.request(),url=new URL(req.url()),path=url.pathname;
@@ -47,7 +47,7 @@ async function setup(page){
   if(path.startsWith('/api/v1/recursos/'))return send(route,{data:[],total:0,last_page:1});
   return send(route,{},404);
  });
- await page.goto('/#inicio');
+ await page.goto('/#'+initialRoute);
  await page.locator('#loginEmail').fill('test@example.invalid');
  await page.locator('#loginPassword').fill('CONTRASENA-FICTICIA');
  await page.locator('#loginSubmit').click();
@@ -62,11 +62,11 @@ test('catálogos locales muestran máximo 25 filas y la búsqueda alcanza otras 
  const rows=root.locator('.catalog-table tbody tr:visible');
  await expect(rows).toHaveCount(25);
  await expect(rows.first()).toContainText('Rubro 001');
- await expect(root.locator('.list-pagination-info')).toContainText('Página 1 de 3');
- await root.locator('.list-pagination').getByRole('button',{name:'Siguiente'}).click();
+ await expect(root.locator('.list-pagination:not(.hd-page-top) .list-pagination-info')).toContainText('Página 1 de 3');
+ await root.locator('.list-pagination:not(.hd-page-top)').getByRole('button',{name:'Siguiente'}).click();
  await expect(rows).toHaveCount(25);
  await expect(rows.first()).toContainText('Rubro 026');
- await root.locator('.list-pagination').getByRole('button',{name:'Siguiente'}).click();
+ await root.locator('.list-pagination:not(.hd-page-top)').getByRole('button',{name:'Siguiente'}).click();
  await expect(rows).toHaveCount(6);
  await expect(rows.last()).toContainText('Rubro 056');
  const search=root.locator('.normalized-toolbar input[type="search"]').first();
@@ -80,11 +80,11 @@ test('mantenedor de listas solicita 25 registros reales por página en Laravel',
  await page.locator('#productSubnav [data-nav="listas_precios"]').click();
  const root=page.locator('#priceListsModule'),rows=root.locator('.catalog-table tbody tr:visible');
  await expect(rows).toHaveCount(25);
- await expect(root.locator('.list-pagination-info')).toContainText('Página 1 de 3');
- await root.locator('.list-pagination').getByRole('button',{name:'Siguiente'}).click();
+ await expect(root.locator('.list-pagination:not(.hd-page-top) .list-pagination-info')).toContainText('Página 1 de 3');
+ await root.locator('.list-pagination:not(.hd-page-top)').getByRole('button',{name:'Siguiente'}).click();
  await expect(rows).toHaveCount(25);
  await expect(rows.first()).toContainText('Tarifa 026');
- await root.locator('.list-pagination').getByRole('button',{name:'Siguiente'}).click();
+ await root.locator('.list-pagination:not(.hd-page-top)').getByRole('button',{name:'Siguiente'}).click();
  await expect(rows).toHaveCount(3);
  await expect(rows.last()).toContainText('Tarifa 053');
  expect(calls.filter(c=>c.per===25).map(c=>c.page)).toEqual([1,2,3]);
@@ -95,10 +95,10 @@ test('usuarios conserva todas las cuentas con paginación local de 25',async({pa
  await page.locator('#navUsuarios').click();
  const root=page.locator('#usersCrud'),rows=root.locator('.catalog-table tbody tr:visible');
  await expect(rows).toHaveCount(25);
- await expect(root.locator('.list-pagination-info')).toContainText('Página 1 de 3');
- await root.locator('.list-pagination').getByRole('button',{name:'Siguiente'}).click();
+ await expect(root.locator('.list-pagination:not(.hd-page-top) .list-pagination-info')).toContainText('Página 1 de 3');
+ await root.locator('.list-pagination:not(.hd-page-top)').getByRole('button',{name:'Siguiente'}).click();
  await expect(rows.first()).toContainText('Persona 026');
- await root.locator('.list-pagination').getByRole('button',{name:'Siguiente'}).click();
+ await root.locator('.list-pagination:not(.hd-page-top)').getByRole('button',{name:'Siguiente'}).click();
  await expect(rows).toHaveCount(2);
  await expect(rows.last()).toContainText('Persona 052');
 });
@@ -109,7 +109,7 @@ test('paginador violeta muestra números circulares y permite ir directo a pági
  await page.locator('#toggleProductSubnav').click();
  await page.locator('#productSubnav [data-nav="catalogos.rubros"]').click();
  const root=page.locator('#adminRemoto');
- const pager=root.locator('.hd-numbered-pagination');
+ const pager=root.locator('.hd-numbered-pagination:not(.hd-page-top)');
  await expect(pager).toBeVisible();
  const first=pager.getByRole('button',{name:'Página 1',exact:true});
  await expect(first).toHaveAttribute('aria-current','page');
@@ -161,7 +161,7 @@ test('página numérica 3 consulta el servidor y mantiene la selección violeta'
  await page.locator('#toggleProductSubnav').click();
  await page.locator('#productSubnav [data-nav="listas_precios"]').click();
  const root=page.locator('#priceListsModule');
- const pager=root.locator('.hd-numbered-pagination');
+ const pager=root.locator('.hd-numbered-pagination:not(.hd-page-top)');
  await expect(pager.getByRole('button',{name:'Página 1'})).toHaveAttribute('aria-current','page');
  await pager.getByRole('button',{name:'Página 3',exact:true}).click();
  await expect(root.locator('.catalog-table tbody tr:visible')).toHaveCount(3);
@@ -186,4 +186,77 @@ test('catálogos sustituyen Eliminar por switch reversible y mantienen hasta 25 
  expect(size.width).toBeLessThan(45);
  expect(size.height).toBeLessThan(27);
  expect(parseFloat(size.radius)).toBeGreaterThan(8);
+});
+
+test('login contrae todos los submenús incluso si la ruta restaurada pertenece a uno',async({page})=>{
+ await setup(page,'listas_precios');
+ for(const [sub,toggle] of [
+  ['#productSubnav','#toggleProductSubnav'],
+  ['#adminSubnav','#toggleAdminSubnav'],
+  ['#providerSubnav','#toggleProviderSubnav']
+ ]){
+  await expect(page.locator(sub)).toBeHidden();
+  await expect(page.locator(toggle)).toHaveAttribute('aria-expanded','false');
+ }
+ await expect(page.locator('#workspaceTitle')).toHaveText('Listas de precios');
+ await page.locator('#toggleProductSubnav').click();
+ await expect(page.locator('#productSubnav')).toBeVisible();
+ await page.locator('#toggleAdminSubnav').click();
+ await expect(page.locator('#productSubnav')).toBeHidden();
+ await expect(page.locator('#adminSubnav')).toBeVisible();
+});
+
+test('buscador lateral encuentra subopciones sin tildes y navega sin abrir opciones prohibidas',async({page})=>{
+ await setup(page);
+ const input=page.locator('#menuQuickSearch');
+ await expect(input).toBeVisible();
+ await input.fill('tipos codigos');
+ const results=page.locator('#menuQuickResults');
+ await expect(results).toBeVisible();
+ await expect(results).toContainText('Tipos de códigos de barras');
+ await results.getByRole('button',{name:/Tipos de códigos de barras/}).click();
+ await expect(page.locator('#workspaceTitle')).toHaveText('Tipos de códigos de barras');
+ await expect(results).toBeHidden();
+ await expect(input).toHaveValue('');
+ await input.fill('proveedores productos');
+ await input.press('Enter');
+ await expect(page.locator('#workspaceTitle')).toHaveText('Proveedores productos');
+ await expect(input).toHaveValue('');
+});
+
+test('paginadores arriba y abajo están sincronizados, cambian página y vuelven arriba',async({page})=>{
+ const calls=await setup(page);
+ await page.locator('#toggleProductSubnav').click();
+ await page.locator('#productSubnav [data-nav="listas_precios"]').click();
+ const root=page.locator('#priceListsModule');
+ const top=root.locator('.hd-page-top');
+ const bottom=root.locator('.list-pagination:not(.hd-page-top)');
+ await expect(top).toBeVisible();
+ await expect(bottom).toBeVisible();
+ await expect(top.getByRole('button',{name:'Página 1',exact:true})).toHaveAttribute('aria-current','page');
+ await bottom.getByRole('button',{name:'Página 2',exact:true}).click();
+ await expect(top.getByRole('button',{name:'Página 2',exact:true})).toHaveAttribute('aria-current','page');
+ await expect(bottom.getByRole('button',{name:'Página 2',exact:true})).toHaveAttribute('aria-current','page');
+ await top.getByRole('button',{name:'Página 3',exact:true}).click();
+ await expect(bottom.getByRole('button',{name:'Página 3',exact:true})).toHaveAttribute('aria-current','page');
+ expect(calls.some(c=>c.page===2&&c.per===25)).toBe(true);
+ expect(calls.some(c=>c.page===3&&c.per===25)).toBe(true);
+ await expect.poll(()=>page.evaluate(()=>document.scrollingElement.scrollTop)).toBeLessThan(100);
+});
+
+test('botón Nueva lista queda a la derecha de controles de búsqueda y sobre tabla',async({page})=>{
+ await setup(page);
+ await page.locator('#toggleProductSubnav').click();
+ await page.locator('#productSubnav [data-nav="listas_precios"]').click();
+ const bar=page.locator('#priceListsModule .workspace-actions');
+ const add=bar.getByRole('button',{name:'Nueva lista de precios'});
+ const search=bar.getByRole('searchbox',{name:'Buscar listas de precios'});
+ const coords=await page.evaluate(([a,b])=>{
+  const x=document.querySelector(a).getBoundingClientRect();
+  const y=document.querySelector(b).getBoundingClientRect();
+  return {createX:x.left,createY:x.top,searchRight:y.right,searchY:y.top};
+ },['#priceListsModule .hd-list-create-action','#priceListsModule .workspace-actions input[type=search]']);
+ expect(coords.createX).toBeGreaterThan(coords.searchRight-5);
+ await expect(add).toBeVisible();
+ await expect(search).toBeVisible();
 });
