@@ -352,7 +352,7 @@ test('glóbulos de precios y códigos se apilan y tooltips salen debajo sin reco
  await action.hover();
  const tip=page.locator('body > .hd-floating-tooltip');
  await expect(tip).toBeVisible();
- await expect(tip).toContainText('Fotos');
+ await expect(tip).toContainText('Abrir galería de fotografías de Conserva del Sur');
  const locations=await page.evaluate(()=>{
   const button=document.querySelector('#productosRealesListado [data-photo-action="9"]');
   const tip=document.querySelector('body > .hd-floating-tooltip');
