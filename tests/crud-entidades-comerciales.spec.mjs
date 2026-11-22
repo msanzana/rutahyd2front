@@ -55,7 +55,7 @@ test('Clientes: lista real, alta, edición y baja lógica desde Laravel',async({
     .getByRole('button',{name:'Editar'}).click();
   const edit=page.getByRole('dialog',{name:'Editar Clientes'});
   await edit.locator('[name="nombre"]').fill('Cliente actualizado real');
-  await edit.getByRole('button',{name:'Guardar cambios'}).click();
+  await edit.getByRole('button',{name:'Guardar',exact:true}).click();
   await expect(page.locator('#workspaceContent')).toContainText('Cliente actualizado real');
   await page.locator('#workspaceContent tbody tr').filter({hasText:'Cliente actualizado real'})
     .getByRole('checkbox',{name:'Desactivar Cliente actualizado real'}).click();
