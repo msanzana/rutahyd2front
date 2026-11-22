@@ -70,7 +70,7 @@ test('menú oficial y CRUD real de productos con todas las clasificaciones',asyn
 
   await page.locator('.nav-link[data-nav="productos"]').click();
   await expect(page.locator('#productosReales')).toBeVisible();
-  await page.getByRole('button',{name:'Nuevo producto real'}).click();
+  await page.getByRole('button',{name:'Nuevo Producto'}).click();
   const modal=page.locator('dialog[open]');
   await expect(modal.locator('select')).toHaveCount(10);
   await modal.locator('input[type=text]').first().fill('SKU-FULLSTACK-TEST');
