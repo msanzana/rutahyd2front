@@ -161,10 +161,10 @@
     else loggedOut();
   });
   document.addEventListener('rutahd:api-estado',event=>{
+    // Disponibilidad del servidor y validez del JWT son cosas diferentes.
+    // Un sondeo "Conectando..." o una caída temporal de red NO debe cerrar sesión.
+    // Solo un 401 confirmado para el JWT activo o el logout revocan la sesión.
     online=Boolean(event.detail?.disponible);
-    if(!online && logged()){
-      acl()?.clear();api().signOut();
-    }
   });
   document.addEventListener('click',event=>{
     const exp=event.target.closest('#toggleProductSubnav,#toggleAdminSubnav');
