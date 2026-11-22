@@ -202,13 +202,19 @@
              const check=make('input');check.type='checkbox';check.value=String(p.id);
              check.checked=selected.has(Number(p.id));check.disabled=isDisabled;
              check.setAttribute('aria-label','Seleccionar '+p.nombre);
-             check.className='hd-lookup-check';
+             // Clase no-switch: excluye expresamente el CSS global de interruptores V32.
+             // La casilla visible es un SVG independiente; el input nativo mantiene
+             // foco, teclado, lectura de pantalla y selección múltiple.
+             check.className='no-switch hd-lookup-check';
              check.addEventListener('change',()=>{
                if(check.checked)selected.set(Number(p.id),p);else selected.delete(Number(p.id));
                redrawSelected();
              });
              const control=make('label',null,'hd-lookup-checkbox');
-             control.append(check);
+             const square=make('span',null,'hd-lookup-box');
+             square.setAttribute('aria-hidden','true');
+             square.innerHTML='<svg viewBox="0 0 20 20" focusable="false" aria-hidden="true"><path d="m4 10 4.2 4.2L16 6.5"/></svg>';
+             control.append(check,square);
              pick.classList.add('hd-lookup-select-cell');
              pick.append(control);
            }else{

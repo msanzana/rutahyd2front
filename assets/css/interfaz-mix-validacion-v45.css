@@ -104,47 +104,64 @@
   margin:0;min-height:44px;padding-inline:20px;border-radius:12px
 }
 
-/* El selector múltiple usa un CHECKBOX auténtico, no el switch de estado global. */
-dialog.hd-product-finder .hd-lookup-select-cell{width:100px}
+/* V46 · Checkbox de selección INDEPENDIENTE del switch de estado V32.
+ * El input nativo es accesible e invisible, la casilla cuadrada es un span real.
+ * No se dibuja la marca con pseudo-elementos del input (evita la perilla rota).
+ */
+dialog.hd-product-finder .hd-lookup-select-cell{
+  width:96px;text-align:left;vertical-align:middle
+}
 dialog.hd-product-finder label.hd-lookup-checkbox{
-  display:inline-grid;place-items:center;width:44px;height:44px;
-  cursor:pointer;border-radius:12px;vertical-align:middle
+  position:relative;display:inline-flex;align-items:center;justify-content:center;
+  width:44px;height:44px;min-width:44px;min-height:44px;cursor:pointer;
+  border-radius:12px;vertical-align:middle
 }
-dialog.hd-product-finder input.hd-lookup-check{
-  -webkit-appearance:none!important;appearance:none!important;
-  display:grid!important;place-items:center!important;position:relative!important;
-  width:24px!important;height:24px!important;min-width:24px!important;min-height:24px!important;
-  margin:0!important;padding:0!important;inset:auto!important;
-  border:2px solid #b79bd9!important;border-radius:7px!important;
-  background:#fff!important;box-shadow:0 2px 6px rgba(52,21,91,.1)!important;
-  opacity:1!important;transform:none!important;
-  cursor:pointer;transition:border-color .16s,background .16s,box-shadow .16s
+dialog.hd-product-finder input[type="checkbox"].hd-lookup-check.no-switch{
+  position:absolute!important;left:0!important;top:0!important;
+  width:100%!important;height:100%!important;min-width:0!important;
+  min-height:0!important;max-width:none!important;max-height:none!important;
+  margin:0!important;padding:0!important;border:0!important;
+  border-radius:0!important;opacity:0!important;
+  appearance:none!important;-webkit-appearance:none!important;
+  background:transparent!important;box-shadow:none!important;
+  cursor:pointer;z-index:1;outline:0!important
 }
-dialog.hd-product-finder input.hd-lookup-check::before{content:none!important}
-dialog.hd-product-finder input.hd-lookup-check::after{
-  content:''!important;position:static!important;
-  width:11px!important;height:6px!important;
-  border-left:2.5px solid #fff!important;border-bottom:2.5px solid #fff!important;
-  border-top:0!important;border-right:0!important;
-  border-radius:0!important;background:transparent!important;
-  transform:rotate(-45deg) translateY(-1px) scale(.5)!important;
-  opacity:0!important;transition:transform .16s,opacity .16s
+dialog.hd-product-finder input.hd-lookup-check::before,
+dialog.hd-product-finder input.hd-lookup-check::after{content:none!important;display:none!important}
+dialog.hd-product-finder .hd-lookup-box{
+  box-sizing:border-box;display:grid;place-items:center;flex:none;
+  width:25px;height:25px;border:2px solid #ad8bcf;border-radius:7px;
+  background:#fff;box-shadow:0 2px 5px rgba(52,21,91,.10);
+  transition:background-color .16s,border-color .16s,box-shadow .16s;
+  pointer-events:none
 }
-dialog.hd-product-finder input.hd-lookup-check:checked{
-  border-color:#7635c7!important;background:#7635c7!important;
-  box-shadow:0 4px 12px rgba(102,38,178,.23)!important
+dialog.hd-product-finder .hd-lookup-box svg{
+  display:block;width:17px;height:17px;fill:none;
+  stroke:#fff;stroke-width:2.6;stroke-linejoin:round;stroke-linecap:round;
+  opacity:0;transform:scale(.65);transition:opacity .15s,transform .15s
 }
-dialog.hd-product-finder input.hd-lookup-check:checked::after{
-  opacity:1!important;transform:rotate(-45deg) translateY(-1px) scale(1)!important
+dialog.hd-product-finder .hd-lookup-checkbox:hover .hd-lookup-box{
+  border-color:#7534bb;background:#fcf8ff
 }
-dialog.hd-product-finder label.hd-lookup-checkbox:hover input.hd-lookup-check{
-  border-color:#7436bd!important;box-shadow:0 0 0 4px rgba(124,58,184,.10)!important
+dialog.hd-product-finder .hd-lookup-check:checked + .hd-lookup-box{
+  background:#7336c6;border-color:#7336c6;
+  box-shadow:0 5px 12px rgba(96,39,170,.20)
 }
-dialog.hd-product-finder input.hd-lookup-check:focus-visible{
-  outline:3px solid #ae7be5!important;outline-offset:3px!important
+dialog.hd-product-finder .hd-lookup-check:checked + .hd-lookup-box svg{
+  opacity:1;transform:scale(1)
 }
-dialog.hd-product-finder input.hd-lookup-check:disabled{
-  opacity:.38!important;cursor:not-allowed
+dialog.hd-product-finder .hd-lookup-check:focus-visible + .hd-lookup-box{
+  outline:3px solid #ab76e2;outline-offset:3px
+}
+dialog.hd-product-finder .hd-lookup-check:disabled + .hd-lookup-box{
+  opacity:.45;background:#f4eff9;border-color:#c5b6d5
+}
+dialog.hd-product-finder .hd-lookup-check:disabled{cursor:not-allowed}
+html[data-theme=oscuro] dialog.hd-product-finder .hd-lookup-box{
+  background:#3a2a4b;border-color:#b693d9
+}
+html[data-theme=oscuro] dialog.hd-product-finder .hd-lookup-check:checked + .hd-lookup-box{
+  background:#9c60d9;border-color:#9c60d9
 }
 
 /* Validación corporativa: tooltip propio anclado al campo; sin popup nativo. */
