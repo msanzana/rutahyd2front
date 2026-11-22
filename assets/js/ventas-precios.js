@@ -26,6 +26,7 @@
   const form=el('form',undefined,'sale-price-form');
   const grid=el('div',undefined,'sale-price-fields');
   const client=control('Cliente','select'),product=control('Producto','select'),qty=control('Cantidad','number');
+  const searchProduct=control('Buscar producto para venta');
   const typeDte=control('Tipo de documento','select'),document=control('Documento receptor'),name=control('Nombre receptor');
   const address=control('Dirección del receptor (factura)'),date=control('Fecha emisión','date');
   client.input.required=true;product.input.required=true;
@@ -35,7 +36,8 @@
   date.input.value=new Date().toISOString().slice(0,10);
   option(client.input,'','Selecciona un cliente');option(product.input,'','Selecciona un producto');
   option(typeDte.input,'39','Boleta (39)');option(typeDte.input,'33','Factura (33)');
-  grid.append(client.wrap,product.wrap,qty.wrap,typeDte.wrap,document.wrap,name.wrap,address.wrap,date.wrap);
+  grid.append(client.wrap,searchProduct.wrap,product.wrap,qty.wrap,
+    typeDte.wrap,document.wrap,name.wrap,address.wrap,date.wrap);
   const priceInfo=el('p','Selecciona cliente y producto para consultar el precio.','sale-effective-price');
   priceInfo.setAttribute('role','status');
   const addLine=el('button','Agregar producto a la venta','button ghost');addLine.type='button';addLine.disabled=true;
@@ -55,17 +57,48 @@
   let loadedClients=[],loadedProducts=[],selection=null,items=[],busy=false,version=0;
   async function init(){
    try{
-    const [c,p]=await Promise.all([api().resources('clientes',1,'',100),api().products(1,'',{activo:'1'})]);
+    let c;
+    try{c=await api().saleCustomers();}
+    catch(error){
+      if(error?.status!==404)throw error;
+      c=await api().resources('clientes',1,'',100);
+    }
     if(current!==sequence||!root.isConnected)return;
-    loadedClients=c.data||[];loadedProducts=p.data||[];
+    loadedClients=c.data||[];
     loadedClients.filter(x=>x.activo).forEach(x=>option(client.input,x.id,
       x.nombre+(x.codigo?' · '+x.codigo:'')));
-    loadedProducts.filter(x=>x.activo).forEach(x=>option(product.input,x.id,
-      x.nombre+(x.sku?' · '+x.sku:'')));
-    if(!loadedClients.length||!loadedProducts.length){
-      priceInfo.textContent='Registra clientes y productos activos antes de crear una venta.';
+    if(!loadedClients.length)priceInfo.textContent='No hay clientes activos disponibles para venta.';
+   }catch(e){priceInfo.textContent='No se pudieron cargar clientes para venta. Comprueba los permisos del perfil.';}
+  }
+  let productsTicket=0,searchTimer=null;
+  async function loadSaleProducts(){
+    const token=++productsTicket;
+    const customerId=Number(client.input.value);
+    product.input.replaceChildren();
+    option(product.input,'',customerId?'Cargando productos con precio vigente…':'Selecciona primero un cliente');
+    loadedProducts=[];selection=null;addLine.disabled=true;
+    if(!customerId){priceInfo.textContent='Selecciona un cliente para consultar su lista de precios.';return;}
+    const search=searchProduct.input.value.trim();
+    try{
+      let data;
+      try{data=await api().saleProducts(customerId,search);}
+      catch(error){
+        if(error?.status!==404)throw error;
+        // Servidores antiguos: no inferir lista especial de datos de Productos.
+        data=await api().products(1,search,{activo:'1'});
+      }
+      if(token!==productsTicket||current!==sequence||!root.isConnected)return;
+      loadedProducts=(data.data||[]).filter(p=>p.activo);
+      product.input.replaceChildren();option(product.input,'','Selecciona un producto');
+      loadedProducts.forEach(p=>option(product.input,p.id,p.nombre+(p.sku?' · '+p.sku:'')));
+      priceInfo.textContent=loadedProducts.length?
+        'Selecciona un producto para consultar el precio de la lista asignada.':
+        'No hay productos con precio activo para la lista de este cliente.';
+    }catch(error){
+      if(token!==productsTicket)return;
+      product.input.replaceChildren();option(product.input,'','No se pudieron cargar productos');
+      priceInfo.textContent='No fue posible consultar los productos vendidos con esta lista.';
     }
-   }catch(e){priceInfo.textContent='No se pudieron cargar clientes o productos de Laravel.';}
   }
   function redrawCart(){
    cartArea.replaceChildren();
@@ -116,7 +149,11 @@
    name.input.value=selected?.nombre||'';
    address.input.value=selected?.direccion||'';
    // No mezclar productos cotizados con la tarifa de otro cliente.
-   items=[];redrawCart();void showPrice();
+   items=[];redrawCart();void loadSaleProducts();
+  });
+  searchProduct.input.addEventListener('input',()=>{
+    clearTimeout(searchTimer);
+    searchTimer=setTimeout(()=>void loadSaleProducts(),250);
   });
   product.input.addEventListener('change',()=>void showPrice());
   typeDte.input.addEventListener('change',()=>{
@@ -129,7 +166,7 @@
    const p=loadedProducts.find(x=>Number(x.id)===selection.producto_id);
    items.push({id:selection.producto_id,nombre:p?.nombre||'Producto',cantidad:count,
      precio:price,lista:selection.lista_precio_nombre,
-     exento:Number(p?.presentacion?.tasaIva??19)===0});
+     exento:Number(p?.tasa_iva??p?.presentacion?.tasaIva??19)===0});
    redrawCart();qty.input.value='';
   });
   form.addEventListener('submit',async event=>{
