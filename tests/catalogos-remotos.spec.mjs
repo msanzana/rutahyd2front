@@ -9,7 +9,7 @@ test('administración remota pide login y mantiene demo local independiente', as
   await expect(page.locator('#catalogAdmin')).toBeVisible();
   await page.locator('.nav-link[data-nav="administracion"]').click();
   await expect(page.locator('#adminRemoto input[type="password"]')).toBeVisible();
-  await expect(page.locator('#adminRemoto')).not.toContainText('Guardar clasificación en MySQL');
+  await expect(page.locator('#adminRemoto')).not.toContainText('Guardar');
 });
 
 test('sesión remota, catálogos CRUD y clasificación con API simulada', async ({page})=>{
@@ -70,7 +70,7 @@ test('sesión remota, catálogos CRUD y clasificación con API simulada', async 
   await page.locator('#adminRemoto input[type="password"]').fill('simulada-no-real');
   await page.locator('#adminRemoto button[type="submit"]').click();
   await expect(page.locator('#adminRemoto')).toContainText('Alimentos');
-  await expect(page.locator('#adminRemoto')).toContainText('Guardar clasificación en MySQL');
+  await expect(page.locator('#adminRemoto')).toContainText('Guardar');
 
   await page.locator('#adminRemoto').getByRole('button',{name:'Nuevo registro de Rubros'}).click();
   await page.locator('dialog[open] input').fill('Ferretería');
@@ -86,7 +86,7 @@ test('sesión remota, catálogos CRUD y clasificación con API simulada', async 
     await form.locator('select[data-field="'+key+'"]').selectOption({index:1});
   }
   await form.locator('input[type="checkbox"]').check();
-  await form.getByRole('button',{name:'Guardar clasificación en MySQL'}).click();
+  await form.getByRole('button',{name:'Guardar'}).click();
   await expect(page.locator('#remoteStatus')).toContainText('Clasificación guardada');
   expect(requests.some(x=>x.path==='/api/v1/productos/123/clasificacion'&&x.method==='PATCH')).toBeTruthy();
   expect(requests.filter(x=>x.path.includes('/catalogos/')).every(x=>x.authorization==='Bearer '+'ciHeader.ciPayload.ciSignature')).toBeTruthy();
