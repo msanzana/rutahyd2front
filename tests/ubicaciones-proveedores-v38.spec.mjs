@@ -61,6 +61,8 @@ test('tercer nivel de Administración oculto tras login y accesible desde el bus
  await expect(page.locator('#workspaceTitle')).toHaveText('Ciudades');
  await expect(page.locator('.location-module')).toBeVisible();
  await expect(page.locator('.location-table')).toContainText('Temuco');
+ await page.locator('#menuToggle').click();
+ await expect(page.locator('#menuQuickSearch')).toBeVisible();
  await page.locator('#menuQuickSearch').fill('administracion ubicaciones ciudades');
  await expect(page.locator('#menuQuickResults')).toContainText('Ciudades');
 });
