@@ -25,7 +25,7 @@ for(const width of [1440,820,572,390]){
     await expect(page.locator('#loginDialog')).toBeHidden();
     if(width<1000)await page.locator('#menuToggle').click();
     await page.locator('.nav-link[data-nav="productos"]').click();
-    await page.getByRole('button',{name:'Nuevo producto real'}).click();
+    await page.getByRole('button',{name:'Nuevo Producto'}).click();
     const dialog=page.locator('.product-editor-dialog[open]');
     await expect(dialog).toBeVisible();
     const m=await dialog.evaluate(node=>{
