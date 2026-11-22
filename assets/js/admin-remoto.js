@@ -10,11 +10,12 @@
     marcas:['Marcas',null],
     modelos:['Modelos','marcas'],
     tipos_unidad:['Tipos de unidad',null],
-    gramajes:['Gramajes',null],
+    tipos_codigos_barras:['Tipos de códigos de barras',null],
     tipos_envasado:['Tipos de envasado',null],
     condiciones_tributarias:['Condiciones tributarias',null]
   };
   const KEYS=Object.keys(CONFIG);
+  const ADMIN_ONLY=new Set(['tipos_unidad','tipos_envasado','condiciones_tributarias','tipos_codigos_barras']);
   // Consultas remotas de solo lectura; jamás se mezclan con localStorage.
   const REMOTE_RESOURCES={
     clientes:{titulo:'Clientes reales',permiso:'clientes.gestionar',campos:[['id','ID'],['nombre','Nombre'],['activo','Activo']]},
@@ -33,7 +34,6 @@
     ['marcaId','marcas',null],
     ['modeloId','modelos','marcaId'],
     ['tipoUnidadId','tipos_unidad',null],
-    ['gramajeId','gramajes',null],
     ['tipoEnvasadoId','tipos_envasado',null],
     ['condicionTributariaId','condiciones_tributarias',null]
   ];
@@ -78,7 +78,8 @@
     const response=await Promise.all(permitted.map(key=>API().list(key)));
     KEYS.forEach(key=>cache[key]=[]);
     permitted.forEach((key,i)=>{cache[key]=response[i].items;});
-    if(!permitted.includes(selected))selected=permitted[0]||'rubros';
+    const visible=restrictedKey?permitted:[...permitted].filter(key=>ADMIN_ONLY.has(key));
+    if(!visible.includes(selected))selected=visible[0]||'tipos_unidad';
     authorized=true;render();
     status('Catálogos cargados desde la API autenticada. No se importaron los datos locales.');
   }
@@ -104,7 +105,7 @@
     root.appendChild(header);
     const message=el('p','catalog-footnote','');message.id='remoteStatus';root.appendChild(message);
     if(!authorized){renderLogin();return;}
-    const keys=KEYS.filter(key=>canSee(key));
+    const keys=KEYS.filter(key=>canSee(key)&&(restrictedKey?key===restrictedKey:ADMIN_ONLY.has(key)));
     if(!keys.length && !access()?.has('productos.gestionar')){
       root.appendChild(el('p','catalog-footnote','Tu perfil no tiene acceso a los catálogos de Productos.'));
       return;
@@ -155,8 +156,7 @@
       tr.appendChild(actions);rows.appendChild(tr);
     });
     table.appendChild(rows);list.appendChild(table);root.appendChild(list);
-    if(!restrictedKey && access()?.has('productos.gestionar'))renderProductAssignment();
-    if(!restrictedKey)renderReadOnlyResources();
+
   }
   function renderLogin(){
     root.appendChild(el('p','catalog-footnote',
