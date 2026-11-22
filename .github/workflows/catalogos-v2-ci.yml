@@ -21,12 +21,15 @@ jobs:
         run: |
           node --check assets/js/catalogos-api.js
           node --check assets/js/admin-remoto.js
-          node --check assets/js/app.js
-          node --check assets/js/catalogos.js
-          node --check tests/catalogos-remotos.spec.mjs
+          node --check assets/js/app-produccion.js
+          node --check assets/js/proveedores-productos.js
+          node --check tests/productos-proveedores-codigos-v2.spec.mjs
+          node --check tests/crud-entidades-comerciales.spec.mjs
+          test "$(grep -o 'data-admin-catalog=' index.html | wc -l)" -eq 4
+          test "$(grep -o 'data-catalog-key=' index.html | wc -l)" -eq 6
       - name: Instalar pruebas Chromium
         run: |
           npm install --no-audit --no-fund
           npx playwright install --with-deps chromium
       - name: Pruebas locales y API simulada sin acceso a InfinityFree
-        run: npm test
+        run: npx playwright test tests/productos-proveedores-codigos-v2.spec.mjs tests/crud-entidades-comerciales.spec.mjs
