@@ -169,3 +169,71 @@ td.list-action-cell button.list-icon-action{
  margin:2px 3px!important;
 }
 td.list-action-cell .list-icon-action svg{width:17px!important;height:17px!important}
+
+
+/* Ruta H&D V2 · Formularios validados v22: reemplazo visual del tooltip nativo */
+.hd-validation-summary:not([hidden]){
+  display:grid;gap:7px;position:relative;
+  margin:14px 23px;padding:17px 20px 17px 58px;
+  border:1px solid #f0b4be;border-left:4px solid #d44b67;
+  border-radius:13px;background:linear-gradient(115deg,#fff1f4,#fffafd);
+  box-shadow:0 8px 24px rgba(165,40,78,.09);color:#80233d;
+  font-size:12px;line-height:1.5;grid-column:1/-1
+}
+.hd-validation-summary:not([hidden])::before{
+  content:"!";position:absolute;left:17px;top:17px;
+  width:28px;height:28px;display:grid;place-items:center;
+  color:#fff;background:#bc3158;border-radius:9px;font-size:17px;font-weight:900
+}
+.hd-validation-title{color:#81223b;font-size:14px;line-height:1.4;font-weight:800}
+.hd-validation-detail{margin:0;color:#834356;font-size:12px;overflow-wrap:anywhere}
+:where(.product-editor-dialog,.crud-dialog,.official-editor,.supplier-product-dialog)
+ :is(input,textarea,select).hd-field-invalid,
+:where(.product-editor-dialog,.crud-dialog,.official-editor,.supplier-product-dialog)
+ :is(input,textarea,select)[aria-invalid=true]{
+  border-color:#d34b6d!important;
+  background:#fff8fa!important;
+  box-shadow:0 0 0 3px rgba(219,57,93,.12)!important;
+}
+.hd-field-error>span:first-child{color:#b42d4f!important;font-weight:800!important}
+.hd-filter-active,.hd-filter-warning{
+  margin:12px 0;padding:12px 14px;border-radius:11px;
+  line-height:1.55;font-size:12px;white-space:normal;
+  border:1px solid #d8c4ed;background:#f5edfc;color:#583079;
+}
+.hd-filter-warning{background:#fff8e8;border-color:#ebd09a;color:#805916}
+.product-advanced-dialog{width:min(890px,calc(100vw - 20px))!important;
+  max-width:890px!important;max-height:calc(100dvh - 20px)!important}
+.product-advanced-dialog .crud-fields{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:17px 18px;align-items:start;padding:24px 25px
+}
+.product-advanced-dialog .crud-field{display:grid;gap:7px;min-width:0}
+.product-advanced-dialog .crud-field :is(input,select){
+  min-width:0;max-width:100%;width:100%;min-height:44px;
+  border-radius:10px;padding:10px 11px;border:1px solid #d9cbe8;
+  background:#fdfaff;color:#332042;font-size:12px
+}
+.product-advanced-dialog .crud-field :is(input,select):focus-visible{
+  outline:none;border-color:#8651c2;box-shadow:0 0 0 3px rgba(126,57,196,.15)
+}
+.product-advanced-dialog .crud-footer{padding:17px 25px}
+html[data-theme=oscuro] .hd-validation-summary:not([hidden]){
+  background:#492936;border-color:#a4586b;color:#ffced8;box-shadow:none
+}
+html[data-theme=oscuro] .hd-validation-title,html[data-theme=oscuro] .hd-validation-detail{color:#ffd4df}
+html[data-theme=oscuro] .hd-filter-active{background:#3b2b50;color:#dfc5fd;border-color:#72548e}
+html[data-theme=oscuro] .hd-filter-warning{background:#48381f;color:#ffdea8;border-color:#8c7341}
+html[data-theme=oscuro] .product-advanced-dialog .crud-field :is(input,select){
+  background:#30243e;color:#f3eaf9;border-color:#6b4e80
+}
+@media(max-width:790px){
+  .product-advanced-dialog .crud-fields{grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}
+}
+@media(max-width:480px){
+  .product-advanced-dialog{width:calc(100vw - 14px)!important;max-width:calc(100vw - 14px)!important}
+  .product-advanced-dialog .crud-fields{grid-template-columns:minmax(0,1fr);padding:18px}
+  .product-advanced-dialog .crud-footer{padding:14px 18px}
+  .hd-validation-summary:not([hidden]){margin:12px 14px;padding:14px 14px 14px 50px}
+  .hd-validation-summary:not([hidden])::before{left:12px;top:14px}
+}
