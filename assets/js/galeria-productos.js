@@ -23,7 +23,7 @@
   const heading=el('header','product-gallery-header');
   const headingContent=el('div','');
   headingContent.append(el('span','overline','RUTA H&D · GALERÍA DE PRODUCTOS'),
-    el('h2','',product.nombre),el('p','',product.sku+' · Fotos en MariaDB'));
+    el('h2','',product.nombre),el('p','',product.sku+' · Galería de fotografías'));
   const close=button('×',()=>dialog.close(),'crud-close');
   close.setAttribute('aria-label','Cerrar ventana de galería');
   heading.append(headingContent,close);panel.append(heading);
@@ -114,7 +114,7 @@
       preview.hidden=false;dropIcon.hidden=true;
       drop.classList.add('has-selection');
       label.textContent=files.length+' fotografía(s) listas para cargar';
-      hint.textContent='Vista previa · Todavía no están guardadas en MariaDB';
+      hint.textContent='Vista previa · Fotografías pendientes de guardar';
     }
     selected.textContent=files.length?
       files.length+' seleccionada(s): '+files.map(f=>f.name).join(', '):
@@ -229,7 +229,7 @@
   }
   async function upload(){
     if(working||!files.length)return;
-    working=true;submit.disabled=true;status.textContent='Guardando '+files.length+' foto(s) en MariaDB…';
+    working=true;submit.disabled=true;status.textContent='Guardando '+files.length+' fotografía(s)…';
     try{
       const uploaded=await api().uploadProductPhotos(product.id,files);
       if(!live)return;
@@ -248,7 +248,7 @@
     const confirmDialog=el('dialog','modal crud-dialog product-gallery-confirm');
     const content=el('div','product-gallery-confirm-body');
     content.append(el('h3','','¿Eliminar esta fotografía?'),
-      el('p','','La imagen se borrará de la base de datos y no podrá recuperarse.'));
+      el('p','','La fotografía se eliminará de forma permanente. Esta acción no se puede deshacer.'));
     const buttons=el('div','modal-footer');
     buttons.append(button('Cancelar',()=>confirmDialog.close()));
     const yes=button('Eliminar definitivamente',async()=>{
