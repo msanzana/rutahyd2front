@@ -2,9 +2,16 @@
  * Los tokens se conservan solo en memoria y se eliminan del fragmento visible. */
 (() => {
   'use strict';
+  // InfinityFree conserva ?query durante su desafío ?i=1, pero elimina #fragment.
+  // Admitir ambos formatos (correos nuevos por query y correos antiguos por hash).
+  const query=new URLSearchParams(location.search).get('recuperar');
   const incoming=/^#recuperar\?token=([a-f0-9]{64})$/i.exec(location.hash);
-  let pending=incoming?.[1]||null;
+  const valid=value=>typeof value==='string'&&/^[a-f0-9]{64}$/i.test(value);
+  let pending=valid(query)?query.toLowerCase():incoming?.[1]?.toLowerCase()||null;
   let active=Boolean(pending), dialog=null, completed=false;
+  // El secreto no debe quedar en historial, Referer, capturas o barra URL.
+  // Guardarlo solo en memoria antes de eliminarlo de la dirección.
+  if(pending)history.replaceState(null,'',location.pathname+'#recuperacion');
   const api=()=>window.RutaHDApiCatalogos;
   const node=(tag,cls,text)=>{
     const element=document.createElement(tag);
@@ -106,10 +113,7 @@
     dlg.addEventListener('cancel',event=>event.preventDefault());
     dlg.addEventListener('close',done,{once:true});
     dlg.showModal();
-    if(reset&&token){
-      // Después de abrir el formulario, borrar el token de la barra URL sin invalidarlo en memoria.
-      history.replaceState(null,'','#recuperacion');
-    }
+
     (email||password)?.focus();
   }
   const isActive=()=>active;
