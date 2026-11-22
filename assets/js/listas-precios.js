@@ -60,7 +60,7 @@
       const tr=el('tr');
       tr.append(el('td',item.codigo),el('td',item.nombre),
         el('td',item.es_base?'Lista Base':'Especial'));
-      const cell=el('td','catalog-status-cell');
+      const cell=el('td',undefined,'catalog-status-cell');
       const toggle=window.RutaHDListUI?.statusSwitch(item.nombre,item.activo,async active=>{
         await api().updatePriceList(item.id,{activo:active});
         await load();
