@@ -339,6 +339,20 @@
   }
   async function detailProduct(id){
     const producto=await api().getProduct(id);
+    // Compatibilidad con API anterior: el listado tiene nombres pero GET individual
+    // puede traer solo IDs. Resolverlos con catálogos para no mostrar falsamente
+    // "Sin clasificar" cuando la categoría está realmente asignada.
+    const requested=[...new Set(ATTRS.filter(([field,cat])=>
+      producto.clasificacion?.[field]!=null &&
+      !producto.clasificacionNombres?.[field] &&
+      !(cache[cat]||[]).some(x=>String(x.id)===String(producto.clasificacion[field]))
+    ).map(([,catalog])=>catalog))];
+    if(requested.length){
+      await Promise.allSettled(requested.map(async catalog=>{
+        const data=await api().list(catalog);
+        if(Array.isArray(data?.items))cache[catalog]=data.items;
+      }));
+    }
     const modal=el('dialog','modal catalog-dialog crud-dialog product-detail-dialog');
     modal.setAttribute('aria-label','Ficha de consulta del producto '+producto.nombre);
     const shell=el('div','product-detail-shell');
@@ -374,8 +388,13 @@
     classification.append(el('h3','','Clasificación del producto'));
     const taxonomy=el('dl','product-detail-taxonomy');
     for(const [field,catalog,label] of ATTRS){
-      const selected=cache[catalog]?.find(x=>Number(x.id)===Number(producto.clasificacion?.[field]));
-      item(taxonomy,label,producto.clasificacionNombres?.[field]||selected?.nombre||'Sin clasificar');
+      const categoryId=producto.clasificacion?.[field];
+      const selected=(cache[catalog]||[]).find(x=>String(x.id)===String(categoryId));
+      const labelValue=categoryId===null||categoryId===undefined
+        ? 'Sin clasificar'
+        : (producto.clasificacionNombres?.[field]||selected?.nombre||
+           'Asignado · ID '+String(categoryId));
+      item(taxonomy,label,labelValue);
     }
     classification.append(taxonomy);content.append(classification);
     const pricesSection=el('section','product-detail-section product-detail-wide');
