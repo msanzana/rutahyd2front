@@ -76,7 +76,7 @@ for(const width of [1440,820,390]){
   await login(page);
   if(width<1000)await page.locator('#menuToggle').click();
   await page.locator('.nav-link[data-nav="productos"]').click();
-  await page.getByRole('button',{name:'Nuevo producto real'}).click();
+  await page.getByRole('button',{name:'Nuevo Producto'}).click();
   const dlg=page.locator('dialog.product-editor-dialog[open]');
   await expect(dlg).toBeVisible();
   const dimensions=await dlg.evaluate(node=>{
@@ -115,7 +115,7 @@ test('nuevo producto envía códigos de venta sin proveedor ni gramajes',async({
   });
   await login(page);
   await page.locator('.nav-link[data-nav="productos"]').click();
-  await page.getByRole('button',{name:'Nuevo producto real'}).click();
+  await page.getByRole('button',{name:'Nuevo Producto'}).click();
   const dlg=page.locator('dialog.product-editor-dialog[open]');
   await dlg.getByLabel('SKU / Código').fill('SKU-CI-V2');
   await dlg.getByLabel('Nombre del producto').fill('Producto con códigos');
