@@ -19,8 +19,8 @@
   function errorText(error){
     if(error?.status===401)return 'Sesión expirada. Inicia sesión nuevamente.';
     if(error?.status===403)return 'No tienes permiso para gestionar productos de proveedores.';
-    if(error?.status===409)return 'Registro duplicado, código en uso o relación comercial inválida.';
-    if(error?.status===422)return 'Revisa los campos requeridos, el código y las cantidades.';
+    if(error?.status===409)return error?.userMessage||'Registro duplicado, código en uso o relación comercial inválida.';
+    if(error?.status===422)return error?.userMessage||'Revisa los campos requeridos, el código y las cantidades.';
     return 'No se pudo consultar el servidor (HTTP '+(error?.status||'sin respuesta')+').';
   }
   function labeled(label,control){
@@ -147,6 +147,23 @@
     }catch(err){message.textContent=errorText(err);message.classList.add('is-error');}
   }
 
+  const purchaseBarcodeLengths=Object.freeze({EAN13:13,EAN8:8,DUN14:14,ITF14:14,UPCA:12,UPCE:8});
+  function purchaseBarcodeValidation(type,rawCode,rawUnits){
+    if(!type)return 'Selecciona un tipo de código de barras vigente.';
+    const barcode=String(rawCode||'').trim();
+    if(!barcode)return 'Ingresa el código de barras de compra.';
+    if(barcode.length>100)return 'El código no puede superar 100 caracteres.';
+    if(/[\x00-\x1f\x7f]/.test(barcode))return 'El código contiene caracteres de control.';
+    const kind=String(type.codigo||'').toUpperCase();
+    const size=purchaseBarcodeLengths[kind];
+    if(size && !new RegExp('^[0-9]{'+size+'}$').test(barcode))
+      return 'El tipo '+kind+' requiere exactamente '+size+' dígitos numéricos.';
+    const quantity=String(rawUnits||'').trim();
+    if(!/^(?:0|[1-9][0-9]{0,11})(?:\.[0-9]{1,3})?$/.test(quantity)
+       || !/[1-9]/.test(quantity))
+      return 'Las unidades deben ser mayores que cero, con hasta 3 decimales y 12 cifras enteras.';
+    return '';
+  }
   async function barcodes(record){
     const {dialog,box}=openDialog('Códigos de barras de compra · '+record.producto);
     const message=e('p','Consultando códigos y tipos…','supplier-status');box.append(message);
@@ -179,6 +196,7 @@
       const reload=async()=>{entries=(await api().purchaseBarcodes(record.id)).items||[];draw();};
       const editCode=(item=null)=>{
         const form=e('form',null,'supplier-barcode-form');
+        form.noValidate=true; // Validación corporativa antes del envío; sin globo nativo.
         const sel=selection(avail.map(t=>({id:t.id,label:t.nombre})),
           'Tipo de código *',item?.tipo_codigo_barra_id);
         sel.required=true;
@@ -186,20 +204,59 @@
         const units=field('number',item?.unidades_por_codigo||'1',20);
         units.required=true;units.min='0.001';units.step='0.001';
         const status=e('p','', 'supplier-status supplier-dialog-wide');
+        status.setAttribute('role','alert');
+        const hint=e('p','', 'supplier-barcode-hint supplier-dialog-wide');
+        const refreshHint=()=>{
+          const type=avail.find(t=>String(t.id)===String(sel.value));
+          const kind=String(type?.codigo||'').toUpperCase();
+          const required=purchaseBarcodeLengths[kind];
+          hint.textContent=required
+            ?kind+': ingresa exactamente '+required+' dígitos, sin espacios ni guiones.'
+            :'Ingresa el código asignado por el proveedor. Unidades: hasta 3 decimales.';
+          code.inputMode=required?'numeric':'text';
+          code.placeholder=required?'Ej.: '+('0'.repeat(required)):'Código del proveedor';
+        };
+        sel.addEventListener('change',refreshHint);
+        refreshHint();
+        const clearMessage=()=>{
+          status.textContent='';status.classList.remove('is-error');
+          for(const el of [sel,code,units])el.removeAttribute('aria-invalid');
+        };
+        for(const el of [sel,code,units])el.addEventListener(
+          el===sel?'change':'input',clearMessage);
         const save=e('button',item?'Guardar código':'Añadir código','button primary');save.type='submit';
         form.append(labeled('Tipo',sel),labeled('Código de compra',code),
-          labeled('Unidades por este código',units),status,save);
+          labeled('Unidades por este código',units),hint,status,save);
+        const report=(message,field)=>{
+          status.textContent=message;status.classList.add('is-error');
+          if(field){field.setAttribute('aria-invalid','true');field.focus();}
+        };
         form.addEventListener('submit',async ev=>{
-          ev.preventDefault();if(!form.reportValidity())return;
+          ev.preventDefault();
+          clearMessage();
+          const chosen=avail.find(t=>String(t.id)===String(sel.value));
+          const invalid=purchaseBarcodeValidation(chosen,code.value,units.value);
+          if(invalid){
+            const size=purchaseBarcodeLengths[String(chosen?.codigo||'').toUpperCase()];
+            const target=!chosen?sel:
+              !code.value.trim() || (size&&!new RegExp('^[0-9]{'+size+'}$')
+                .test(code.value.trim()))?code:units;
+            report(invalid,target);return;
+          }
           const payload={tipo_codigo_barra_id:Number(sel.value),
-            codigo_barras:code.value.trim(),unidades_por_codigo:units.value,activo:true};
-          save.disabled=true;
+            codigo_barras:code.value.trim(),unidades_por_codigo:units.value.trim(),activo:true};
+          save.disabled=true;status.textContent='Guardando código…';
           try{
             if(item)await api().updatePurchaseBarcode(record.id,item.id,payload);
             else await api().createPurchaseBarcode(record.id,payload);
             form.remove();await reload();
-          }catch(err){status.textContent=errorText(err);status.classList.add('is-error');}
-          finally{save.disabled=false;}
+          }catch(err){
+            const field=err?.validationErrors && Object.keys(err.validationErrors)[0];
+            report(errorText(err),
+              field==='tipo_codigo_barra_id'?sel:
+              field==='codigo_barras'?code:
+              field==='unidades_por_codigo'?units:null);
+          }finally{save.disabled=false;}
         });
         list.prepend(form);
         code.focus();

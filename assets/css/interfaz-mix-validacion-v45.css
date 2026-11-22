@@ -254,3 +254,25 @@ html[data-theme=oscuro] .hd-validation-bubble::after{background:#4b2b3c;border-c
   from{opacity:0;transform:translateY(-4px)}
   to{opacity:1;transform:translateY(0)}
 }
+
+
+/* V47: ayuda contextual y errores del formulario de códigos de compra. */
+.supplier-barcode-form .supplier-barcode-hint{
+  margin:2px 0 5px;padding:11px 13px;border-radius:11px;
+  border:1px solid #ded0ee;background:#faf7fe;color:#6c4c84;
+  font-size:12px;line-height:1.5;
+}
+.supplier-barcode-form .supplier-status.is-error{
+  padding:11px 13px;border-radius:11px;border:1px solid #f0c5d0;
+  background:#fff7f9;color:#ac365b;font-weight:650;
+}
+.supplier-barcode-form :is(input,select)[aria-invalid="true"]{
+  border-color:#cc4a70!important;background:#fff9fb!important;
+  box-shadow:0 0 0 3px rgba(204,74,112,.10)!important;
+}
+html[data-theme=oscuro] .supplier-barcode-form .supplier-barcode-hint{
+  background:#3a294d;color:#e8d1f4;border-color:#775a8c
+}
+html[data-theme=oscuro] .supplier-barcode-form .supplier-status.is-error{
+  background:#4d2b40;color:#ffcfdf;border-color:#915470
+}
