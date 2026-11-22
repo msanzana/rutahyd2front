@@ -18,7 +18,7 @@ for (const width of [1440,820,390]) {
     const visual=await page.evaluate(async()=>{
       const form=document.querySelector('#loginDialog .login-form');
       const style=getComputedStyle(form,'::before');
-      const match=style.backgroundImage.match(/data:image\\/webp;base64,([A-Za-z0-9+/=]+)/);
+      const match=style.backgroundImage.match(new RegExp('data:image/webp;base64,([A-Za-z0-9+/=]+)'));
       if(!match) return {missing:true,background:style.backgroundImage.slice(0,80)};
       const img=new Image();
       img.src='data:image/webp;base64,'+match[1];
