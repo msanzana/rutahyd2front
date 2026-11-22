@@ -54,7 +54,7 @@
     if(e?.userMessage)return e.userMessage;
     if(e?.status===422)return 'Datos incompletos. Revisa el campo destacado o el margen mínimo en Precios.';
     if(e?.name==='AbortError')return 'El servidor agotó el tiempo de respuesta.';
-    return 'No se pudo completar la operación con Laravel.';
+    return 'No se pudo completar la operación. Intenta nuevamente.';
   }
   async function guarded(fn){
     if(busy){message('Terminando la consulta anterior. Intenta nuevamente.',true);return;}
@@ -73,7 +73,7 @@
       notifier
     );
     root.querySelector('.panel-heading').appendChild(
-      add(el('div'),el('span','overline','BASE PRODUCTIVA'),el('h2','','Productos y presentaciones'))
+      add(el('div'),el('span','overline','CATÁLOGO COMERCIAL'),el('h2','','Productos y presentaciones'))
     );
     root.appendChild(el('p','catalog-footnote',
       ''));
@@ -192,7 +192,7 @@
     const label=el('div','crud-heading-copy');
     label.append(el('span','crud-kicker','RUTA H&D · CATÁLOGOS'),
       el('h2','','No se puede completar la carga del producto'),
-      el('p','crud-intro','El editor requiere las clasificaciones del servidor para guardar un artículo válido.'));
+      el('p','crud-intro','Completa las clasificaciones obligatorias para guardar el producto.'));
     const close=button('×',()=>dialog.close(),'crud-close');
     close.setAttribute('aria-label','Cerrar ventana');heading.append(label,close);
     const info=el('p','catalog-footnote',error?.message||'No se recibieron los catálogos necesarios.');
@@ -224,7 +224,7 @@
       const note=el('p',serverFiltering?'hd-filter-active':'hd-filter-warning',
         serverFiltering?
           advancedKeys.length+' filtros avanzados aplicados a la base de productos.':
-          'El servidor todavía no admite los filtros avanzados. Se mostrarán coincidencias de esta página hasta actualizar la API.');
+          'Algunos filtros se aplicarán solo a los resultados de la página actual.');
       note.setAttribute('role','status');result.appendChild(note);
     }
     let products=data.data;
@@ -606,7 +606,7 @@
     form.append(costFields);
     form.appendChild(el('h3','product-editor-section','Precios'));
     if(compatibility)form.appendChild(el('p','hd-filter-warning product-editor-wide',
-      'El servidor aún no publica listas de precios. El formulario conservará únicamente el precio general de presentación.'));
+      'Las listas de precios aún no están disponibles. Puedes continuar con el precio general de presentación.'));
     form.appendChild(el('p','catalog-footnote product-editor-wide',
       'La Lista Base es obligatoria. El precio y el margen se calculan desde el costo. Sin costo se conserva el precio y el margen queda sin cálculo. El IVA depende de la condición tributaria.'));
     const minimum=inputField('Mínimo margen precio venta de la línea (%)','number',form,
