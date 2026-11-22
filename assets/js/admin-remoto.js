@@ -230,6 +230,13 @@
     const wrap=(label,control)=>{const field=el('label','field crud-field');field.append(el('span','',label),control);return field;};
     const name=el('input');name.required=true;name.maxLength=100;name.value=rec?.nombre??'';
     body.append(wrap('Nombre o valor *',name));
+    let minimo=null;
+    if(key==='lineas'){
+      minimo=el('input');minimo.type='number';
+      minimo.min='0';minimo.step='0.0001';minimo.required=true;
+      minimo.value=String(rec?.minimoMargenPrecioVenta??'0');
+      body.append(wrap('Mínimo margen precio venta (%) *',minimo));
+    }
     const state=el('select');
     [['1','Activo'],['0','Inactivo']].forEach(([id,label])=>{
       const opt=el('option','',label);opt.value=id;state.appendChild(opt);
@@ -258,6 +265,7 @@
     dialog((rec?'Editar ':'Crear ')+CONFIG[key][0],body,async()=>{
       if(!name.value.trim()||(parent&&!parent.value))throw Object.assign(new Error('Formulario incompleto'),{status:422});
       const data={nombre:name.value.trim(),activo:state.value==='1',parentId:parent?Number(parent.value):null};
+      if(key==='lineas')data.minimoMargenPrecioVenta=Number(minimo.value);
       if(rec)await API().update(key,rec.id,data);
       else await API().create(key,data);
       await refresh(viewVersion);status('Catálogo actualizado en servidor.');
