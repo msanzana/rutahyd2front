@@ -29,6 +29,8 @@
   const searchProduct=control('Buscar producto para venta');
   const typeDte=control('Tipo de documento','select'),document=control('Documento receptor'),name=control('Nombre receptor');
   const address=control('Dirección del receptor (factura)'),date=control('Fecha emisión','date');
+  client.input.setAttribute('aria-label','Cliente');
+  product.input.setAttribute('aria-label','Producto');
   client.input.required=true;product.input.required=true;
   // Cantidad se valida al agregar una línea, no al finalizar la venta.
   qty.input.required=false;qty.input.min='0.001';qty.input.step='0.001';
