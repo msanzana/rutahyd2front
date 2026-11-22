@@ -6,7 +6,7 @@
  --hd-switch-on:#7134af;
  --hd-switch-knob:#ffffff;
 }
-input[type="checkbox"]:not(.no-switch):not(.switch-native):not(.user-theme-switch input){
+input[type="checkbox"]:not(.no-switch):not(.switch-native):not(.user-theme-switch input):not(.permissions-table input):not(.permission-tree-row input){
  -webkit-appearance:none!important;appearance:none!important;
  display:inline-block!important;vertical-align:middle!important;
  position:relative!important;box-sizing:border-box!important;
@@ -19,25 +19,25 @@ input[type="checkbox"]:not(.no-switch):not(.switch-native):not(.user-theme-switc
  box-shadow:inset 0 1px 3px rgba(39,14,65,.12)!important;
  outline-offset:3px;
 }
-input[type="checkbox"]:not(.no-switch):not(.switch-native):not(.user-theme-switch input)::before{
+input[type="checkbox"]:not(.no-switch):not(.switch-native):not(.user-theme-switch input):not(.permissions-table input):not(.permission-tree-row input)::before{
  content:"";display:block;position:absolute;left:2px;top:2px;
  width:16px;height:16px;border-radius:50%;
  background:var(--hd-switch-knob);box-shadow:0 1px 4px rgba(29,15,45,.22);
  transform:translateX(0);transition:transform .16s ease;
 }
-input[type="checkbox"]:not(.no-switch):not(.switch-native):not(.user-theme-switch input):checked{
+input[type="checkbox"]:not(.no-switch):not(.switch-native):not(.user-theme-switch input):not(.permissions-table input):not(.permission-tree-row input):checked{
  border-color:var(--hd-switch-on)!important;background:var(--hd-switch-on)!important;
 }
-input[type="checkbox"]:not(.no-switch):not(.switch-native):not(.user-theme-switch input):checked::before{
+input[type="checkbox"]:not(.no-switch):not(.switch-native):not(.user-theme-switch input):not(.permissions-table input):not(.permission-tree-row input):checked::before{
  transform:translateX(16px);
 }
-input[type="checkbox"]:not(.no-switch):not(.switch-native):not(.user-theme-switch input):focus-visible{
+input[type="checkbox"]:not(.no-switch):not(.switch-native):not(.user-theme-switch input):not(.permissions-table input):not(.permission-tree-row input):focus-visible{
  outline:3px solid #bc93f0!important;outline-offset:3px;
 }
-input[type="checkbox"]:not(.no-switch):not(.switch-native):not(.user-theme-switch input):disabled{
+input[type="checkbox"]:not(.no-switch):not(.switch-native):not(.user-theme-switch input):not(.permissions-table input):not(.permission-tree-row input):disabled{
  opacity:.56;cursor:not-allowed;
 }
-input[type="checkbox"]:not(.no-switch):not(.switch-native):not(.user-theme-switch input):disabled::before{
+input[type="checkbox"]:not(.no-switch):not(.switch-native):not(.user-theme-switch input):not(.permissions-table input):not(.permission-tree-row input):disabled::before{
  box-shadow:none;
 }
 .price-list-dialog .price-list-active{
