@@ -162,6 +162,7 @@
     const action=el('div','workspace-actions');
     const create=button('Nuevo registro de '+CONFIG[selected][0],()=>edit(null),'button primary');
     create.disabled=!canManage(selected);
+    create.classList.add('hd-list-create-action');
     action.appendChild(create);
     root.appendChild(action);
     const list=el('div','catalog-table-scroll'),table=el('table','catalog-table');
