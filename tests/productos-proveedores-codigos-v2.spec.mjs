@@ -189,7 +189,7 @@ test('mix lista proveedores y permite asociar un producto con código de compra'
   const panel=page.locator('dialog.supplier-mix-dialog[open]');
   await expect(panel).toBeVisible();
   await panel.getByRole('button',{name:'Añadir producto al mix'}).click();
-  const relation=page.locator('dialog.supplier-product-dialog[open]').last();
+  const relation=page.locator('dialog.supplier-product-dialog:not(.supplier-mix-dialog)[open]');
   await relation.getByLabel('Producto del catálogo *').selectOption('50');
   await relation.getByLabel('Código de producto según proveedor').fill('P-CI-50');
   await relation.getByLabel('Costo neto acordado (CLP)').fill('1099');
