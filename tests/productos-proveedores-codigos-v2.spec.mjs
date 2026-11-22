@@ -191,7 +191,7 @@ test('mix lista proveedores y permite asociar un producto con código de compra'
   await main.locator('.supplier-row-actions button').first().click();
   const panel=page.locator('dialog.supplier-mix-dialog[open]');
   await expect(panel).toBeVisible();
-  await panel.getByRole('button',{name:'Añadir producto al mix'}).click();
+  await panel.getByRole('button',{name:'Agregar individualmente'}).click();
   const relation=page.locator('dialog.supplier-product-dialog:not(.supplier-mix-dialog)[open]');
   await relation.getByLabel('Producto del catálogo *').selectOption('50');
   await relation.getByLabel('Código de producto según proveedor').fill('P-CI-50');
