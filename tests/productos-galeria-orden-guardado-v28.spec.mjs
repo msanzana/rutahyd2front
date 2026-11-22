@@ -240,3 +240,64 @@ test('conserva precio al dejar costo en cero y guarda margen indefinido',async({
  expect(Number(dto.precios[0].precioVenta)).toBe(130);
  expect(dto.precios[0].margenPorcentaje).toBeUndefined();
 });
+
+
+test('ficha de consulta muestra precios por lista, márgenes y códigos de barras sin edición',async({page})=>{
+ await fixture(page);
+ await page.route('**/api/v1/productos/9',route=>send(route,{
+  ...product,
+  precios:[
+   {...product.precios[0],esBase:true,costo:'100'},
+   {listaPrecioId:2,listaNombre:'Mayoristas',precioVenta:'125',
+    margenPorcentaje:'25',costo:'100',activo:true,esBase:false}
+  ]
+ }));
+ await page.locator('#productosRealesListado').getByRole('button',{name:'Ver',exact:true}).click();
+ const dialog=page.locator('dialog.product-detail-dialog[open]');
+ await expect(dialog).toBeVisible();
+ await expect(dialog.getByRole('heading',{name:'Conserva del Sur'})).toBeVisible();
+ await expect(dialog.locator('.product-detail-table')).toHaveCount(2);
+ await expect(dialog.locator('.product-detail-table').first()).toContainText('LISTA BASE');
+ await expect(dialog.locator('.product-detail-table').first()).toContainText('Mayoristas');
+ await expect(dialog.locator('.product-detail-table').first()).toContainText('25.00 %');
+ await expect(dialog.locator('.product-detail-barcodes')).toContainText('EAN-13');
+ await expect(dialog.locator('.product-detail-barcodes')).toContainText('7801234567890');
+ await expect(dialog.locator('.product-detail-content')).toContainText('Vegetales');
+ await expect(dialog.locator('input')).toHaveCount(0);
+ await dialog.getByRole('button',{name:'Cerrar ficha'}).click();
+ await expect(dialog).toBeHidden();
+});
+test('galería presenta fotos locales en zona de carga antes de subir y permite cerrar',async({page})=>{
+ const state=await fixture(page);
+ await page.locator('#productosRealesListado [data-photo-action="9"]').click();
+ const dialog=page.locator('dialog.product-gallery-dialog[open]');
+ await dialog.getByLabel('Examinar fotos del producto').setInputFiles([
+  {name:'frontal.png',mimeType:'image/png',buffer:png},
+  {name:'lateral.png',mimeType:'image/png',buffer:png}
+ ]);
+ await expect(dialog.locator('.product-gallery-drop.has-selection')).toBeVisible();
+ await expect(dialog.locator('.product-gallery-pending-image')).toHaveCount(2);
+ await expect(dialog.locator('.product-gallery-pending-image').first()).toBeVisible();
+ await expect(dialog.locator('.product-gallery-drop')).toContainText('Todavía no están guardadas');
+ expect(state.calls.some(x=>x.p==='/api/v1/productos/9/fotos'&&x.m==='POST')).toBe(false);
+ await dialog.getByRole('button',{name:'Cerrar galería',exact:true}).click();
+ await expect(dialog).toBeHidden();
+});
+test('galería limita la página de miniaturas a 25 fotografías sin perder navegación',async({page})=>{
+ await fixture(page);
+ const photos=Array.from({length:28},(_,i)=>({
+  id:100+i,producto_id:9,sku:'SKU-9',mime_tipo:'image/png',
+  nombre_archivo:'foto-'+i+'.png',tamano_bytes:png.length,posicion:i+1
+ }));
+ await page.route('**/api/v1/productos/9/fotos',route=>send(route,{
+  producto_id:9,sku:'SKU-9',items:photos,total:28
+ }));
+ await page.locator('#productosRealesListado [data-photo-action="9"]').click();
+ const dialog=page.locator('dialog.product-gallery-dialog[open]');
+ await expect(dialog.locator('.product-gallery-thumb')).toHaveCount(25);
+ await expect(dialog.locator('.product-gallery-thumb-count')).toHaveText(/Página 1 de 2/);
+ await dialog.locator('.product-gallery-thumb-pages').getByRole('button',{name:'Siguiente'}).click();
+ await expect(dialog.locator('.product-gallery-thumb')).toHaveCount(3);
+ await dialog.locator('.product-gallery-thumb').last().click();
+ await expect(dialog.locator('.product-gallery-counter')).toHaveText('28 de 28');
+});
