@@ -11,6 +11,7 @@
     'tipos_unidad','gramajes','tipos_envasado','condiciones_tributarias'
   ]);
   const RESOURCES = new Set(['clientes','productos','ventas','notas_venta','bodegas','movimientos_inventario','proveedores','ordenes_compra']);
+  const MANAGEABLE = new Set(['clientes','proveedores','bodegas']);
   const FIELDS = [
     'rubroId','departamentoId','familiaId','lineaId','marcaId','modeloId',
     'tipoUnidadId','gramajeId','tipoEnvasadoId','condicionTributariaId'
@@ -192,6 +193,18 @@
         throw new Error('Página inválida.');
       }
       return send('/recursos/' + encodeURIComponent(recurso) + '?por_pagina=25&page=' + pagina);
+    },
+    createResource: (recurso,datos) => {
+      if (!MANAGEABLE.has(recurso)) throw new Error('La escritura no está permitida para esta entidad.');
+      return send('/recursos/'+recurso,'POST',datos);
+    },
+    updateResource: (recurso,identificador,datos) => {
+      if (!MANAGEABLE.has(recurso)) throw new Error('La escritura no está permitida para esta entidad.');
+      return send('/recursos/'+recurso+'/'+id(identificador),'PUT',datos);
+    },
+    deactivateResource: (recurso,identificador) => {
+      if (!MANAGEABLE.has(recurso)) throw new Error('La escritura no está permitida para esta entidad.');
+      return send('/recursos/'+recurso+'/'+id(identificador),'DELETE');
     },
     list: (catalogo) => send('/catalogos/' + key(catalogo)),
     create: (catalogo, datos) => send('/catalogos/' + key(catalogo), 'POST', datos),
