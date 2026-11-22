@@ -1,0 +1,247 @@
+/* Ruta H&D V2 · CRUD corporativo v18 · 2026-11-22
+   Consistencia visual real de formularios y listados, sin alterar contratos Laravel. */
+:root{--crud-purple:#612a9e;--crud-violet:#8b4ec6;--crud-ink:#251538;--crud-border:#e4d9ef;--crud-muted:#6e637b;--crud-focus:rgba(123,66,188,.18)}
+:where(.modal,.official-editor,.supplier-product-dialog):not(.login-modal):not(.recovery-dialog){
+  color:var(--crud-ink);background:#fff;border:1px solid #e9ddf1;
+  border-radius:20px;box-shadow:0 30px 100px rgba(19,8,38,.37);
+}
+:where(.modal,.official-editor,.supplier-product-dialog):not(.login-modal):not(.recovery-dialog)::backdrop{
+  background:rgba(17,7,33,.68);backdrop-filter:blur(5px)
+}
+:where(.crud-dialog,.crud-official-dialog,.crud-product-dialog,.crud-supplier-dialog)[open]{animation:crud-enter .19s ease-out both}
+@keyframes crud-enter{from{opacity:.6;transform:translateY(8px) scale(.992)}to{opacity:1;transform:translateY(0) scale(1)}}
+.crud-dialog{width:min(740px,calc(100vw - 30px));max-width:740px;max-height:calc(100dvh - 30px);padding:0;overflow-x:hidden;overflow-y:auto}
+.crud-shell{display:flex;flex-direction:column;min-width:0}
+.crud-heading,.official-editor-heading,.supplier-dialog-header{
+  position:relative;min-width:0;background:linear-gradient(111deg,#35164f 0%,#5a2483 64%,#7b3fae 100%);
+  color:#fff;border:0
+}
+.crud-heading{padding:27px 76px 25px 30px}
+.crud-heading-copy{min-width:0;display:grid;gap:7px}
+.crud-kicker,.crud-heading .overline,.official-editor-heading .official-editor-eyebrow,
+.supplier-dialog-header>.overline,.product-editor-heading>.overline{
+  color:#e4c8ff;font-weight:800;font-size:10px;letter-spacing:.17em;text-transform:uppercase
+}
+.crud-heading h2,.official-editor-heading h2,.supplier-dialog-header h2,.product-editor-heading h2{
+  color:white;font-size:clamp(22px,2.35vw,30px);font-weight:800;letter-spacing:-.035em;
+  line-height:1.16;margin:0;overflow-wrap:anywhere
+}
+.crud-intro,.crud-supplier-subtitle,.official-editor-description,.product-editor-heading>p{
+  color:#eee1f8;font-size:12px;line-height:1.55;margin:0;max-width:68ch
+}
+.crud-close,.button.crud-close{
+  position:absolute;top:20px;right:22px;display:grid;place-items:center;
+  padding:0;width:36px;height:36px;min-height:36px;border-radius:11px;
+  border:1px solid rgba(255,255,255,.32);background:rgba(255,255,255,.13);
+  color:#fff;font-size:26px;font-weight:400;line-height:1;box-shadow:none;
+  cursor:pointer;z-index:5
+}
+.crud-close:hover,.button.crud-close:hover{background:rgba(255,255,255,.26);transform:none}
+.crud-close:focus-visible{outline:3px solid #eddbff;outline-offset:2px}
+.crud-fields{padding:28px 30px;min-width:0}
+.crud-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 20px}
+.crud-form-grid .crud-field{display:grid;gap:7px;min-width:0}
+.crud-field>span,.crud-form-grid .field>span{font-size:12px;color:#443057;font-weight:780}
+.crud-form-grid :is(input,select,textarea),
+.crud-supplier-dialog .supplier-field :is(input:not([type="checkbox"]),select),
+.official-editor-grid :is(input,textarea),
+.product-editor-form :is(input:not([type="checkbox"]),select,textarea){
+  box-sizing:border-box;width:100%;min-width:0;max-width:100%;
+  min-height:46px;border:1px solid #d9cce8;border-radius:11px;
+  padding:10px 13px;color:#2d1c3e;background:#fdfbff;
+  font-size:13px;transition:border-color .15s,box-shadow .15s,background .15s;
+}
+.crud-form-grid :is(input,select,textarea):focus,
+.crud-supplier-dialog .supplier-field :is(input,select):focus,
+.official-editor-grid :is(input,textarea):focus,
+.product-editor-form :is(input,select,textarea):focus{
+  outline:0;border-color:#8a4cc5;box-shadow:0 0 0 4px var(--crud-focus);background:#fff
+}
+.crud-form-grid :is(input,select,textarea):disabled,
+.crud-supplier-dialog .supplier-field :is(input,select):disabled{background:#f3f0f7;color:#82798d;cursor:not-allowed}
+.crud-form-grid input[readonly]{background:#f4f0f9}
+.crud-help{grid-column:1/-1;margin:0;padding:12px 15px;border:1px solid #e7d7f6;
+  border-radius:12px;background:#f8f4ff;color:#614d78;font-size:12px}
+.crud-confirm-text{grid-column:1/-1;font-size:14px;line-height:1.65;color:#584769;margin:0}
+.crud-message:not([hidden]){margin:0 30px 12px}
+.crud-footer,.modal-footer.crud-footer{
+  display:flex;align-items:center;justify-content:flex-end;gap:11px;flex-wrap:wrap;
+  margin-top:auto;padding:18px 30px 20px;background:#f9f6fc;
+  border-top:1px solid #e9e0f2;position:sticky;bottom:0;z-index:3
+}
+.crud-footer .button{min-height:45px;min-width:124px;border-radius:10px;font-size:12px}
+.crud-footer .button.primary{background:linear-gradient(110deg,#6630a7,#8749c4);box-shadow:0 6px 15px rgba(93,39,156,.2)}
+.crud-footer .button.ghost{background:#fff;border-color:#d5c8e2}
+/* Ventanas comerciales: cabecera de identidad corporativa, formulario y pie separados */
+.official-editor.crud-official-dialog{width:min(860px,calc(100vw - 28px));max-width:860px;max-height:calc(100dvh - 28px)}
+.official-editor-form{padding:0;gap:0;display:flex;flex-direction:column}
+.official-editor-heading{padding:27px 78px 26px 30px;display:grid;gap:8px;min-height:118px}
+.official-editor-grid{padding:28px 30px;display:grid;gap:18px 20px;grid-template-columns:repeat(2,minmax(0,1fr))}
+.official-editor-grid .field{display:grid;gap:7px}
+.official-editor-grid .official-editor-wide{grid-column:1/-1}
+.official-editor-grid .field span{font-size:12px;font-weight:780;color:#443057}
+.official-editor-grid textarea{min-height:104px}
+.official-active-field{margin:0 30px 16px;padding:13px 15px;
+  background:#faf7fe;border:1px solid #e9ddf2;border-radius:11px}
+.official-editor-status:not(:empty){margin:0 30px 15px;padding:10px 13px;background:#f0fbf3;border-radius:10px;border:1px solid #cee8d7}
+.official-editor-status.is-error:not(:empty){background:#fff3f5;border-color:#f3cdd5;color:#a82443}
+.official-editor-actions{
+  margin-top:auto;padding:18px 30px;background:#f9f6fc;border-top:1px solid #e9e0f2;
+  position:sticky;bottom:0;z-index:3;display:flex;justify-content:flex-end;gap:11px
+}
+.official-editor-actions .button{min-width:125px;min-height:44px}
+.official-confirm .official-confirm-panel{padding:26px 30px;gap:16px}
+.official-confirm .official-editor-actions{margin:8px -30px -26px}
+/* Producto: sección de formulario tipo ficha profesional, sin perder ancho */
+.modal.product-editor-dialog.crud-product-dialog{
+  width:min(1120px,calc(100vw - 36px));max-width:min(1120px,calc(100vw - 36px));
+  max-height:calc(100dvh - 32px);border-radius:20px;overflow-x:hidden
+}
+.product-editor-form{gap:14px 20px;padding:25px;align-items:start}
+.product-editor-heading{
+  position:relative;grid-column:1/-1;border:0;border-radius:14px;
+  padding:24px 76px 25px 27px;background:linear-gradient(115deg,#35164f,#5b2785 62%,#7b3fac);
+  margin-bottom:4px;display:grid;gap:7px;min-height:118px
+}
+.product-editor-heading .crud-close{top:20px;right:20px}
+.product-editor-section{
+  display:flex;align-items:center;gap:13px;grid-column:1/-1;
+  background:#f4effa;border:1px solid #e5d7f3;border-left:4px solid #884ec3;
+  border-radius:11px;margin:14px 0 1px;padding:14px 16px;
+  color:#45265e;font-size:14px;font-weight:800;line-height:1.3
+}
+.product-editor-section::before{content:"";height:8px;width:8px;border-radius:50%;background:#8b4cc6;box-shadow:0 0 0 5px #e7d9f8;flex-shrink:0;margin:0 5px}
+.product-editor-form>.field{display:grid;gap:7px;padding:0 1px}
+.product-editor-form>.field span{font-weight:800;color:#4c365e;font-size:12px}
+.product-editor-form>.field:has(textarea){grid-column:1/-1}
+.product-editor-form>.catalog-footnote{background:#faf7fd;border:1px solid #eee5f5;border-radius:11px;padding:12px 15px;color:#6b577e}
+.product-active-toggle{align-self:end;min-height:46px;background:#f7f4fb;border-color:#dfd1ec}
+.product-barcode-row{border:1px solid #e4d7f1;background:#fcfaff;box-shadow:0 3px 8px rgba(37,17,67,.025)}
+.product-editor-actions{
+  grid-column:1/-1;display:flex;justify-content:flex-end;gap:12px;
+  border-top:1px solid #e5d9ee;background:rgba(255,255,255,.97);
+  border-radius:0 0 12px 12px;padding:17px 9px;margin:11px -7px -8px
+}
+.product-editor-actions .button{min-width:125px;min-height:45px}
+.product-editor-form .field :is(select,input,textarea):required{border-left:3px solid #9f73d0}
+/* Proveedores / compra: agrupación y controles de búsqueda alineados */
+.modal.supplier-product-dialog.crud-supplier-dialog{width:min(900px,calc(100vw - 30px));max-width:min(900px,calc(100vw - 30px))}
+.crud-supplier-dialog .supplier-dialog-body{padding:0;gap:0;display:flex;flex-direction:column}
+.crud-supplier-dialog .supplier-dialog-header{display:grid;gap:7px;padding:27px 76px 27px 30px;min-height:128px}
+.crud-supplier-dialog .supplier-dialog-form{padding:25px 30px;gap:17px 20px}
+.crud-supplier-dialog .supplier-dialog-form>.button{min-height:46px;align-self:end;justify-self:stretch;margin:0}
+.crud-supplier-dialog .supplier-field{gap:7px;align-self:end}
+.crud-supplier-dialog .supplier-field span{font-weight:800;color:#4d3562;font-size:12px}
+.crud-supplier-dialog .supplier-field:has(input[type=checkbox]){
+  display:flex;align-items:center;align-self:center;gap:11px;min-height:46px;padding:11px 14px;
+  border:1px solid #e2d5ee;border-radius:11px;background:#faf7fe
+}
+.crud-supplier-dialog .supplier-field:has(input[type=checkbox]) span{order:2}
+.crud-supplier-dialog .supplier-field:has(input[type=checkbox]) input{order:1}
+.crud-supplier-dialog .supplier-dialog-actions{
+  grid-column:1/-1;display:flex;justify-content:flex-end;gap:10px;
+  padding:19px 0 0;border-top:1px solid #e7ddee
+}
+.crud-supplier-dialog .supplier-status{padding:12px 30px;color:#695778;line-height:1.6}
+.crud-supplier-dialog .supplier-dialog-form .supplier-status{padding:0}
+.crud-supplier-dialog .supplier-barcodes{padding:12px 30px 23px}
+.crud-supplier-dialog .supplier-barcode-item{border-radius:12px;background:#fcf9ff}
+.crud-supplier-dialog .supplier-barcode-form{grid-template-columns:repeat(2,minmax(0,1fr));padding:17px}
+.crud-supplier-dialog .supplier-dialog-add{margin:0 30px 15px;align-self:flex-start}
+.crud-supplier-dialog .supplier-dialog-dismiss{margin:0 30px 24px;align-self:flex-end}
+.crud-supplier-dialog .supplier-readonly{background:#f3edf8;color:#624975}
+/* Fichas y acciones: última columna de tablas intacta, sin desarmar <td> */
+:where(.catalog-table-scroll,.permissions-table-scroll,.table-scroll){
+  width:100%;max-width:100%;overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch
+}
+:where(.catalog-table,.official-table,.supplier-products-table,.data-table){
+  width:100%;border-collapse:separate;border-spacing:0;font-size:12px
+}
+:where(.catalog-table,.data-table) thead th{
+  color:#5e4674;background:#f5f0fb;border-bottom:1px solid #e7ddf0;font-size:11px;
+  font-weight:800;letter-spacing:.025em
+}
+:where(.catalog-table,.data-table) tbody tr:hover td{background:#faf7fe}
+:where(.catalog-table,.data-table) tbody tr td{border-top:1px solid #f0eaf6}
+:where(.catalog-table,.data-table) tr>:last-child{text-align:right}
+.catalog-table td:is(.catalog-actions,.official-row-actions,.supplier-row-actions),
+.data-table td.row-actions{
+  display:table-cell!important;text-align:right!important;vertical-align:middle;white-space:nowrap;
+  min-width:160px;max-width:none
+}
+.catalog-table td:is(.catalog-actions,.official-row-actions,.supplier-row-actions) button,
+.data-table td.row-actions button{
+  display:inline-flex;align-items:center;justify-content:center;min-height:34px;
+  margin:3px 0 3px 6px;padding:7px 10px;white-space:nowrap;
+  border-radius:9px;font-size:11px;font-weight:750;vertical-align:middle
+}
+.catalog-table .catalog-small-button,.catalog-table .official-row-actions .button,
+.catalog-table .supplier-row-actions .button{border:1px solid #dfd2ef;background:#f8f1ff;color:#633198}
+.catalog-table .catalog-small-button:hover,.catalog-table .official-row-actions .button:hover,
+.catalog-table .supplier-row-actions .button:hover{background:#ecdefb}
+.catalog-table .danger-text{background:#fff4f5;border-color:#f1d5dc;color:#b02b48}
+.official-module,.supplier-products-module,#adminRemoto,.perfiles-panel{border-radius:18px}
+.official-module .panel-heading,.supplier-products-module .panel-heading{border-bottom:1px solid #eee6f4;padding-bottom:15px}
+.official-module .panel-heading h2,.supplier-products-module .panel-heading h2{font-size:20px;color:#311a48;letter-spacing:-.025em}
+.official-source{color:#66369a;background:#f3eafb;border:1px solid #e4d3f4;border-radius:100px;padding:7px 11px;font-size:10px;font-weight:800}
+.official-module .workspace-actions,.supplier-products-module .workspace-actions{margin:10px 0 17px}
+.official-module .official-search-bar,.supplier-products-module .supplier-search-bar{padding:12px 0}
+#usersCrud>.workspace-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:13px 0}
+#usersCrud>.workspace-actions input[type=search]{
+  flex:1 1 250px;min-width:180px;min-height:43px;border:1px solid #dcd0ea;
+  border-radius:10px;padding:10px 13px;background:#fdfbff
+}
+#usersCrud>.workspace-actions .button{min-height:42px}
+#adminRemoto>.workspace-actions{padding:12px 0}
+#adminRemoto .panel-heading{padding-bottom:14px;border-bottom:1px solid #eee5f4}
+#adminRemoto .catalog-tabs{flex-direction:row;flex-wrap:wrap;margin:12px 0 18px}
+#adminRemoto .catalog-tab{width:auto;border:1px solid #e6d8f2}
+#adminRemoto .catalog-tab.selected{border-color:#b996df;background:#f0e6fa}
+#rolesForm .field>select,.profile-user-assignment select{
+  max-width:100%;min-height:43px;border:1px solid #d9cce8;border-radius:10px;background:#fff;padding:9px 11px
+}
+/* Control de salida único en barra junto al usuario */
+.topbar-right{min-width:0}
+.topbar-right .profile{order:9;gap:9px;min-width:0;max-width:240px}
+.topbar-right #authButton{order:10;min-width:92px;min-height:39px}
+@media(min-width:1180px){.topbar-right .profile-label{display:flex}}
+@media(max-width:900px){
+  .crud-form-grid,.official-editor-grid,.crud-supplier-dialog .supplier-dialog-form{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .catalog-table,.supplier-products-table{min-width:720px}
+}
+@media(max-width:680px){
+  .crud-dialog,.official-editor.crud-official-dialog,.modal.supplier-product-dialog.crud-supplier-dialog{
+    width:calc(100vw - 14px);max-width:calc(100vw - 14px);max-height:calc(100dvh - 14px);
+    border-radius:14px
+  }
+  .crud-heading,.official-editor-heading,.crud-supplier-dialog .supplier-dialog-header{padding:22px 63px 21px 19px}
+  .crud-close,.button.crud-close{top:17px;right:16px;width:32px;height:32px;min-height:32px;font-size:23px}
+  .crud-fields,.official-editor-grid,.crud-supplier-dialog .supplier-dialog-form{padding:20px 18px}
+  .crud-form-grid,.official-editor-grid,.crud-supplier-dialog .supplier-dialog-form,
+  .crud-supplier-dialog .supplier-barcode-form{grid-template-columns:minmax(0,1fr)}
+  .crud-message:not([hidden]){margin:0 18px 10px}
+  .crud-footer,.modal-footer.crud-footer,.official-editor-actions{padding:15px 18px}
+  .official-active-field{margin:0 18px 15px}
+  .official-editor-status:not(:empty){margin:0 18px 12px}
+  .modal.product-editor-dialog.crud-product-dialog{width:calc(100vw - 14px);max-width:calc(100vw - 14px);max-height:calc(100dvh - 14px)}
+  .product-editor-form{padding:15px;grid-template-columns:minmax(0,1fr)}
+  .product-editor-heading{padding:22px 58px 22px 18px;border-radius:11px}
+  .product-editor-section{margin-top:12px;padding:12px}
+  .product-barcode-row{grid-template-columns:minmax(0,1fr)}
+  .product-editor-actions{margin:8px 0 0;padding:14px 0}
+  .crud-supplier-dialog .supplier-barcodes{padding:8px 18px 20px}
+  .crud-supplier-dialog .supplier-dialog-add{margin-left:18px}
+  .crud-supplier-dialog .supplier-dialog-dismiss{margin-right:18px}
+  .crud-supplier-dialog .supplier-status{padding:10px 18px}
+  .catalog-table{min-width:640px}
+  .catalog-table td,.catalog-table th{white-space:nowrap;overflow-wrap:normal}
+  .topbar-right .profile-label{display:none!important}
+}
+@media(max-width:420px){
+  .crud-footer .button,.official-editor-actions .button{flex:1 1 125px;min-width:0}
+  .crud-heading h2,.product-editor-heading h2,.official-editor-heading h2{font-size:22px}
+  .topbar-right #authButton{padding:7px 9px;font-size:11px;min-width:80px}
+}
+@media(prefers-reduced-motion:reduce){
+  :where(.crud-dialog,.crud-official-dialog,.crud-product-dialog,.crud-supplier-dialog)[open]{animation:none}
+}
