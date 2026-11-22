@@ -49,23 +49,26 @@
             <button type="button" class="nav-expand" id="toggleAdminSubnav" aria-label="Expandir submódulos de Administración" aria-controls="adminSubnav" aria-expanded="false" hidden><svg class="icon small"><use href="#i-chevron"/></svg></button>
           </div>
           <div id="adminSubnav" class="product-subnav" role="menu" aria-label="Submódulos de Administración" hidden>
-            <button type="button" data-admin-catalog="rubros" class="nav-sublink" role="menuitem"><span>Rubros</span></button>
-            <button type="button" data-admin-catalog="departamentos" class="nav-sublink" role="menuitem"><span>Departamentos</span></button>
-            <button type="button" data-admin-catalog="familias" class="nav-sublink" role="menuitem"><span>Familias</span></button>
-            <button type="button" data-admin-catalog="lineas" class="nav-sublink" role="menuitem"><span>Líneas</span></button>
-            <button type="button" data-admin-catalog="marcas" class="nav-sublink" role="menuitem"><span>Marcas</span></button>
-            <button type="button" data-admin-catalog="modelos" class="nav-sublink" role="menuitem"><span>Modelos</span></button>
             <button type="button" data-admin-catalog="tipos_unidad" class="nav-sublink" role="menuitem"><span>Tipos de unidad</span></button>
-            <button type="button" data-admin-catalog="gramajes" class="nav-sublink" role="menuitem"><span>Gramos / Gramajes</span></button>
             <button type="button" data-admin-catalog="tipos_envasado" class="nav-sublink" role="menuitem"><span>Tipos de envasado</span></button>
             <button type="button" data-admin-catalog="condiciones_tributarias" class="nav-sublink" role="menuitem"><span>Condición tributaria</span></button>
+            <button type="button" data-admin-catalog="tipos_codigos_barras" class="nav-sublink" role="menuitem"><span>Tipos de códigos de barras</span></button>
             <button type="button" data-nav="usuarios" class="nav-sublink" id="navUsuarios" role="menuitem" hidden><span>Usuarios</span></button>
             <button type="button" data-nav="perfiles" class="nav-sublink" id="navPerfiles" role="menuitem" hidden><span>Perfiles y permisos</span></button>
           </div>
         </div>
         <button type="button" data-nav="compras" class="nav-link"><svg class="icon"><use href="#i-orders"/></svg><span>Compras</span></button>
         <button type="button" data-nav="ventas" class="nav-link"><svg class="icon"><use href="#i-chart"/></svg><span>Ventas</span></button>
-        <button type="button" data-nav="proveedores" class="nav-link"><svg class="icon"><use href="#i-users"/></svg><span>Proveedores</span></button>
+        <div class="nav-group" id="providersNavGroup">
+          <div class="nav-parent">
+            <button type="button" data-nav="proveedores" class="nav-link"><svg class="icon"><use href="#i-users"/></svg><span>Proveedores</span></button>
+            <button type="button" class="nav-expand" id="toggleProviderSubnav" aria-label="Expandir submódulos de Proveedores" aria-controls="providerSubnav" aria-expanded="false"><svg class="icon small"><use href="#i-chevron"/></svg></button>
+          </div>
+          <div id="providerSubnav" class="product-subnav" role="menu" aria-label="Submódulos de Proveedores" hidden>
+            <button type="button" data-nav="proveedores" class="nav-sublink" role="menuitem"><span>Listado de proveedores</span></button>
+            <button type="button" data-nav="proveedores_productos" class="nav-sublink" role="menuitem"><span>Proveedores productos</span></button>
+          </div>
+        </div>
         <button type="button" data-nav="clientes" class="nav-link"><svg class="icon"><use href="#i-users"/></svg><span>Clientes</span></button>
         <div class="nav-group" id="productsNavGroup">
           <div class="nav-parent">
@@ -80,10 +83,6 @@
             <button type="button" data-nav="catalogos.lineas" data-catalog-key="lineas" class="nav-sublink" role="menuitem"><span>Líneas</span></button>
             <button type="button" data-nav="catalogos.marcas" data-catalog-key="marcas" class="nav-sublink" role="menuitem"><span>Marcas</span></button>
             <button type="button" data-nav="catalogos.modelos" data-catalog-key="modelos" class="nav-sublink" role="menuitem"><span>Modelos</span></button>
-            <button type="button" data-nav="catalogos.tipos_unidad" data-catalog-key="tipos_unidad" class="nav-sublink" role="menuitem"><span>Tipos de unidad</span></button>
-            <button type="button" data-nav="catalogos.gramajes" data-catalog-key="gramajes" class="nav-sublink" role="menuitem"><span>Gramajes</span></button>
-            <button type="button" data-nav="catalogos.tipos_envasado" data-catalog-key="tipos_envasado" class="nav-sublink" role="menuitem"><span>Tipos de envasado</span></button>
-            <button type="button" data-nav="catalogos.condiciones_tributarias" data-catalog-key="condiciones_tributarias" class="nav-sublink" role="menuitem"><span>Condiciones tributarias</span></button>
           </div>
         </div>
         <button type="button" data-nav="bodega" class="nav-link"><svg class="icon"><use href="#i-stock"/></svg><span>Bodega</span></button>
@@ -184,6 +183,7 @@
     </form>
   </dialog>
   <script src="assets/js/modulos-oficiales.js" defer></script>
+  <script src="assets/js/proveedores-productos.js" defer></script>
   <script src="assets/js/login-produccion.js" defer></script>
   <script src="assets/js/app-produccion.js" defer></script>
 </body>
