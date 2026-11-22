@@ -117,7 +117,7 @@ test('rango incorrecto muestra aviso bonito y no ejecuta peticiones',async({page
 });
 test('nuevo producto usa validación elegante sin tooltip nativo',async({page})=>{
  await setup(page);
- await page.locator('#productosReales').getByRole('button',{name:'Nuevo producto real'}).click();
+ await page.locator('#productosReales').getByRole('button',{name:'Nuevo Producto'}).click();
  const dlg=page.locator('dialog.product-editor-dialog[open]');
  await expect(dlg).toBeVisible();
  await dlg.getByRole('button',{name:'Guardar en MySQL'}).click();
