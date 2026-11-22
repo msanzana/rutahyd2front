@@ -106,7 +106,7 @@ test('Permisos y whitelist: usuarios sin gestión no pueden crear registros',asy
     usuario:{id:7,nombre:'Operador CI',rol:'vendedor',permisos:['clientes.ver']}};
   await login(page,vendedor);
   await page.locator('.nav-link[data-nav="clientes"]').click();
-  await expect(page.locator('#workspaceContent')).toContainText('No existen registros');
+  await expect(page.locator('#workspaceContent')).toContainText('No hay registros para mostrar en esta página.');
   await expect(page.getByRole('button',{name:'Nuevo registro'})).toHaveCount(0);
   const rejected=await page.evaluate(async()=>{
     try{
