@@ -92,6 +92,7 @@ async function fixture(page,{oldPrice=false,saveReject=false}={}){
  await page.locator('#loginPassword').fill('PASSWORD-FICTICIA');
  await page.locator('#loginSubmit').click();
  await expect(page.locator('#loginDialog')).toBeHidden();
+ if((await page.viewportSize()).width<900)await page.locator('#menuToggle').click();
  await page.locator('.nav-link[data-nav="productos"]').click();
  await expect(page.locator('#productosRealesListado')).toContainText('SKU-9');
  return {calls,sorts};
@@ -151,14 +152,15 @@ test('nueva ficha empieza con margen mínimo y guarda precio calculado sin ser n
  await page.getByRole('button',{name:'Nuevo Producto'}).click();
  const dlg=page.locator('dialog.product-editor-dialog[open]');
  const price=dlg.locator('.product-price-row').filter({hasText:'LISTA BASE'});
- await expect(price.locator('input[type=number]').nth(1)).toHaveValue('15');
- await dlg.locator('#productoCostoNeto').fill('100');
- await expect(price.locator('input[type=number]').nth(2)).toHaveValue('115.0000');
  await dlg.getByLabel('SKU / Código').fill('SKU-NUEVO-CI');
  await dlg.getByLabel('Nombre del producto').fill('Prueba tarifa inicial');
  const fields=dlg.locator('.product-editor-form > label.field select');
  const values=[1,2,3,4,5,6,7,8,9];
  for(let i=0;i<values.length;i++)await fields.nth(i).selectOption(String(values[i]));
+ // Antes de elegir Línea no se puede conocer su mínimo comercial.
+ await expect(price.locator('input[type=number]').nth(1)).toHaveValue('15.0000');
+ await dlg.locator('#productoCostoNeto').fill('100');
+ await expect(price.locator('input[type=number]').nth(2)).toHaveValue('115.0000');
  await dlg.getByRole('button',{name:'Guardar en MySQL'}).click();
  await expect(dlg).toBeHidden();
  const dto=state.calls.find(c=>c.m==='POST'&&c.p==='/api/v1/productos')?.dto;
@@ -174,6 +176,16 @@ test('guardado de producto muestra error de margen del backend y nunca lo oculta
  const row=dlg.locator('.product-price-row').filter({hasText:'LISTA BASE'});
  await row.locator('input[type=number]').nth(2).fill('140');
  await dlg.getByRole('button',{name:'Guardar en MySQL'}).click();
+ await page.waitForTimeout(500);
+ const check=await dlg.evaluate(node=>{
+   const form=node.querySelector('form');
+   return {valid:form.checkValidity(),
+     invalid:[...form.querySelectorAll(':invalid')].map(n=>({
+       type:n.type,name:n.name,value:n.value,message:n.validationMessage
+     }))};
+ });
+ console.log('VALIDACION_PRODUCTO',JSON.stringify(check),
+   'LLAMADAS',JSON.stringify(state.calls));
  await expect(dlg.locator('.form-error')).toContainText('El margen está por debajo del mínimo');
  await expect(dlg).toBeVisible();
  expect(state.calls.find(c=>c.m==='PUT'&&c.p==='/api/v1/productos/9')).toBeDefined();
