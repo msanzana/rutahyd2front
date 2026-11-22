@@ -16,10 +16,68 @@
  const action=(text,click,{kind='editar',danger=false}={})=>{
   const b=document.createElement('button');b.type='button';
   b.className='list-icon-action'+(danger?' is-danger':'');
-  b.setAttribute('aria-label',text);b.setAttribute('title',text);
+  b.setAttribute('aria-label',text);
   b.dataset.tip=text;b.innerHTML=icon(kind);
   b.addEventListener('click',click);return b;
  };
+ // Interruptor de estado reversible; no elimina datos. 
+ const statusSwitch=(name,active,onChange,{disabled=false,confirmOff=true}={})=>{
+  const label=document.createElement('label');label.className='hd-inline-status-switch';
+  const input=document.createElement('input');input.type='checkbox';
+  input.className='hd-state-switch';input.checked=Boolean(active);input.disabled=Boolean(disabled);
+  input.setAttribute('aria-label',(input.checked?'Desactivar ':'Activar ')+name);
+  input.dataset.tip=(input.checked?'Desactivar ':'Activar ')+name;
+  const description=document.createElement('span');description.className='hd-status-word';
+  description.textContent=input.checked?'Activo':'Inactivo';label.append(input,description);
+  input.addEventListener('change',async()=>{
+   const wanted=input.checked,previous=!wanted;
+   if(!wanted&&confirmOff&&!window.confirm('¿Desactivar «'+name+'»? Se conservará su historial.')){
+    input.checked=previous;return;
+   }
+   input.disabled=true;
+   try{
+    await onChange(wanted);
+    description.textContent=wanted?'Activo':'Inactivo';
+    input.setAttribute('aria-label',(wanted?'Desactivar ':'Activar ')+name);
+    input.dataset.tip=(wanted?'Desactivar ':'Activar ')+name;
+   }catch(err){
+    input.checked=previous;description.textContent=previous?'Activo':'Inactivo';
+    input.setAttribute('aria-label',(previous?'Desactivar ':'Activar ')+name);
+    input.dataset.tip=(previous?'Desactivar ':'Activar ')+name;
+    const alert=document.createElement('span');alert.className='hd-switch-error';
+    alert.setAttribute('role','alert');alert.textContent=err?.message||'No se pudo actualizar el estado.';
+    label.append(alert);window.setTimeout(()=>alert.remove(),5000);
+   }finally{input.disabled=Boolean(disabled);}
+  });
+  return label;
+ };
+ // Tooltip en body: no lo cortan el scroll horizontal ni las celdas sticky.
+ let activeTooltip=null,tipOrigin=null;
+ function hideTip(){if(activeTooltip)activeTooltip.remove();activeTooltip=null;tipOrigin=null;}
+ function showTip(control){
+  if(!control||control.disabled||!control.isConnected)return;
+  const content=control.dataset.tip||control.getAttribute('aria-label');if(!content)return;
+  if(tipOrigin!==control){
+   hideTip();tipOrigin=control;
+   activeTooltip=document.createElement('span');activeTooltip.className='hd-floating-tooltip';
+   activeTooltip.setAttribute('role','tooltip');activeTooltip.textContent=content;
+   document.body.append(activeTooltip);
+  }
+  const rect=control.getBoundingClientRect(),width=activeTooltip.offsetWidth||170;
+  activeTooltip.style.left=Math.max(8,Math.min(window.innerWidth-width-8,rect.left+rect.width/2-width/2))+'px';
+  activeTooltip.style.top=Math.max(8,Math.min(window.innerHeight-activeTooltip.offsetHeight-8,rect.bottom+10))+'px';
+ }
+ const tooltipTarget=t=>t instanceof Element?
+  t.closest('.list-icon-action[data-tip],.hd-inline-status-switch input[data-tip]'):null;
+ document.addEventListener('pointerover',e=>{const t=tooltipTarget(e.target);if(t)showTip(t);});
+ document.addEventListener('pointerout',e=>{
+  if(tipOrigin&&tooltipTarget(e.target)===tipOrigin&&!tipOrigin.contains(e.relatedTarget))hideTip();
+ });
+ document.addEventListener('focusin',e=>{const t=tooltipTarget(e.target);if(t)showTip(t);});
+ document.addEventListener('focusout',e=>{
+  if(tipOrigin&&tooltipTarget(e.target)===tipOrigin)hideTip();
+ });
+ window.addEventListener('scroll',hideTip,true);window.addEventListener('resize',hideTip);
  const actionsCell=(cell)=>{cell.classList.add('list-action-cell');return cell;};
  const wrapTable=(table)=>{table.classList.add('normalized-table');table.querySelectorAll('th:last-child').forEach(n=>n.classList.add('table-actions-head'));return table;};
  let globalSearch=null;
@@ -228,7 +286,7 @@
      const label=(b.textContent||'').trim(),kind=actionKinds[normalize(label)];
      if(!kind)return;
      b.dataset.normalizedIcon='true';b.dataset.tip=label;
-     b.setAttribute('title',label);b.setAttribute('aria-label',label);
+     b.setAttribute('aria-label',label);
      b.classList.add('list-icon-action');if(kind==='desactivar')b.classList.add('is-danger');
      b.innerHTML=icon(kind);
     });
@@ -321,5 +379,5 @@
   new MutationObserver(rescan).observe(area,{childList:true,subtree:true});
   rescan();
  });
- window.RutaHDListUI=Object.freeze({action,actionsCell,wrapTable,registerSearch,advanced,filterButton,matching,createSearch,icon,paginate,renderPager,PAGE_SIZE});
+ window.RutaHDListUI=Object.freeze({action,actionsCell,wrapTable,registerSearch,advanced,filterButton,matching,createSearch,icon,paginate,renderPager,statusSwitch,PAGE_SIZE});
 })();
