@@ -46,7 +46,13 @@
   arrows.append(prev,current,next);
   const thumbs=el('div','product-gallery-thumbnails');
   thumbs.setAttribute('aria-label','Miniaturas de fotografías del producto');
-  viewer.append(stage,arrows,thumbs);
+  const thumbPages=el('nav','product-gallery-thumb-pages');
+  thumbPages.setAttribute('aria-label','Páginas de fotografías');
+  const thumbPrev=button('Anterior',()=>{thumbPage--;renderThumbs();},'button ghost');
+  const thumbCounter=el('span','product-gallery-thumb-count','');
+  const thumbNext=button('Siguiente',()=>{thumbPage++;renderThumbs();},'button ghost');
+  thumbPages.append(thumbPrev,thumbCounter,thumbNext);
+  viewer.append(stage,arrows,thumbs,thumbPages);
   const aside=el('aside','product-gallery-tools');
   aside.append(el('h3','','Agregar fotografías'),
     el('p','catalog-footnote','JPG, PNG o WebP · máximo 2 MB por foto · hasta 6 por envío.'));
@@ -75,7 +81,7 @@
   aside.append(selected,controls,status);
   body.append(viewer,aside);panel.append(body);dialog.append(panel);
   document.body.append(dialog);dialog.showModal();
-  let photos=[],index=-1,files=[],working=false,live=true,ticket=0;
+  let photos=[],index=-1,files=[],working=false,live=true,ticket=0,thumbPage=1;
   const urls=new Map(),pending=new Map(),previewUrls=[];
   const clearPreview=()=>{
     previewUrls.forEach(url=>URL.revokeObjectURL(url));previewUrls.length=0;
@@ -152,16 +158,47 @@
     pending.set(item.id,task);
     try{return await task;}finally{pending.delete(item.id);}
   }
+  // En una galería de N fotos, mostrar solamente 25 miniaturas por página.
+  // La fotografía grande puede navegar todo N con las flechas.
+  function renderThumbs(){
+    const pages=Math.max(1,Math.ceil(photos.length/25));
+    thumbPage=Math.max(1,Math.min(thumbPage,pages));
+    thumbPrev.disabled=thumbPage<=1;thumbNext.disabled=thumbPage>=pages;
+    thumbPages.hidden=pages<=1;
+    thumbCounter.textContent='Página '+thumbPage+' de '+pages+' · máximo 25';
+    thumbs.replaceChildren();
+    const start=(thumbPage-1)*25;
+    photos.slice(start,start+25).forEach((item,j)=>{
+      const i=start+j;
+      const card=button('',()=>void select(i),'product-gallery-thumb');
+      card.dataset.photoIndex=String(i);
+      card.classList.toggle('is-selected',index===i);
+      const symbol=el('span','product-gallery-thumb-symbol','▧');
+      const info=el('span','product-gallery-thumb-label',
+        'Foto '+(i+1)+' · '+Math.round(item.tamano_bytes/1024)+' KB');
+      card.append(symbol,info);card.title=item.nombre_archivo;thumbs.append(card);
+      // La miniatura solo se consulta si pertenece a la página visible.
+      void photoUrl(item).then(url=>{
+        if(!url||!live||!card.isConnected)return;
+        const img=el('img','product-gallery-mini');
+        img.src=url;img.alt='Miniatura '+(i+1);img.loading='lazy';
+        symbol.replaceWith(img);
+      }).catch(()=>{});
+    });
+  }
   async function select(i){
     if(!live||!photos.length)return;
     const position=(i+photos.length)%photos.length;
     const localTicket=++ticket;index=position;
     const photo=photos[index];
+    if(thumbPage!==Math.floor(index/25)+1){
+      thumbPage=Math.floor(index/25)+1;renderThumbs();
+    }
     current.textContent=(index+1)+' de '+photos.length;
     prev.disabled=next.disabled=photos.length<2;
     main.hidden=true;empty.hidden=false;empty.textContent='Cargando imagen…';
-    thumbs.querySelectorAll('button').forEach((n,k)=>
-      n.classList.toggle('is-selected',k===index));
+    thumbs.querySelectorAll('button').forEach(n=>
+      n.classList.toggle('is-selected',Number(n.dataset.photoIndex)===index));
     try{
       const url=await photoUrl(photo);
       if(!live||ticket!==localTicket||!url)return;
@@ -176,32 +213,7 @@
       const data=await api().productPhotos(product.id);
       if(!live)return;
       photos=Array.isArray(data?.items)?data.items:[];
-      thumbs.replaceChildren();
-      // Miniaturas reales; carga diferida y limitada para no inundar la API
-      // cuando un producto tiene cientos de fotografías.
-      photos.forEach((item,i)=>{
-        const card=button('',()=>void select(i),'product-gallery-thumb');
-        const icon=el('span','product-gallery-thumb-symbol','▧');
-        const info=el('span','product-gallery-thumb-label',
-          'Foto '+(i+1)+' · '+Math.round(item.tamano_bytes/1024)+' KB');
-        card.append(icon,info);
-        card.title=item.nombre_archivo;
-        thumbs.append(card);
-      });
-      async function thumbImage(item,i){
-        if(!live||i>=24)return;
-        const card=thumbs.children[i];if(!card)return;
-        try{
-          const src=await photoUrl(item);
-          if(!src||!live||card!==thumbs.children[i])return;
-          const img=el('img','product-gallery-mini');
-          img.src=src;img.alt='Miniatura '+(i+1);img.loading='lazy';
-          card.querySelector('.product-gallery-thumb-symbol')?.replaceWith(img);
-        }catch(_ignored){}
-      }
-      for(let i=0;i<Math.min(photos.length,24);i+=3){
-        void Promise.all(photos.slice(i,i+3).map((photo,j)=>thumbImage(photo,i+j)));
-      }
+      renderThumbs();
       if(!photos.length){
         index=-1;main.hidden=true;empty.hidden=false;
         empty.replaceChildren(el('span','product-gallery-empty-icon','▧'),
