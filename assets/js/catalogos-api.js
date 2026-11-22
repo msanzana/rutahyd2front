@@ -104,7 +104,7 @@
     } finally { clearTimeout(timer); }
   }
 
-  async function send(path, method = 'GET', body) {
+  async function sendCore(path, method = 'GET', body) {
     if (!endpoint || !bearer) throw new Error('La API requiere configuración y sesión autenticada.');
     const sessionBearer = bearer;
     const controller = new AbortController();
@@ -157,7 +157,13 @@
     return response.json();
   }
 
-  async function sendBinary(path,method='GET',files=null) {
+  async function send(path,method='GET',body){
+    const finish=window.RutaHDCarga?.start({path,method});
+    try{return await sendCore(path,method,body);}
+    finally{finish?.();}
+  }
+
+  async function sendBinaryCore(path,method='GET',files=null) {
     if(!endpoint||!bearer)throw new Error('Debes iniciar sesión.');
     const token=bearer;
     const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),45000);
@@ -198,7 +204,13 @@
     }finally{clearTimeout(timer);}
   }
 
-  async function publico(path, payload) {
+  async function sendBinary(path,method='GET',files=null){
+    const finish=window.RutaHDCarga?.start({path,method});
+    try{return await sendBinaryCore(path,method,files);}
+    finally{finish?.();}
+  }
+
+  async function publicoCore(path,payload) {
     if (!endpoint) configure(window.location.origin);
     if(!['/recuperacion/solicitar','/recuperacion/restablecer'].includes(path))
       throw new Error('Ruta no autorizada');
@@ -212,6 +224,12 @@
       if(!(response.headers.get('Content-Type')||'').includes('application/json'))throw new Error('No se recibió JSON');
       return response.json();
     }finally{clearTimeout(timer);}
+  }
+
+  async function publico(path,payload){
+    const finish=window.RutaHDCarga?.start({path,method:'POST'});
+    try{return await publicoCore(path,payload);}
+    finally{finish?.();}
   }
 
   function key(catalogo) {
