@@ -33,7 +33,7 @@
   return labels[key]||'Revisa el contenido de este campo.';
  };
  function ensureSummary(form){
-  let summary=form.querySelector(':scope > .hd-validation-summary');
+  let summary=form.querySelector('.hd-validation-summary');
   if(summary)return summary;
   summary=document.createElement('div');
   summary.className='hd-validation-summary';
@@ -45,8 +45,8 @@
   heading.textContent='Revisa los datos del formulario';
   const body=document.createElement('p');body.className='hd-validation-detail';
   summary.append(heading,body);
-  const footer=form.querySelector('.crud-footer,.modal-footer,.product-editor-actions,.official-editor-actions,.supplier-dialog-actions');
-  if(footer&&footer.parentElement===form)form.insertBefore(summary,footer);
+  const footer=form.querySelector('.crud-footer,.modal-footer,.product-editor-actions,.official-editor-actions,.supplier-dialog-actions,.login-actions,.recovery-actions');
+  if(footer?.parentElement)footer.parentElement.insertBefore(summary,footer);
   else form.prepend(summary);
   return summary;
  }
