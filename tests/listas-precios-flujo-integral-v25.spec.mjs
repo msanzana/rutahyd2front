@@ -117,7 +117,7 @@ test('producto mantiene base obligatoria y calcula margen/precio sobre costo',as
  const specialRow=dialog.locator('.product-price-row').filter({hasText:'Mayoristas'});
  await specialRow.locator('input[type=number]').nth(2).fill('120');
  await expect(specialRow.locator('input[type=number]').nth(1)).toHaveValue('20.0000');
- await dialog.getByRole('button',{name:'Guardar en MySQL'}).click();
+ await dialog.getByRole('button',{name:'Guardar'}).click();
  await expect(dialog).toBeHidden();
  const dto=state.calls.find(v=>v.p==='/api/v1/productos/9'&&v.m==='PUT').dto;
  expect(dto.presentacion).toMatchObject({nombre:'Unidad',precioNeto:'140.0000'});
