@@ -428,6 +428,7 @@
       return send('/proveedores-productos?'+query.toString());
     },
     createProductSupplier: data => send('/proveedores-productos','POST',data),
+    createProductSuppliersBatch: data => send('/proveedores-productos/lote','POST',data),
     updateProductSupplier: (identificador,data) => send('/proveedores-productos/'+id(identificador),'PUT',data),
     deactivateProductSupplier: identificador => send('/proveedores-productos/'+id(identificador),'DELETE'),
     saleBarcodes: productId => send('/productos/'+id(productId)+'/codigos-venta'),

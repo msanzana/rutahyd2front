@@ -223,25 +223,176 @@
       e('span',(supplier.rut||'Sin RUT')+' · '+(supplier.giro||'Giro no informado')));
     const tools=e('div',null,'supplier-mix-tools');
     const status=e('p','Consultando productos del proveedor…','supplier-status');
+    status.setAttribute('role','status');
+    const staged=e('section',null,'supplier-mix-staged');
+    staged.setAttribute('aria-label','Productos seleccionados pendientes de guardar');
+    const stagedHeading=e('div',null,'supplier-mix-staged-heading');
+    const stagedTitle=e('strong','Productos seleccionados para agregar');
+    const stagedCount=e('span','0 pendientes','supplier-mix-badge');
+    stagedHeading.append(stagedTitle,stagedCount);
+    const stagedList=e('div',null,'catalog-table-scroll supplier-mix-staged-scroll');
+    const batchActions=e('div',null,'supplier-mix-batch-actions');
+    const saveBatch=button('Guardar productos seleccionados',()=>void saveSelected(),'button primary');
+    saveBatch.disabled=true;
+    batchActions.append(e('p','La selección no se incorpora al proveedor hasta pulsar Guardar.','supplier-status'),
+      saveBatch);
+    staged.append(stagedHeading,stagedList,batchActions);
+    staged.hidden=true;
     const list=e('div',null,'catalog-table-scroll supplier-mix-list');
     const pager=e('nav',null,'list-pagination');
     pager.setAttribute('aria-label','Páginas del mix '+supplier.nombre);
-    let page=1,loading=false;
+    const pending=new Map();
+    let page=1,loading=false,saving=false,currentRows=[];
+
     const refresh=async()=>{await load();await refreshDirectory();};
-    tools.append(button('Añadir producto al mix',()=>editRelation(null,refresh,supplier),
-      'button primary'),button('Actualizar mix',()=>void load()));
-    box.append(summary,tools,status,list,pager);
+    const openPicker=async()=>{
+      if(saving)return;
+      if(!window.RutaHDBuscadorProductos?.openMultiple){
+        status.textContent='El buscador de productos no está disponible. Actualiza la página.';
+        status.classList.add('is-error');return;
+      }
+      try{
+        const picked=await window.RutaHDBuscadorProductos.openMultiple({
+          title:'Buscar productos para '+supplier.nombre,
+          context:'compras',
+          lockedFilters:{solo_sin_proveedor_id:Number(supplier.id)},
+          excludeIds:currentRows.map(row=>Number(row.producto_id)),
+          initial:[...pending.values()].map(row=>row.producto),
+        });
+        if(picked===null)return;
+        if(picked.length>50){
+          status.textContent='Puedes agregar hasta 50 productos por guardado. Divide la selección en dos grupos.';
+          status.classList.add('is-error');return;
+        }
+        const selectedIds=new Set(picked.map(row=>Number(row.id)));
+        for(const id of pending.keys())if(!selectedIds.has(id))pending.delete(id);
+        let added=0;
+        for(const product of picked){
+          const id=Number(product.id);
+          if(!Number.isSafeInteger(id)||id<1||pending.has(id))continue;
+          pending.set(id,{producto:product,codigo:'',costo:''});
+          added++;
+        }
+        renderPending();
+        status.classList.remove('is-error');
+        status.textContent=pending.size
+          ?pending.size+' producto(s) listos para guardar. Puedes completar código y costo por artículo.'
+          :'No hay productos pendientes de guardar.';
+      }catch(error){
+        status.classList.add('is-error');status.textContent=errorText(error);
+      }
+    };
+    const addMany=button('Buscar y agregar productos',()=>void openPicker(),'button primary');
+    const addOne=button('Agregar individualmente',()=>editRelation(null,refresh,supplier));
+    const update=button('Actualizar mix',()=>void load());
+    tools.append(addMany,addOne,update);
+    box.append(summary,tools,status,staged,list,pager);
+
+    function renderPending(){
+      staged.hidden=pending.size===0;
+      stagedCount.textContent=pending.size+' pendientes';
+      saveBatch.textContent='Guardar '+pending.size+' producto'+(pending.size===1?'':'s');
+      saveBatch.disabled=saving||pending.size===0;
+      addMany.disabled=saving;addOne.disabled=saving;
+      stagedList.replaceChildren();
+      if(!pending.size)return;
+      const table=e('table',null,'catalog-table supplier-mix-table supplier-mix-draft-table');
+      const head=e('tr');
+      ['SKU / producto','Código del proveedor','Costo neto CLP','Estado','Acciones']
+        .forEach(label=>head.append(e('th',label)));
+      const thead=e('thead');thead.append(head);table.append(thead);
+      const body=e('tbody');
+      for(const [id,item] of pending){
+        const tr=e('tr',null,'supplier-mix-draft-row');
+        const title=e('td');
+        title.append(e('strong',(item.producto.sku||'Sin SKU')+' · '+item.producto.nombre),
+          e('small','Pendiente de guardar','supplier-mix-pending-label'));
+        const codeCell=e('td');
+        const code=field('text',item.codigo,80);
+        code.placeholder='Opcional';
+        code.setAttribute('aria-label','Código del proveedor para '+item.producto.nombre);
+        code.addEventListener('input',()=>{item.codigo=code.value;});
+        codeCell.append(code);
+        const costCell=e('td');
+        const cost=field('number',item.costo,40);
+        cost.min='0';cost.step='0.0001';cost.max='99999999999';
+        cost.placeholder='Opcional';
+        cost.setAttribute('aria-label','Costo neto para '+item.producto.nombre);
+        cost.addEventListener('input',()=>{item.costo=cost.value;});
+        costCell.append(cost);
+        const state=e('td','Por guardar','supplier-mix-pending-state');
+        const actions=e('td',null,'supplier-row-actions');
+        const remove=window.RutaHDListUI?.action('Quitar '+item.producto.nombre,
+          ()=>{pending.delete(id);renderPending();},{kind:'quitar'})||
+          button('Quitar',()=>{pending.delete(id);renderPending();});
+        actions.append(remove);
+        tr.append(title,codeCell,costCell,state,actions);body.append(tr);
+      }
+      table.append(body);stagedList.append(table);
+    }
+
+    async function saveSelected(){
+      if(saving||!pending.size)return;
+      if(pending.size>50){
+        status.textContent='El máximo por guardado es 50 productos.';
+        status.classList.add('is-error');return;
+      }
+      const inputs=stagedList.querySelectorAll('input');
+      for(const input of inputs){
+        if(!input.checkValidity()){input.reportValidity();input.focus();return;}
+      }
+      const codes=new Set();
+      const products=[];
+      for(const [id,item] of pending){
+        const code=item.codigo.trim();
+        if(code){
+          const normalized=code.toLocaleLowerCase('es-CL');
+          if(codes.has(normalized)){
+            status.textContent='Hay códigos de proveedor repetidos. Cada producto debe tener un código distinto.';
+            status.classList.add('is-error');return;
+          }
+          codes.add(normalized);
+        }
+        products.push({
+          producto_id:id,
+          codigo_proveedor_producto:code||null,
+          costo_proveedor:item.costo===''?null:item.costo
+        });
+      }
+      saving=true;renderPending();
+      status.classList.remove('is-error');
+      status.textContent='Guardando '+products.length+' productos del proveedor…';
+      try{
+        const saved=await api().createProductSuppliersBatch({
+          proveedor_id:Number(supplier.id),productos:products
+        });
+        pending.clear();
+        page=1;renderPending();
+        await refresh();
+        status.textContent=(saved.cantidad||products.length)+' producto(s) agregados al mix correctamente.';
+        status.classList.remove('is-error');
+      }catch(error){
+        // La transacción del backend se revierte completa ante cualquier error.
+        // La selección permanece editable para corregir códigos y reintentar.
+        status.textContent=errorText(error)+' Ninguna selección pendiente fue descartada.';
+        status.classList.add('is-error');
+      }finally{
+        saving=false;renderPending();
+      }
+    }
+
     async function load(){
       if(loading)return;
       loading=true;
-      status.textContent='Consultando relaciones reales del proveedor…';
+      status.classList.remove('is-error');
+      status.textContent='Consultando productos registrados del proveedor…';
       try{
         const result=await api().productSuppliers(page,{proveedor_id:supplier.id});
         if(!dialog.open)return;
-        const rows=result.data||[];
+        const rows=result.data||[];currentRows=rows;
         list.replaceChildren();
         if(!rows.length){
-          list.append(e('p','Aún no existen productos asociados. Añade un producto del catálogo para registrar su código de compra.','supplier-status'));
+          list.append(e('p','No hay productos guardados en esta página. Puedes buscarlos y seleccionarlos arriba.','supplier-status'));
         }else{
           const table=e('table',null,'catalog-table supplier-mix-table');
           const head=e('tr');
@@ -253,8 +404,7 @@
             const tr=e('tr');
             tr.append(e('td',(item.codigo_producto||'—')+' · '+item.producto),
               e('td',item.codigo_proveedor_producto||'—'),e('td',money(item.costo_proveedor)));
-            const codeCell=e('td','Consulta desde Acciones','supplier-codes-summary');
-            tr.append(codeCell);
+            tr.append(e('td','Consulta desde Acciones','supplier-codes-summary'));
             const stateCell=e('td',null,'catalog-status-cell');
             const switchControl=window.RutaHDListUI?.statusSwitch(
               item.producto+' · '+supplier.nombre,Boolean(item.activo),async active=>{
@@ -276,16 +426,20 @@
           }
           table.append(body);list.append(table);
         }
-        status.textContent=(result.total||0)+' vínculos registrados para este proveedor.';
+        status.textContent=(result.total||0)+' productos guardados para este proveedor'
+          +(pending.size?' · '+pending.size+' pendientes de guardar.':'.');
         window.RutaHDListUI?.renderPager(pager,{
           page,pages:Number(result.last_page||1),total:Number(result.total||0),
           label:'productos',onPage:n=>{page=n;void load();}
         });
         pager.hidden=Number(result.last_page||1)<=1;
-      }catch(e){status.textContent=errorText(e);status.classList.add('is-error');}
+      }catch(error){status.textContent=errorText(error);status.classList.add('is-error');}
       finally{loading=false;}
     }
-    box.append(button('Cerrar panel',()=>dialog.close(),'button ghost supplier-dialog-dismiss'));
+    const close=button('Cerrar panel',()=>dialog.close(),'button ghost supplier-dialog-dismiss');
+    const reminder=e('p','Los productos pendientes se descartan al cerrar sin guardar.',
+      'supplier-mix-draft-reminder');
+    box.append(reminder,close);
     void load();
   }
 
