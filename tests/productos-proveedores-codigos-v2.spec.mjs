@@ -124,7 +124,7 @@ test('nuevo producto envía códigos de venta sin proveedor ni gramajes',async({
   const order=['rubros','departamentos','familias','lineas','marcas','modelos',
     'tipos_unidad','tipos_envasado','condiciones_tributarias'];
   for(let i=0;i<order.length;i++)await selects.nth(i).selectOption(String(cats[order[i]][0].id));
-  await dlg.getByRole('button',{name:'Añadir código de venta'}).click();
+  await dlg.getByRole('button',{name:'Agregar código de barras al producto'}).click();
   const barcode=dlg.locator('.product-barcode-row');
   await barcode.getByLabel('Tipo de código de barras').selectOption('11');
   await barcode.getByLabel('Código de barras',{exact:true}).fill('7801234567890');
