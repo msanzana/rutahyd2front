@@ -100,7 +100,10 @@
     const heading=create('div',undefined,'official-editor-heading');
     heading.append(create('span','RUTA H&D · GESTIÓN COMERCIAL','official-editor-eyebrow'),
       create('h2',(editing?'Editar ':'Nuevo registro · ')+cfg.title));
-    heading.append(create('p','Los cambios se guardan directamente en Laravel y MariaDB.','official-editor-description'));
+    heading.append(create('p',cfg.resource==='proveedores'?
+      'Completa los datos tributarios, domicilio, representantes y condiciones comerciales.' :
+      'Mantén la información de esta entidad actualizada y validada.',
+      'official-editor-description'));
     const close=action('×',()=>dialog.close(),'crud-close');close.setAttribute('aria-label','Cerrar ventana');
     heading.append(close);form.append(heading);
     const grid=create('div',undefined,'official-editor-grid'),inputs={};
