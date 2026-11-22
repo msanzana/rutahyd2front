@@ -7,9 +7,14 @@
  const btn=(text,fn,cls='ghost')=>{
   const n=el('button',text,'button '+cls);n.type='button';n.addEventListener('click',fn);return n;
  };
- const error=e=>e?.message||e?.detail||e?.error||
-   (e?.status===409?'La lista está en uso o su código ya existe.':
-    'No fue posible completar la operación. Comprueba los datos y tu conexión.');
+ const error=e=>e?.userMessage||
+   (e?.status===500
+     ? 'El servidor no pudo guardar la lista (HTTP 500). Se detectó un esquema antiguo sin listas_precios.codigo; revisa el DDL27 en phpMyAdmin antes de intentar nuevamente.'
+     : e?.status===409
+       ? 'Ya existe una lista con ese código o la lista está en uso.'
+       : e?.status===422
+         ? 'Datos de la lista inválidos. Verifica código, nombre y observación.'
+         : e?.message||'No fue posible completar la operación. Comprueba la conexión y permisos.');
  let revision=0;
  function mount(parent){
   const own=++revision;
@@ -96,6 +101,8 @@
    observation.required=false;
    const status=el('label',undefined,'field price-list-active');
    const active=el('input');active.type='checkbox';active.checked=item?.activo!==false;
+   active.setAttribute('aria-label','Lista activa');
+   active.classList.add('hd-active-switch');
    if(item?.es_base){active.checked=true;active.disabled=true;codigo.readOnly=true;}
    status.append(active,el('span',item?.es_base?'La Lista Base siempre está activa':'Lista activa'));
    fields.append(status);form.append(fields);
