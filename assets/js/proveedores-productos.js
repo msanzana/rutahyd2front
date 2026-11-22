@@ -222,7 +222,9 @@
     summary.append(e('strong',supplier.razon_social||supplier.nombre),
       e('span',(supplier.rut||'Sin RUT')+' · '+(supplier.giro||'Giro no informado')));
     const tools=e('div',null,'supplier-mix-tools');
-    const status=e('p','Consultando productos del proveedor…','supplier-status');
+    tools.setAttribute('role','group');
+    tools.setAttribute('aria-label','Acciones del mix de productos');
+    const status=e('p','Consultando productos del proveedor…','supplier-status supplier-mix-feedback');
     status.setAttribute('role','status');
     const staged=e('section',null,'supplier-mix-staged');
     staged.setAttribute('aria-label','Productos seleccionados pendientes de guardar');
@@ -243,6 +245,16 @@
     pager.setAttribute('aria-label','Páginas del mix '+supplier.nombre);
     const pending=new Map();
     let page=1,loading=false,saving=false,currentRows=[];
+    const metrics=e('div',null,'supplier-mix-metrics');
+    const stat=(label,value)=>{
+      const card=e('div',null,'supplier-mix-stat');
+      card.append(e('span',label,'supplier-mix-stat-label'),value);
+      metrics.append(card);
+      return value;
+    };
+    const savedNumber=stat('Productos guardados',e('strong','—','supplier-mix-stat-number'));
+    const pendingNumber=stat('Pendientes de guardar',e('strong','0','supplier-mix-stat-number'));
+    const stateNumber=stat('Estado del mix',e('strong','Sin cambios','supplier-mix-stat-state'));
 
     const refresh=async()=>{await load();await refreshDirectory();};
     const openPicker=async()=>{
@@ -286,10 +298,20 @@
     const addOne=button('Agregar individualmente',()=>editRelation(null,refresh,supplier));
     const update=button('Actualizar mix',()=>void load());
     tools.append(addMany,addOne,update);
-    box.append(summary,tools,status,staged,list,pager);
+    const content=e('div',null,'supplier-mix-content');
+    const providerBlock=e('section',null,'supplier-mix-provider-block');
+    providerBlock.setAttribute('aria-label','Datos del proveedor');
+    providerBlock.append(e('span','PROVEEDOR SELECCIONADO','supplier-mix-provider-kicker'),summary);
+    const savedBlock=e('section',null,'supplier-mix-saved-block');
+    savedBlock.append(e('h3','Productos asociados','supplier-mix-section-heading'),list,pager);
+    content.append(providerBlock,tools,metrics,status,staged,savedBlock);
+    box.append(content);
 
     function renderPending(){
       staged.hidden=pending.size===0;
+      pendingNumber.textContent=String(pending.size);
+      stateNumber.textContent=pending.size?'Cambios sin guardar':'Sin cambios';
+      stateNumber.classList.toggle('has-pending',pending.size>0);
       stagedCount.textContent=pending.size+' pendientes';
       saveBatch.textContent='Guardar '+pending.size+' producto'+(pending.size===1?'':'s');
       saveBatch.disabled=saving||pending.size===0;
@@ -392,7 +414,13 @@
         const rows=result.data||[];currentRows=rows;
         list.replaceChildren();
         if(!rows.length){
-          list.append(e('p','No hay productos guardados en esta página. Puedes buscarlos y seleccionarlos arriba.','supplier-status'));
+          const empty=e('div',null,'supplier-mix-empty');
+          const emblem=e('span','▦','supplier-mix-empty-icon');
+          emblem.setAttribute('aria-hidden','true');
+          const text=e('div',null,'supplier-mix-empty-copy');
+          text.append(e('h4','Aún no hay productos asociados'),
+            e('p','Busca productos del catálogo, selecciónalos y guárdalos en el mix de este proveedor.'));
+          empty.append(emblem,text);list.append(empty);
         }else{
           const table=e('table',null,'catalog-table supplier-mix-table');
           const head=e('tr');
@@ -426,8 +454,10 @@
           }
           table.append(body);list.append(table);
         }
-        status.textContent=(result.total||0)+' productos guardados para este proveedor'
-          +(pending.size?' · '+pending.size+' pendientes de guardar.':'.');
+        savedNumber.textContent=String(Number(result.total||0));
+        status.textContent=pending.size
+          ?'Tienes '+pending.size+' producto(s) pendientes. Guárdalos antes de cerrar el panel.'
+          :'El mix está actualizado. Puedes buscar y asociar más productos.';
         window.RutaHDListUI?.renderPager(pager,{
           page,pages:Number(result.last_page||1),total:Number(result.total||0),
           label:'productos',onPage:n=>{page=n;void load();}
@@ -437,9 +467,12 @@
       finally{loading=false;}
     }
     const close=button('Cerrar panel',()=>dialog.close(),'button ghost supplier-dialog-dismiss');
-    const reminder=e('p','Los productos pendientes se descartan al cerrar sin guardar.',
+    const reminder=e('p','Los cambios pendientes no se guardan al cerrar el panel.',
       'supplier-mix-draft-reminder');
-    box.append(reminder,close);
+    const footer=e('div',null,'supplier-mix-footer');
+    footer.append(reminder,close);
+    box.append(footer);
+    renderPending();
     void load();
   }
 
