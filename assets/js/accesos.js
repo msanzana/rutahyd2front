@@ -16,6 +16,7 @@
       throw new Error('La API no devolvió el perfil con sus permisos; se niega el acceso.');
     }
     sesion = {
+      id: Number.isSafeInteger(Number(usuario.id))&&Number(usuario.id)>0?Number(usuario.id):null,
       nombre: String(usuario.nombre || 'Usuario'),
       rol: usuario.rol,
       permisos: new Set(usuario.permisos.filter(v => typeof v === 'string'))
@@ -41,6 +42,6 @@
   window.RutaHDAccesos = Object.freeze({
     catalogos, setSession, clear, authenticated, isAdmin, has,
     canViewCatalog, canManageCatalog,
-    usuario: () => sesion && {nombre:sesion.nombre,rol:sesion.rol}
+    usuario: () => sesion && {id:sesion.id,nombre:sesion.nombre,rol:sesion.rol}
   });
 })();
