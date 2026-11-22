@@ -62,6 +62,93 @@
     if(full)full.textContent=user?.nombre||'Ruta H&D';
     const avatar=$('.profile .avatar');
     if(avatar)avatar.textContent=user?.nombre?.slice(0,2).toUpperCase()||'HD';
+    if(menuFind())menuFind().hidden=!logged();
+    if(menuInput()?.value)searchMenu();
+  }
+  // Índice de navegación oficial tomado del DOM, nunca de rutas inventadas.
+  // allowed() aplica permisos JWT y canViewCatalog a cada coincidencia.
+  const menuFind=()=>$('#menuFinder'),menuInput=()=>$('#menuQuickSearch'),
+    menuResults=()=>$('#menuQuickResults');
+  const normalizeMenu=value=>String(value||'').normalize('NFD')
+    .replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('es-CL').trim();
+  function clearMenuSearch(){
+    const field=menuInput(),results=menuResults();
+    if(field){field.value='';field.setAttribute('aria-expanded','false');}
+    if(results){results.hidden=true;results.replaceChildren();}
+  }
+  function menuEntries(){
+    return $$('.sidebar .nav [data-nav],.sidebar .nav [data-admin-catalog]')
+      .filter(element=>!element.hidden)
+      .map(element=>{
+        const key=element.dataset.adminCatalog
+          ?'catalogos.'+element.dataset.adminCatalog:element.dataset.nav;
+        const group=element.closest('.nav-group');
+        const parent=group?.querySelector('.nav-parent .nav-link span')?.textContent?.trim()||'Menú principal';
+        return {key,text:element.querySelector('span')?.textContent?.trim()
+          ||element.textContent.trim(),parent,
+          from:group?.id==='adminNavGroup'?'administracion':
+            group?.id==='productsNavGroup'?'productos':
+            group?.id==='providersNavGroup'?'proveedores':null,
+          sub:element.classList.contains('nav-sublink')};
+      }).filter(entry=>entry.text&&allowed(entry.key));
+  }
+  function searchMenu(){
+    const input=menuInput(),results=menuResults();
+    if(!input||!results)return;
+    results.replaceChildren();
+    const q=normalizeMenu(input.value);
+    if(!q||!logged()){results.hidden=true;input.setAttribute('aria-expanded','false');return;}
+    const matched=menuEntries().filter(entry=>
+      normalizeMenu(entry.text+' '+(entry.sub?entry.parent:'')).includes(q)).slice(0,12);
+    if(!matched.length){
+      results.append(node('p','No hay opciones disponibles con ese nombre.','hd-menu-empty'));
+    }
+    matched.forEach(entry=>{
+      const b=node('button',undefined,'hd-menu-result');
+      b.type='button';
+      b.append(node('span',entry.text,'hd-menu-result-title'));
+      b.append(node('small',entry.sub?entry.parent:'Menú principal','hd-menu-result-parent'));
+      b.addEventListener('click',event=>{
+        event.preventDefault();event.stopPropagation();
+        clearMenuSearch();navigate(entry.key,entry.from);
+      });
+      results.append(b);
+    });
+    results.hidden=false;
+    input.setAttribute('aria-expanded','true');
+  }
+  function setupMenuSearch(){
+    const input=menuInput();if(!input||input.dataset.ready)return;
+    input.dataset.ready='true';
+    input.addEventListener('input',searchMenu);
+    input.addEventListener('keydown',event=>{
+      if(event.key==='Escape'){clearMenuSearch();input.blur();}
+      if(event.key==='Enter'){
+        const first=menuResults()?.querySelector('.hd-menu-result');
+        if(first){event.preventDefault();first.click();}
+      }
+      if(event.key==='ArrowDown'){
+        const first=menuResults()?.querySelector('.hd-menu-result');
+        if(first){event.preventDefault();first.focus();}
+      }
+    });
+    menuResults()?.addEventListener('keydown',event=>{
+      if(event.key==='Escape'){event.preventDefault();input.focus();clearMenuSearch();}
+      if(event.key==='ArrowDown'||event.key==='ArrowUp'){
+        const controls=$$('.hd-menu-result',menuResults()),current=controls.indexOf(document.activeElement);
+        const next=event.key==='ArrowDown'?Math.min(controls.length-1,current+1):Math.max(0,current-1);
+        if(controls[next]){event.preventDefault();controls[next].focus();}
+      }
+    });
+    document.addEventListener('keydown',event=>{
+      if(event.key==='/'&&!event.ctrlKey&&!event.altKey&&!event.metaKey&&
+        !event.target.closest('input,textarea,select,[contenteditable="true"]')&&logged()){
+        event.preventDefault();input.focus();
+      }
+    });
+    document.addEventListener('pointerdown',event=>{
+      if(!event.target.closest('#menuFinder')&&!menuResults()?.hidden)clearMenuSearch();
+    });
   }
   function collapse(){
     $('#productSubnav').hidden=true;
@@ -173,13 +260,19 @@
   }
   function loggedIn(){
     menuAccess();
+    clearMenuSearch();
     const requested=location.hash.slice(1)||'inicio';
     navigate(allowed(requested)?requested:'inicio');
+    // La restauración de ruta no debe expandir submenús tras autenticarse.
+    collapse();
+    $('#appShell').classList.remove('sidebar-open');
     $('.environment-notice').hidden=true;
   }
   function loggedOut(){
     menuAccess();
+    clearMenuSearch();
     collapse();
+    $('#appShell').classList.remove('sidebar-open');
     $('#homeView').hidden=false;
     $('#workspaceView').hidden=true;
     $('#workspaceContent').replaceChildren();
@@ -246,6 +339,7 @@
     else if(!logged()&&!recoveringNow())window.RutaHDLogin?.show();
   });
   document.addEventListener('DOMContentLoaded',async()=>{
+    setupMenuSearch();
     menuAccess();
     collapse();
     $('.environment-notice').hidden=true;
