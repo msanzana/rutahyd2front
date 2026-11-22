@@ -220,6 +220,27 @@
       send('/catalogos/' + key(catalogo) + '/' + id(identificador), 'PUT', datos),
     remove: (catalogo, identificador) =>
       send('/catalogos/' + key(catalogo) + '/' + id(identificador), 'DELETE'),
+    priceLists: (buscar='',activo=null) => {
+      const q=new URLSearchParams({por_pagina:'100'});
+      if(buscar)q.set('buscar',String(buscar).slice(0,120));
+      if(activo!==null)q.set('activo',activo?'1':'0');
+      return send('/listas-precios?'+q);
+    },
+    createPriceList: data => send('/listas-precios','POST',data),
+    updatePriceList: (listId,data) => send('/listas-precios/'+id(listId),'PUT',data),
+    deactivatePriceList: listId => send('/listas-precios/'+id(listId),'DELETE'),
+    productPriceLists: productId => send('/productos/'+id(productId)+'/precios'),
+    saveProductPrice: (productId,listId,data) =>
+      send('/productos/'+id(productId)+'/precios/'+id(listId),'PUT',data),
+    removeProductPrice: (productId,listId) =>
+      send('/productos/'+id(productId)+'/precios/'+id(listId),'DELETE'),
+    customerPriceList: customerId => send('/clientes/'+id(customerId)+'/lista-precio'),
+    assignCustomerPriceList: (customerId,listId) =>
+      send('/clientes/'+id(customerId)+'/lista-precio','PUT',{lista_precio_id:Number(id(listId))}),
+    customerSalePrice: (customerId,productId) =>
+      send('/ventas/precio-cliente?'+new URLSearchParams({
+        cliente_id:id(customerId),producto_id:id(productId)
+      })),
     products: (page=1, buscar='', filters={}) => {
       if(!Number.isSafeInteger(page)||page<1||page>10000)throw new Error('Página inválida');
       if(typeof buscar!=='string'||buscar.length>120)throw new Error('Búsqueda inválida');
