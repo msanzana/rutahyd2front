@@ -41,6 +41,12 @@
   const note=el('p','', 'form-error');note.hidden=true;note.setAttribute('role','alert');
   const actions=el('div',undefined,'sale-price-actions');
   const save=el('button','Registrar venta','button primary');save.type='submit';save.disabled=true;
+  const canSell=window.RutaHDAccesos?.isAdmin?.() ||
+    window.RutaHDAccesos?.has?.('ventas.gestionar');
+  if(!canSell){
+    save.hidden=true;
+    hint.textContent+=' Tu perfil solo puede consultar precios; no registrar ventas.';
+  }
   actions.append(addLine,save);
   form.append(grid,priceInfo,cartArea,note,actions);root.append(header,hint,form);
   parent.prepend(root);
@@ -81,7 +87,7 @@
     const net=items.reduce((n,it)=>n+it.precio*it.cantidad,0);
     cartArea.append(el('p','Total neto estimado: '+money(net)+'. IVA según condición tributaria; Laravel recalculará el total.','sale-cart-total'));
    }
-   save.disabled=!items.length||busy;
+   save.disabled=!canSell||!items.length||busy;
   }
   async function showPrice(){
    const ticket=++version;selection=null;addLine.disabled=true;
