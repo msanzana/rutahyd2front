@@ -187,12 +187,14 @@
       send('/perfiles/usuarios/' + id(userId) + '/rol','PUT',{rol_id:Number(id(roleId))}),
     saveRoleCatalogPermissions: (roleId, modulos) =>
       send('/perfiles/' + id(roleId) + '/catalogos','PUT',{modulos}),
-    resources: (recurso, pagina = 1) => {
+    resources: (recurso, pagina = 1, buscar = '', perPage=25) => {
       if (!RESOURCES.has(recurso)) throw new Error('Recurso remoto no permitido.');
-      if (!Number.isSafeInteger(pagina) || pagina < 1 || pagina > 10000) {
-        throw new Error('Página inválida.');
-      }
-      return send('/recursos/' + encodeURIComponent(recurso) + '?por_pagina=25&page=' + pagina);
+      if (!Number.isSafeInteger(pagina) || pagina < 1 || pagina > 10000 ||
+        !Number.isSafeInteger(perPage)||perPage<1||perPage>100)throw new Error('Paginación inválida.');
+      if(typeof buscar!=='string'||buscar.length>120)throw Error('Búsqueda inválida');
+      const query=new URLSearchParams({por_pagina:String(perPage),page:String(pagina)});
+      if(buscar.trim()&&['clientes','proveedores'].includes(recurso))query.set('buscar',buscar.trim());
+      return send('/recursos/'+encodeURIComponent(recurso)+'?'+query.toString());
     },
     createResource: (recurso,datos) => {
       if (!MANAGEABLE.has(recurso)) throw new Error('La escritura no está permitida para esta entidad.');
