@@ -284,6 +284,8 @@
     cell.querySelectorAll('button').forEach(b=>{
      if(b.dataset.normalizedIcon)return;
      const label=(b.textContent||'').trim(),kind=actionKinds[normalize(label)];
+     // Los listados nunca muestran acciones destructivas directas.
+     if(['eliminar','borrar'].includes(normalize(label))){b.remove();return;}
      if(!kind)return;
      b.dataset.normalizedIcon='true';b.dataset.tip=label;
      b.setAttribute('aria-label',label);
