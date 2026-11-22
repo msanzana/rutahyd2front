@@ -173,6 +173,11 @@
   const api = Object.freeze({
     configure, authenticate, login, logout, signOut, status,
     profile: () => send('/perfil'),
+    userTheme: () => send('/perfil/preferencias'),
+    saveTheme: tema_interfaz => {
+      if(!['claro','oscuro'].includes(tema_interfaz))throw Error('Tema inválido');
+      return send('/perfil/preferencias','PUT',{tema_interfaz});
+    },
     requestRecovery: correo_electronico =>
       publico('/recuperacion/solicitar',{correo_electronico}),
     resetPassword: (token,contrasena,contrasena_confirmation) =>
@@ -185,8 +190,9 @@
     usersForProfiles: () => send('/perfiles/usuarios'),
     assignUserRole: (userId,roleId) =>
       send('/perfiles/usuarios/' + id(userId) + '/rol','PUT',{rol_id:Number(id(roleId))}),
-    saveRoleCatalogPermissions: (roleId, modulos) =>
-      send('/perfiles/' + id(roleId) + '/catalogos','PUT',{modulos}),
+    saveRoleCatalogPermissions: (roleId, modulos, submodulos=null) =>
+      send('/perfiles/' + id(roleId) + '/catalogos','PUT',
+        submodulos?{modulos,submodulos}:{modulos}),
     resources: (recurso, pagina = 1, buscar = '', perPage=25) => {
       if (!RESOURCES.has(recurso)) throw new Error('Recurso remoto no permitido.');
       if (!Number.isSafeInteger(pagina) || pagina < 1 || pagina > 10000 ||
