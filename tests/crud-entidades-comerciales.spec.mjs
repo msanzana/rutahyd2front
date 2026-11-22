@@ -57,16 +57,15 @@ test('Clientes: lista real, alta, edición y baja lógica desde Laravel',async({
   await edit.locator('[name="nombre"]').fill('Cliente actualizado real');
   await edit.getByRole('button',{name:'Guardar cambios'}).click();
   await expect(page.locator('#workspaceContent')).toContainText('Cliente actualizado real');
+  page.once('dialog',dialog=>dialog.accept());
   await page.locator('#workspaceContent tbody tr').filter({hasText:'Cliente actualizado real'})
-    .getByRole('button',{name:'Desactivar'}).click();
-  const confirm=page.getByRole('dialog',{name:'Confirmar desactivación'});
-  await expect(confirm).toContainText('No se borrará su historial comercial');
-  await confirm.getByRole('button',{name:'Sí, desactivar'}).click();
+    .getByRole('checkbox',{name:'Desactivar Cliente actualizado real'}).uncheck();
   await expect(page.locator('#workspaceContent tbody tr')
     .filter({hasText:'Cliente actualizado real'})).toContainText('Inactivo');
   expect(writes.some(x=>x.method==='POST'&&x.data.nombre==='Cliente nuevo real')).toBe(true);
   expect(writes.some(x=>x.method==='PUT'&&x.data.nombre==='Cliente actualizado real')).toBe(true);
-  expect(writes.some(x=>x.method==='DELETE')).toBe(true);
+  expect(writes.some(x=>x.method==='PUT'&&x.data?.activo===false)).toBe(true);
+  expect(writes.some(x=>x.method==='DELETE')).toBe(false);
 });
 
 test('Proveedores y Bodegas administran solo sus campos autorizados',async({page})=>{
