@@ -98,8 +98,11 @@
     results.replaceChildren();
     const q=normalizeMenu(input.value);
     if(!q||!logged()){results.hidden=true;input.setAttribute('aria-expanded','false');return;}
-    const matched=menuEntries().filter(entry=>
-      normalizeMenu(entry.text+' '+(entry.sub?entry.parent:'')).includes(q)).slice(0,12);
+    const terms=q.split(/\s+/).filter(Boolean);
+    const matched=menuEntries().filter(entry=>{
+      const searchable=normalizeMenu(entry.text+' '+(entry.sub?entry.parent:''));
+      return terms.every(term=>searchable.includes(term));
+    }).slice(0,12);
     if(!matched.length){
       results.append(node('p','No hay opciones disponibles con ese nombre.','hd-menu-empty'));
     }
