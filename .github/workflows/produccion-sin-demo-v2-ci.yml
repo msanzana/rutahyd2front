@@ -31,7 +31,8 @@ jobs:
           node --check assets/js/galeria-productos.js
           node --check assets/js/productos-remotos.js
           grep -Fq 'galeria-productos.js?v=20261122-photos28' index.html
-          grep -Fq 'productos-densidad-v28.css?v=20261122-photos28' index.html
+          grep -Fq 'productos-densidad-v28.css?v=20261122-save29' index.html
+          grep -Fq 'productos-remotos.js?v=20261122-save29' index.html
           grep -Fq 'login-foto-v26.css?v=20261122-login26' index.html
           grep -Fq 'data:image/webp;base64,' assets/css/login-foto-v26.css
           grep -Fq 'app-produccion.js' index.html
