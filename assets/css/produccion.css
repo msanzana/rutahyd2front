@@ -141,3 +141,54 @@ body[data-login-start="true"] #loginDialog[open] .login-form::before{
   body[data-login-start="true"] #loginDialog[open] .modal-heading{grid-column:1;grid-row:1}
   body[data-login-start="true"] #loginDialog[open] .login-body{grid-column:1;grid-row:2}
 }
+
+/* Recuperación de acceso: identidad corporativa oficial, accesible y adaptable. */
+body.is-recovering .app-shell{visibility:hidden;pointer-events:none}
+.recovery-dialog{
+  box-sizing:border-box;position:fixed;inset:0;margin:auto;padding:clamp(10px,3vw,40px);
+  width:100vw;max-width:none;height:100vh;max-height:none;border:0;border-radius:0;
+  background:radial-gradient(circle at 12% 18%,rgba(173,112,232,.22),transparent 30%),
+    linear-gradient(128deg,#1d0b31,#381457 55%,#633390);
+  color:#241b34;overflow:auto;z-index:10000
+}
+.recovery-dialog[open]{display:grid;place-items:center}
+.recovery-dialog::backdrop{background:#170822}
+.recovery-layout{
+  display:grid;grid-template-columns:minmax(270px,.86fr) minmax(360px,1fr);
+  width:min(960px,100%);min-height:490px;background:white;border-radius:24px;
+  overflow:hidden;box-shadow:0 36px 90px rgba(18,7,32,.35)
+}
+.recovery-brand{
+  display:flex;flex-direction:column;justify-content:center;align-items:flex-start;
+  padding:clamp(28px,5vw,62px);background:radial-gradient(circle at 80% 17%,rgba(255,255,255,.15),transparent 34%),
+    linear-gradient(150deg,#34124f,#7c42b4);color:white
+}
+.recovery-logo{width:96px;height:96px;object-fit:contain;margin:12px 0 25px;filter:drop-shadow(0 7px 14px rgba(20,5,35,.2))}
+.recovery-eyebrow{font-size:11px;font-weight:850;letter-spacing:.14em;color:#8a4abf}
+.recovery-brand .recovery-eyebrow{color:#e9d6ff}
+.recovery-brand h2{font-size:clamp(26px,3vw,37px);letter-spacing:-.045em;line-height:1.13;margin:0 0 14px}
+.recovery-brand p{line-height:1.7;color:#f1e2fb;font-size:13px;max-width:300px}
+.recovery-form{display:flex;flex-direction:column;justify-content:center;gap:15px;padding:clamp(26px,5vw,54px)}
+.recovery-form h2{font-size:clamp(26px,3vw,34px);letter-spacing:-.04em;color:#301747;margin:0}
+.recovery-description{color:#736981;font-size:13px;line-height:1.65;margin:0 0 6px}
+.recovery-form .field{display:grid;gap:7px}
+.recovery-form .field span{font-weight:750;font-size:12px;color:#4b315c}
+.recovery-form .field input{width:100%;min-height:49px;padding:12px 15px;border:1px solid #dcd2e7;
+  border-radius:12px;background:#fcfbff;color:#21172d;outline:0}
+.recovery-form .field input:focus{border-color:#8a4cc7;box-shadow:0 0 0 3px rgba(124,58,237,.18)}
+.recovery-hint{font-size:12px;line-height:1.55;color:#766984;margin:0}
+.recovery-message{min-height:20px;color:#226345;font-size:12px;line-height:1.5;margin:0}
+.recovery-message.recovery-error{color:#ab284a}
+.recovery-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:5px}
+.recovery-actions .button{flex:1 1 165px;min-height:44px;border-radius:11px}
+.recovery-actions .button:disabled{opacity:.65;cursor:wait}
+@media(max-width:720px){
+  .recovery-dialog{padding:12px;align-items:start}
+  .recovery-layout{grid-template-columns:minmax(0,1fr);width:min(500px,100%);margin:auto;min-height:0;border-radius:18px}
+  .recovery-brand{padding:23px 25px;min-height:135px}
+  .recovery-logo{width:55px;height:55px;margin:8px 0}
+  .recovery-brand h2{font-size:23px;margin:0}
+  .recovery-brand p{display:none}
+  .recovery-form{padding:26px 23px;gap:12px}
+}
+@media(max-width:390px){.recovery-dialog{padding:7px}.recovery-form{padding:22px 17px}.recovery-actions .button{flex-basis:100%}}
