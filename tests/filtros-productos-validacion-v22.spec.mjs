@@ -52,6 +52,7 @@ async function setup(page){
  await page.locator('#loginPassword').fill('DEMO-NO-REAL');
  await page.locator('#loginSubmit').click();
  await expect(page.locator('#loginDialog')).toBeHidden();
+ if((await page.viewportSize())?.width<900)await page.locator('#menuToggle').click();
  await page.locator('.nav-link[data-nav="productos"]').click();
  await expect(page.locator('#productosRealesListado')).toContainText('Conserva Norte');
  return queries;
@@ -124,7 +125,8 @@ test('nuevo producto usa validación elegante sin tooltip nativo',async({page})=
  await expect(dlg.locator('.hd-validation-summary')).toContainText('obligatorio');
  await expect(dlg.locator('input[required]').first()).toHaveAttribute('aria-invalid','true');
  await dlg.locator('input[required]').first().fill('SKU-VALID');
- await expect(dlg.locator('.hd-validation-summary')).toBeHidden();
+ await expect(dlg.locator('input[required]').first()).not.toHaveAttribute('aria-invalid','true');
+ await expect(dlg.locator('.hd-validation-summary')).toBeVisible();
 });
 test('búsqueda avanzada de producto es adaptable a 390 píxeles',async({page})=>{
  await page.setViewportSize({width:390,height:830});
