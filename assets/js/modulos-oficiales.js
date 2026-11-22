@@ -238,22 +238,28 @@
           rows.forEach(row=>{
             const tr=create('tr');
             for(const [field] of columns){
-              let value=row[field];
-              if(field==='activo')value=Boolean(value)?'Activo':'Inactivo';
-              else if(value===undefined||value===null)value='—';
-              tr.append(create('td',String(value)));
+              if(field==='activo'){
+                const cell=create('td',undefined,'catalog-status-cell');
+                const toggle=window.RutaHDListUI?.statusSwitch(row.nombre||row.codigo||'Registro',
+                  Boolean(row.activo),async active=>{
+                    await api().updateResource(cfg.resource,row.id,{activo:active});
+                    await load();
+                  },{disabled:!editable});
+                cell.append(toggle||create('span',Boolean(row.activo)?'Activo':'Inactivo'));
+                tr.append(cell);continue;
+              }
+              const value=row[field];
+              tr.append(create('td',value===undefined||value===null?'—':String(value)));
             }
             if(editable){
               const cell=create('td',undefined,'official-row-actions');
               cell.append(action('Editar',()=>openEditor(cfg,row,load),'ghost'));
-              if(Boolean(row.activo))cell.append(
-                action('Desactivar',()=>confirmDeactivate(cfg,row,load),'ghost'));
               tr.append(cell);
             }
             body.append(tr);
           });
           table.append(body);content.append(table);
-          notice.textContent='Registros cargados desde la base de datos · Página '+page+'.';
+          notice.textContent='';
         }else{
           notice.textContent='No existen registros para esta página de la base de datos.';
         }
