@@ -36,6 +36,8 @@ const asset=p=>path.join(root,p);
   assert.equal(await page.locator('#loginEmail').locator('xpath=..').locator('.hd-validation-bubble').isHidden(),true);
 
   await page.setContent('<main id="fixture"></main>');
+  // Reproduce la hoja real V32 que transforma checkboxes en switches.
+  await page.addStyleTag({path:asset('assets/css/switches-v32.css')});
   await page.addStyleTag({path:asset('assets/css/interfaz-mix-validacion-v45.css')});
   await page.evaluate(()=>{
     window.RutaHDApiCatalogos={
@@ -51,17 +53,35 @@ const asset=p=>path.join(root,p);
     });
   });
   await page.waitForSelector('dialog.hd-product-finder[open] .hd-lookup-check');
-  const shape=await page.locator('.hd-lookup-check').evaluate(e=>({
-    type:e.type,radius:getComputedStyle(e).borderRadius,
-    width:Math.round(e.getBoundingClientRect().width),
-    appearance:getComputedStyle(e).appearance
-  }));
+  const shape=await page.locator('.hd-lookup-check').evaluate(e=>{
+    const box=e.parentElement.querySelector('.hd-lookup-box');
+    const s=getComputedStyle(box);
+    return {type:e.type,exempt:e.classList.contains('no-switch'),
+      radius:s.borderRadius,width:Math.round(box.getBoundingClientRect().width),
+      height:Math.round(box.getBoundingClientRect().height),
+      border:s.borderStyle,visual:getComputedStyle(e).opacity,
+      visibleBox:box.getBoundingClientRect().width>20,
+      before:getComputedStyle(e,'::before').content};
+  });
   assert.equal(shape.type,'checkbox');
+  assert.equal(shape.exempt,true,'Debe excluir regla switches-v32.css');
   assert.equal(shape.radius,'7px');
-  assert.equal(shape.width,24);
-  assert.equal(shape.appearance,'none');
+  assert.equal(shape.width,25);
+  assert.equal(shape.height,25);
+  assert.equal(shape.border,'solid');
+  assert.equal(shape.visual,'0','Input nativo invisible: únicamente casilla SVG');
+  assert.equal(shape.visibleBox,true);
+  assert.equal(shape.before,'none','No debe aparecer la perilla del switch heredado');
+  await page.screenshot({path:'v46-checkbox-antes.png'});
   await page.locator('.hd-lookup-checkbox').click();
   assert.equal(await page.locator('.hd-lookup-check').isChecked(),true);
+  assert.equal(await page.locator('.hd-lookup-box svg').evaluate(e=>getComputedStyle(e).opacity),'1');
+  await page.screenshot({path:'v46-checkbox-seleccionado.png'});
+  await page.locator('.hd-lookup-check').focus();
+  await page.keyboard.press('Space');
+  assert.equal(await page.locator('.hd-lookup-check').isChecked(),false,'Espacio debe quitar la selección');
+  await page.keyboard.press('Space');
+  assert.equal(await page.locator('.hd-lookup-check').isChecked(),true,'Espacio debe restaurar selección');
   assert.match(await page.locator('.hd-product-selection').innerText(),/Scotch 10 mm/);
   await page.getByRole('button',{name:'Usar productos seleccionados'}).click();
   const selected=await page.evaluate(()=>window.__pickV45);
@@ -95,6 +115,6 @@ const asset=p=>path.join(root,p);
   }));
   assert.ok(widths.modal<=widths.viewport,'Modal no debe desbordarse en móvil');
   assert.deepEqual(errors,[],'Errores JavaScript de regresión');
-  console.log('V45_UI_OK login-validación, checkbox múltiple, mix vacío, métricas y móvil');
+  console.log('V46_UI_OK checkbox cuadrado SVG independiente de switch V32; teclado; selección; mix y login');
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1});
