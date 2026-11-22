@@ -25,6 +25,7 @@ jobs:
           node --check tests/catalogos-menu-regresion-v19.spec.mjs
           node --check tests/ui-v20-listados-perfil.spec.mjs
           node --check tests/filtros-productos-validacion-v22.spec.mjs
+          node --check tests/listas-precios-flujo-integral-v25.spec.mjs
           grep -Fq 'app-produccion.js' index.html
           grep -Fq 'login-produccion.js' index.html
           grep -Fq 'produccion.css' index.html
@@ -55,7 +56,7 @@ jobs:
           npm install --no-audit --no-fund
           npx playwright install --with-deps chromium
       - name: Pruebas de producción con API simulada y sin credenciales reales
-        run: npx playwright test tests/produccion-sin-demo.spec.mjs tests/crud-entidades-comerciales.spec.mjs tests/producto-modal-hotfix.spec.mjs tests/productos-proveedores-codigos-v2.spec.mjs tests/crud-estilo-v18.spec.mjs tests/catalogos-menu-regresion-v19.spec.mjs tests/ui-v20-listados-perfil.spec.mjs tests/filtros-productos-validacion-v22.spec.mjs
+        run: npx playwright test tests/produccion-sin-demo.spec.mjs tests/crud-entidades-comerciales.spec.mjs tests/producto-modal-hotfix.spec.mjs tests/productos-proveedores-codigos-v2.spec.mjs tests/crud-estilo-v18.spec.mjs tests/catalogos-menu-regresion-v19.spec.mjs tests/ui-v20-listados-perfil.spec.mjs tests/filtros-productos-validacion-v22.spec.mjs tests/listas-precios-flujo-integral-v25.spec.mjs
       - name: Guardar diagnóstico si falla
         if: failure()
         uses: actions/upload-artifact@v4
