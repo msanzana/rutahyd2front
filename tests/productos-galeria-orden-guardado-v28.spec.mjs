@@ -165,7 +165,7 @@ test('nueva ficha empieza con margen mínimo y guarda precio calculado sin ser n
  await expect(price.locator('input[type=number]').nth(1)).toHaveValue('15.0000');
  await expect(price.locator('input[type=number]').nth(1)).toBeEnabled();
  await expect(price.locator('input[type=number]').nth(2)).toHaveValue('115.0000');
- await dlg.getByRole('button',{name:'Guardar en MySQL'}).click();
+ await dlg.getByRole('button',{name:'Guardar'}).click();
  await expect(dlg).toBeHidden();
  const dto=state.calls.find(c=>c.m==='POST'&&c.p==='/api/v1/productos')?.dto;
  expect(dto).toBeDefined();
@@ -179,7 +179,7 @@ test('guardado de producto muestra error de margen del backend y nunca lo oculta
  const dlg=page.locator('dialog.product-editor-dialog[open]');
  const row=dlg.locator('.product-price-row').filter({hasText:'LISTA BASE'});
  await row.locator('input[type=number]').nth(2).fill('140');
- await dlg.getByRole('button',{name:'Guardar en MySQL'}).click();
+ await dlg.getByRole('button',{name:'Guardar'}).click();
  await page.waitForTimeout(500);
  const check=await dlg.evaluate(node=>{
    const form=node.querySelector('form');
@@ -208,12 +208,12 @@ test('nuevo producto bloquea EAN-13 de doce dígitos sin enviar POST y permite c
  const barcode=dlg.locator('.product-barcode-row').last();
  await barcode.locator('select').selectOption('10');
  await barcode.getByLabel('Código de barras',{exact:true}).fill('978020137962');
- await dlg.getByRole('button',{name:'Guardar en MySQL'}).click();
+ await dlg.getByRole('button',{name:'Guardar'}).click();
  await expect(dlg.locator('.form-error')).toContainText('exactamente 13 dígitos');
  await expect(dlg).toBeVisible();
  expect(state.calls.some(x=>x.m==='POST'&&x.p==='/api/v1/productos')).toBe(false);
  await barcode.getByLabel('Código de barras',{exact:true}).fill('9780201379624');
- await dlg.getByRole('button',{name:'Guardar en MySQL'}).click();
+ await dlg.getByRole('button',{name:'Guardar'}).click();
  await expect(dlg).toBeHidden();
  const dto=state.calls.find(x=>x.m==='POST'&&x.p==='/api/v1/productos')?.dto;
  expect(dto?.codigosVenta?.[0]?.codigoBarras).toBe('9780201379624');
@@ -232,7 +232,7 @@ test('conserva precio al dejar costo en cero y guarda margen indefinido',async({
  await expect(price).toHaveValue('130.0000');
  await expect(margin).toHaveValue('');
  await expect(margin).toBeDisabled();
- await dlg.getByRole('button',{name:'Guardar en MySQL'}).click();
+ await dlg.getByRole('button',{name:'Guardar'}).click();
  await expect(dlg).toBeHidden();
  const dto=state.calls.find(c=>c.p==='/api/v1/productos/9'&&c.m==='PUT')?.dto;
  expect(dto).toBeDefined();
