@@ -27,6 +27,7 @@
  };
  const errorFor=input=>{
   const v=input.validity;
+  if(v?.customError&&input.validationMessage)return input.validationMessage;
   const key=Object.keys(labels).find(k=>v?.[k]);
   return labels[key]||'Revisa el contenido de este campo.';
  };
