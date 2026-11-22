@@ -202,6 +202,7 @@
     search.placeholder='Buscar proveedor, SKU, producto o código del proveedor';
     const submit=e('button','Buscar','button primary');submit.type='submit';
     const create=button('Asociar producto a proveedor',()=>editRelation(null,load),'button primary');
+    create.classList.add('hd-list-create-action');
     toolbar.append(search,submit,create);
     const content=e('div',null,'catalog-table-scroll');
     const pager=e('nav',null,'list-pagination');
