@@ -18,6 +18,7 @@ const cats={
 };
 const product={
  id:9,sku:'SKU-9',nombre:'Conserva del Sur',activo:true,costoNeto:'100',
+ costoPromedioPonderado:'74.1250',
  clasificacion:{rubroId:1,departamentoId:2,familiaId:3,lineaId:4,
   marcaId:5,modeloId:6,tipoUnidadId:7,tipoEnvasadoId:8,condicionTributariaId:9},
  clasificacionNombres:{rubroId:'Alimentos',departamentoId:'Abarrotes',
@@ -362,4 +363,52 @@ test('glóbulos de precios y códigos se apilan y tooltips salen debajo sin reco
  });
  expect(locations.correctParent).toBe(true);
  expect(locations.tipTop).toBeGreaterThan(locations.buttonBottom);
+});
+
+test('ficha Producto presenta costo promedio ponderado junto al costo neto y no lo permite editar',async({page})=>{
+ const state=await fixture(page);
+ await page.locator('#productosRealesListado').getByRole('button',{name:'Editar',exact:true}).click();
+ const dlg=page.locator('dialog.product-editor-dialog[open]');
+ const cost=dlg.locator('#productoCostoNeto');
+ const average=dlg.locator('#productoCostoPromedioPonderado');
+ await expect(cost).toHaveValue('100');
+ await expect(average).toHaveValue('74.1250');
+ await expect(average).toHaveJSProperty('readOnly',true);
+ await expect(average).toHaveAttribute('aria-readonly','true');
+ await expect(dlg).toContainText('Solo lectura · Se actualizará con las recepciones');
+ const positions=await dlg.evaluate(()=>{
+  const one=document.getElementById('productoCostoNeto').getBoundingClientRect();
+  const two=document.getElementById('productoCostoPromedioPonderado').getBoundingClientRect();
+  return {firstRight:one.right,secondLeft:two.left,firstTop:one.top,secondTop:two.top};
+ });
+ expect(positions.secondLeft).toBeGreaterThan(positions.firstRight);
+ expect(Math.abs(positions.firstTop-positions.secondTop)).toBeLessThan(4);
+ await dlg.getByRole('button',{name:'Guardar',exact:true}).click();
+ await expect(dlg).toBeHidden();
+ const dto=state.calls.find(x=>x.m==='PUT'&&x.p==='/api/v1/productos/9')?.dto;
+ expect(dto).toBeDefined();
+ expect(dto.costoPromedioPonderado).toBeUndefined();
+ expect(dto.costoNeto).toBe('100');
+});
+
+test('nuevo Producto muestra costo promedio inicial cero, sin enviarlo en el POST',async({page})=>{
+ const state=await fixture(page);
+ await page.getByRole('button',{name:'Nuevo Producto'}).click();
+ const dlg=page.locator('dialog.product-editor-dialog[open]');
+ const average=dlg.locator('#productoCostoPromedioPonderado');
+ await expect(average).toHaveValue('0.0000');
+ await expect(average).toHaveJSProperty('readOnly',true);
+ // El valor informativo no se puede modificar ni se sincroniza desde costo neto.
+ await dlg.locator('#productoCostoNeto').fill('123');
+ await expect(average).toHaveValue('0.0000');
+ expect(state.calls.find(x=>x.m==='POST'&&x.p==='/api/v1/productos')).toBeUndefined();
+});
+
+test('consulta individual muestra promedio real devuelto por API, nunca lo recalcula con costo neto',async({page})=>{
+ await fixture(page);
+ await page.locator('#productosRealesListado').getByRole('button',{name:'Ver',exact:true}).click();
+ const dlg=page.locator('dialog.product-detail-dialog[open]');
+ await expect(dlg.getByText(/Costo promedio ponderado:/)).toBeVisible();
+ await expect(dlg.getByText(/Costo promedio ponderado:/)).toContainText('74');
+ await expect(dlg.getByText(/Costo neto:/)).toContainText('100');
 });
