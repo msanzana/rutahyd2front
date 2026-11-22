@@ -238,6 +238,14 @@
     customerPriceList: customerId => send('/clientes/'+id(customerId)+'/lista-precio'),
     assignCustomerPriceList: (customerId,listId) =>
       send('/clientes/'+id(customerId)+'/lista-precio','PUT',{lista_precio_id:Number(id(listId))}),
+    saleCustomers: (buscar='',page=1) =>
+      send('/ventas/clientes-disponibles?'+new URLSearchParams({
+        buscar:String(buscar).slice(0,120),page:String(page)
+      })),
+    saleProducts: (customerId,buscar='',page=1) =>
+      send('/ventas/productos-disponibles?'+new URLSearchParams({
+        cliente_id:id(customerId),buscar:String(buscar).slice(0,120),page:String(page)
+      })),
     customerSalePrice: (customerId,productId) =>
       send('/ventas/precio-cliente?'+new URLSearchParams({
         cliente_id:id(customerId),producto_id:id(productId)
