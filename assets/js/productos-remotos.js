@@ -411,6 +411,8 @@
     const cost=Number(producto.costoNeto||0);
     const priceIntro=el('div','product-detail-price-summary');
     priceIntro.append(el('span','','Costo neto: '+money(cost)),
+      el('span','product-detail-average-cost','Costo promedio ponderado: '+
+        (producto.costoPromedioPonderado==null?'—':money(producto.costoPromedioPonderado))),
       el('span','','Margen mínimo línea: '+Number(producto.minimoMargenPrecioVenta||0).toFixed(2)+' %'));
     pricesSection.append(priceIntro);
     const prices=Array.isArray(producto.precios)?producto.precios:[];
@@ -576,11 +578,25 @@
       clearChildren(field);redraw();
     }));
     form.appendChild(el('h3','product-editor-section','Datos de envase y costo'));
-    const units=inputField('Unidades por envase','number',form,producto?.presentacion?.unidadesPorEnvase??'1',
-      {required:true,min:0.001,step:0.001});
-    const cost=inputField('Costo neto (CLP)','number',form,producto?.costoNeto??'0',
+    const costFields=el('div','product-cost-fields product-editor-wide');
+    const units=inputField('Unidades por envase','number',costFields,
+      producto?.presentacion?.unidadesPorEnvase??'1',{required:true,min:0.001,step:0.001});
+    const cost=inputField('Costo neto (CLP)','number',costFields,producto?.costoNeto??'0',
       {required:true,min:0,step:0.0001});
     cost.id='productoCostoNeto';
+    const average=inputField('Costo promedio ponderado (CLP)','number',costFields,
+      producto ? (producto.costoPromedioPonderado??'') : '0.0000',
+      {min:0,step:0.0001});
+    average.id='productoCostoPromedioPonderado';
+    average.readOnly=true;
+    average.setAttribute('aria-readonly','true');
+    average.classList.add('price-readonly','product-average-cost-readonly');
+    average.placeholder='Sin información';
+    average.title='Valor de solo lectura. Se calculará automáticamente al registrar recepciones.';
+    const averageNote=el('small','product-average-cost-hint',
+      'Solo lectura · Se actualizará con las recepciones de mercadería.');
+    average.parentElement.append(averageNote);
+    form.append(costFields);
     form.appendChild(el('h3','product-editor-section','Precios'));
     if(compatibility)form.appendChild(el('p','hd-filter-warning product-editor-wide',
       'El servidor aún no publica listas de precios. El formulario conservará únicamente el precio general de presentación.'));
