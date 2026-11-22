@@ -58,7 +58,7 @@ test('Clientes: lista real, alta, edición y baja lógica desde Laravel',async({
   await edit.getByRole('button',{name:'Guardar cambios'}).click();
   await expect(page.locator('#workspaceContent')).toContainText('Cliente actualizado real');
   await page.locator('#workspaceContent tbody tr').filter({hasText:'Cliente actualizado real'})
-    .getByRole('checkbox',{name:'Desactivar Cliente actualizado real'}).uncheck();
+    .getByRole('checkbox',{name:'Desactivar Cliente actualizado real'}).click();
   const confirmation=page.locator('dialog.hd-status-confirm[open]');
   await expect(confirmation).toBeVisible();
   await expect(confirmation).toContainText('Cliente actualizado real');
@@ -130,7 +130,7 @@ test('Switch de estado: cancelar no escribe y activar usa diálogo central acces
   await login(page);
   await page.locator('.nav-link[data-nav="clientes"]').click();
   let toggle=page.getByRole('checkbox',{name:'Desactivar Cliente temporal'});
-  await toggle.uncheck();
+  await toggle.click();
   let dlg=page.locator('dialog.hd-status-confirm[open]');
   await expect(dlg).toBeVisible();
   await expect(dlg).toHaveAttribute('aria-describedby','hd-state-description');
@@ -140,20 +140,20 @@ test('Switch de estado: cancelar no escribe y activar usa diálogo central acces
   await expect(dlg).toBeHidden();
   await expect(toggle).toBeChecked();
   expect(writes).toHaveLength(0);
-  await toggle.uncheck();
+  await toggle.click();
   dlg=page.locator('dialog.hd-status-confirm[open]');
   await dlg.getByRole('button',{name:'Sí, desactivar'}).click();
   await expect(page.getByRole('checkbox',{name:'Activar Cliente temporal'})).not.toBeChecked();
   expect(writes).toHaveLength(1);
   expect(writes[0].activo).toBe(false);
   toggle=page.getByRole('checkbox',{name:'Activar Cliente temporal'});
-  await toggle.check();
+  await toggle.click();
   dlg=page.locator('dialog.hd-status-confirm[open]');
   await expect(dlg.getByRole('heading',{name:'¿Activar registro?'})).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(dlg).toBeHidden();
   expect(writes).toHaveLength(1);
-  await toggle.check();
+  await toggle.click();
   dlg=page.locator('dialog.hd-status-confirm[open]');
   await dlg.getByRole('button',{name:'Sí, activar'}).click();
   await expect(page.getByRole('checkbox',{name:'Desactivar Cliente temporal'})).toBeChecked();
@@ -172,7 +172,7 @@ test('Switch de estado: error del servidor devuelve el interruptor a su estado o
   await login(page);
   await page.locator('.nav-link[data-nav="clientes"]').click();
   const toggle=page.getByRole('checkbox',{name:'Desactivar Cliente protegido'});
-  await toggle.uncheck();
+  await toggle.click();
   await page.locator('dialog.hd-status-confirm[open]').getByRole('button',{name:'Sí, desactivar'}).click();
   await expect(toggle).toBeChecked();
   await expect(page.getByRole('alert')).toContainText('No autorizado');
