@@ -58,20 +58,22 @@
     const body=el('tbody');
     rows.forEach(item=>{
       const tr=el('tr');
-      tr.append(el('td',item.codigo),el('td',item.nombre),el('td',item.es_base?'Lista Base':'Especial'),
-        el('td',item.activo?'Activo':'Inactivo'));
+      tr.append(el('td',item.codigo),el('td',item.nombre),
+        el('td',item.es_base?'Lista Base':'Especial'));
+      const cell=el('td','catalog-status-cell');
+      const toggle=window.RutaHDListUI?.statusSwitch(item.nombre,item.activo,async active=>{
+        await api().updatePriceList(item.id,{activo:active});
+        await load();
+      },{disabled:Boolean(item.es_base)});
+      cell.append(toggle||el('span',item.activo?'Activo':'Inactivo'));
+      tr.append(cell);
       const actions=el('td',undefined,'official-row-actions');
-      const edit=btn('Editar',()=>openEditor(item),'ghost');
-      edit.setAttribute('title','Editar lista');actions.append(edit);
-      if(!item.es_base&&item.activo){
-        const deactivate=btn('Desactivar',()=>confirmDeactivate(item),'ghost');
-        deactivate.setAttribute('title','Desactivar lista');actions.append(deactivate);
-      }
+      actions.append(btn('Editar',()=>openEditor(item),'ghost'));
       tr.append(actions);body.append(tr);
     });
     table.append(body);list.append(table);
     const total=Number(response?.total??rows.length);
-    note.textContent='Listas registradas: '+total+'. La Lista Base no puede eliminarse.';
+    note.textContent='';
     window.RutaHDListUI?.renderPager(pager,{
       page,pages:lastPage,total,label:'listas',
       onPage:n=>{page=n;void load();}
