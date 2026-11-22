@@ -1,0 +1,239 @@
+/* Ruta H&D V45 · Mix profesional, checkbox múltiple y validación corporativa.
+ * Sobrescrituras aditivas sobre V42: no cambian JWT, permisos ni API.
+ */
+.modal.supplier-product-dialog.crud-supplier-dialog.supplier-mix-dialog{
+  box-sizing:border-box;width:min(1120px,calc(100vw - 36px));max-width:1120px;
+  max-height:calc(100dvh - 30px);padding:0;
+  border:1px solid #e2d5f2;border-radius:22px;overflow:auto;
+  background:#fff;box-shadow:0 30px 100px rgba(35,10,65,.29);
+}
+.supplier-mix-dialog .supplier-dialog-body{display:flex;flex-direction:column;gap:0;padding:0;min-width:0}
+.supplier-mix-dialog .supplier-dialog-header{
+  padding:30px 86px 30px 34px;min-height:0;gap:8px;
+  background:linear-gradient(115deg,#361447 0%,#512079 55%,#803bb5 100%);
+}
+.supplier-mix-dialog .supplier-dialog-header h2{
+  font-size:clamp(25px,3vw,36px);line-height:1.15;letter-spacing:-.035em;
+  color:#fff;max-width:900px;overflow-wrap:anywhere;margin:0;
+}
+.supplier-mix-dialog .supplier-dialog-header .overline{
+  color:#e7cfff;font-size:11px;font-weight:800;letter-spacing:.14em
+}
+.supplier-mix-dialog .supplier-dialog-header .crud-supplier-subtitle{
+  color:#f3e9ff;line-height:1.55;font-size:13px;margin:0
+}
+.supplier-mix-dialog .supplier-dialog-header .crud-close{
+  right:28px;top:25px;border-radius:12px;min-width:44px;min-height:44px
+}
+.supplier-mix-content{display:grid;gap:21px;padding:28px 34px 24px;min-width:0}
+.supplier-mix-provider-block{
+  display:grid;gap:8px;padding:20px 22px;border-radius:16px;
+  border:1px solid #e4d7f3;background:#faf7fe;
+}
+.supplier-mix-provider-kicker{
+  color:#8a57b5;font-size:10px;font-weight:850;letter-spacing:.12em
+}
+.supplier-mix-dialog .supplier-mix-summary{
+  display:flex;align-items:baseline;flex-wrap:wrap;gap:8px 18px;
+  margin:0;padding:0;background:transparent;border:0;line-height:1.45
+}
+.supplier-mix-dialog .supplier-mix-summary strong{
+  color:#3b1b59;font-size:clamp(19px,2.1vw,23px);font-weight:800
+}
+.supplier-mix-dialog .supplier-mix-summary span{font-size:12px;color:#715f86;overflow-wrap:anywhere}
+.supplier-mix-dialog .supplier-mix-tools{
+  display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin:0;padding:0
+}
+.supplier-mix-dialog .supplier-mix-tools .button{
+  min-height:46px;padding:10px 18px;border-radius:12px;
+  font-size:12px;font-weight:760;white-space:normal
+}
+.supplier-mix-dialog .supplier-mix-tools .button.primary{
+  box-shadow:0 7px 17px rgba(102,43,174,.18)
+}
+.supplier-mix-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}
+.supplier-mix-stat{
+  display:flex;flex-direction:column;gap:7px;min-width:0;padding:17px 19px;
+  border:1px solid #e9e0f3;border-radius:15px;background:#fcfaff
+}
+.supplier-mix-stat-label{font-size:11px;color:#765d89;font-weight:670}
+.supplier-mix-stat-number{font-size:25px;line-height:1.2;font-weight:850;color:#50217f}
+.supplier-mix-stat-state{font-size:14px;line-height:1.45;color:#553875;font-weight:800}
+.supplier-mix-stat-state.has-pending{color:#985122}
+.supplier-mix-dialog .supplier-status.supplier-mix-feedback{
+  margin:0;padding:12px 15px;border-radius:12px;border:1px solid #eadff4;
+  background:#fbf8ff;color:#6a527f;line-height:1.5;font-size:12px
+}
+.supplier-mix-dialog .supplier-status.supplier-mix-feedback.is-error{
+  background:#fff6f8;color:#a72f55;border-color:#f3c8d3
+}
+.supplier-mix-staged{gap:15px;padding:19px;border-radius:16px}
+.supplier-mix-saved-block{
+  display:grid;gap:12px;min-width:0;padding:18px;
+  border:1px solid #ece3f4;border-radius:16px;background:#fff
+}
+.supplier-mix-section-heading{margin:0;color:#462464;font-size:16px;font-weight:800}
+.supplier-mix-dialog .supplier-mix-list{
+  width:100%;max-width:100%;min-width:0;overflow-x:auto;
+  border:1px solid #eee5f5;border-radius:13px
+}
+.supplier-mix-dialog .supplier-mix-list .supplier-mix-table{
+  min-width:840px;margin:0
+}
+.supplier-mix-empty{
+  display:flex;align-items:center;gap:20px;min-height:145px;
+  padding:27px;border-radius:12px;
+  background:linear-gradient(125deg,#fcfaff,#f7f0fd)
+}
+.supplier-mix-empty-icon{
+  display:grid;place-items:center;flex:0 0 56px;width:56px;height:56px;
+  border-radius:16px;background:#eee1fb;color:#6b319d;font-size:29px
+}
+.supplier-mix-empty-copy{display:grid;gap:7px;min-width:0}
+.supplier-mix-empty-copy h4{margin:0;color:#472169;font-size:17px;font-weight:800}
+.supplier-mix-empty-copy p{margin:0;color:#735f88;font-size:12px;line-height:1.65}
+.supplier-mix-dialog .list-pagination{padding:8px 0 2px}
+.supplier-mix-footer{
+  display:flex;justify-content:space-between;align-items:center;gap:18px;flex-wrap:wrap;
+  padding:19px 34px 25px;border-top:1px solid #ede4f5;background:#fff
+}
+.supplier-mix-dialog .supplier-mix-draft-reminder{
+  margin:0;font-size:11px;color:#7c6a90;line-height:1.5
+}
+.supplier-mix-dialog .supplier-dialog-dismiss{
+  margin:0;min-height:44px;padding-inline:20px;border-radius:12px
+}
+
+/* El selector múltiple usa un CHECKBOX auténtico, no el switch de estado global. */
+dialog.hd-product-finder .hd-lookup-select-cell{width:100px}
+dialog.hd-product-finder label.hd-lookup-checkbox{
+  display:inline-grid;place-items:center;width:44px;height:44px;
+  cursor:pointer;border-radius:12px;vertical-align:middle
+}
+dialog.hd-product-finder input.hd-lookup-check{
+  -webkit-appearance:none!important;appearance:none!important;
+  display:grid!important;place-items:center!important;position:relative!important;
+  width:24px!important;height:24px!important;min-width:24px!important;min-height:24px!important;
+  margin:0!important;padding:0!important;inset:auto!important;
+  border:2px solid #b79bd9!important;border-radius:7px!important;
+  background:#fff!important;box-shadow:0 2px 6px rgba(52,21,91,.1)!important;
+  opacity:1!important;transform:none!important;
+  cursor:pointer;transition:border-color .16s,background .16s,box-shadow .16s
+}
+dialog.hd-product-finder input.hd-lookup-check::before{content:none!important}
+dialog.hd-product-finder input.hd-lookup-check::after{
+  content:''!important;position:static!important;
+  width:11px!important;height:6px!important;
+  border-left:2.5px solid #fff!important;border-bottom:2.5px solid #fff!important;
+  border-top:0!important;border-right:0!important;
+  border-radius:0!important;background:transparent!important;
+  transform:rotate(-45deg) translateY(-1px) scale(.5)!important;
+  opacity:0!important;transition:transform .16s,opacity .16s
+}
+dialog.hd-product-finder input.hd-lookup-check:checked{
+  border-color:#7635c7!important;background:#7635c7!important;
+  box-shadow:0 4px 12px rgba(102,38,178,.23)!important
+}
+dialog.hd-product-finder input.hd-lookup-check:checked::after{
+  opacity:1!important;transform:rotate(-45deg) translateY(-1px) scale(1)!important
+}
+dialog.hd-product-finder label.hd-lookup-checkbox:hover input.hd-lookup-check{
+  border-color:#7436bd!important;box-shadow:0 0 0 4px rgba(124,58,184,.10)!important
+}
+dialog.hd-product-finder input.hd-lookup-check:focus-visible{
+  outline:3px solid #ae7be5!important;outline-offset:3px!important
+}
+dialog.hd-product-finder input.hd-lookup-check:disabled{
+  opacity:.38!important;cursor:not-allowed
+}
+
+/* Validación corporativa: tooltip propio anclado al campo; sin popup nativo. */
+.hd-validation-bubble{
+  box-sizing:border-box;position:relative;display:flex;align-items:center;gap:9px;
+  width:fit-content;max-width:100%;margin-top:6px;padding:10px 13px 10px 36px;
+  border:1px solid #edc2ce;border-radius:11px;
+  background:#fff7f9;color:#a12d50;
+  box-shadow:0 8px 20px rgba(100,25,65,.10);
+  font-size:12px!important;font-weight:650!important;line-height:1.45;
+  overflow-wrap:anywhere;animation:hd-v45-pop .17s ease-out
+}
+.hd-validation-bubble[hidden]{display:none!important}
+.hd-validation-bubble::before{
+  content:'!';position:absolute;left:11px;top:50%;transform:translateY(-50%);
+  display:grid;place-items:center;width:17px;height:17px;border-radius:6px;
+  background:#c94971;color:#fff;font-size:11px;font-weight:900
+}
+.hd-validation-bubble::after{
+  content:'';position:absolute;top:-5px;left:20px;
+  width:8px;height:8px;border-left:1px solid #edc2ce;border-top:1px solid #edc2ce;
+  transform:rotate(45deg);background:#fff7f9
+}
+:is(input,select,textarea).hd-field-invalid{
+  border-color:#cd5076!important;background:#fffafb!important;
+  box-shadow:0 0 0 3px rgba(205,80,118,.1)!important
+}
+.hd-validation-summary:not([hidden]){
+  border:1px solid #f1c6d1;border-radius:13px;background:#fff7f9;
+  color:#9d2e51;box-shadow:0 5px 14px rgba(100,25,65,.07)
+}
+#loginDialog .field .hd-validation-bubble{font-size:12px;color:#a12d50}
+#loginDialog .login-form .form-error:not([hidden]){
+  padding:12px 14px;border:1px solid #edbecb;border-radius:11px;
+  background:#fff7f9;color:#a12d50;font-weight:650
+}
+html[data-theme=oscuro] .supplier-mix-dialog{
+  background:#2b1c3c;color:#f3e8ff;border-color:#694989
+}
+html[data-theme=oscuro] .supplier-mix-provider-block,
+html[data-theme=oscuro] .supplier-mix-stat,
+html[data-theme=oscuro] .supplier-mix-saved-block,
+html[data-theme=oscuro] .supplier-mix-footer{
+  background:#352447;border-color:#70528b
+}
+html[data-theme=oscuro] .supplier-mix-dialog .supplier-mix-summary strong,
+html[data-theme=oscuro] .supplier-mix-section-heading,
+html[data-theme=oscuro] .supplier-mix-empty-copy h4{color:#f2e1ff}
+html[data-theme=oscuro] .supplier-mix-dialog .supplier-mix-summary span,
+html[data-theme=oscuro] .supplier-mix-stat-label,
+html[data-theme=oscuro] .supplier-mix-stat-state,
+html[data-theme=oscuro] .supplier-mix-draft-reminder{color:#d2b9e5}
+html[data-theme=oscuro] .supplier-mix-empty{
+  background:linear-gradient(125deg,#3a2a4e,#30233f)
+}
+html[data-theme=oscuro] .supplier-mix-empty-copy p{color:#d3bde2}
+html[data-theme=oscuro] .hd-validation-bubble{
+  background:#4b2b3c;border-color:#995574;color:#ffe1ec
+}
+html[data-theme=oscuro] .hd-validation-bubble::after{background:#4b2b3c;border-color:#995574}
+@media(max-width:800px){
+  .supplier-mix-content{padding:20px 22px}
+  .supplier-mix-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .supplier-mix-footer{padding:18px 22px}
+}
+@media(max-width:560px){
+  .modal.supplier-product-dialog.crud-supplier-dialog.supplier-mix-dialog{
+    width:calc(100vw - 12px);max-width:calc(100vw - 12px);
+    max-height:calc(100dvh - 12px);border-radius:17px
+  }
+  .supplier-mix-dialog .supplier-dialog-header{padding:23px 63px 22px 20px}
+  .supplier-mix-dialog .supplier-dialog-header h2{font-size:24px}
+  .supplier-mix-content{padding:18px 16px;gap:16px}
+  .supplier-mix-provider-block{padding:16px}
+  .supplier-mix-dialog .supplier-mix-tools{display:grid;grid-template-columns:1fr}
+  .supplier-mix-dialog .supplier-mix-tools .button{width:100%}
+  .supplier-mix-metrics{grid-template-columns:1fr}
+  .supplier-mix-stat{padding:13px 16px}
+  .supplier-mix-empty{padding:22px 16px;align-items:flex-start;gap:13px}
+  .supplier-mix-empty-icon{flex-basis:42px;width:42px;height:42px;font-size:22px}
+  .supplier-mix-saved-block{padding:13px}
+  .supplier-mix-footer{padding:16px;align-items:stretch;flex-direction:column}
+  .supplier-mix-dialog .supplier-dialog-dismiss{width:100%}
+}
+@media(prefers-reduced-motion:reduce){
+  .hd-validation-bubble{animation:none}
+  dialog.hd-product-finder input.hd-lookup-check{transition:none}
+}
+@keyframes hd-v45-pop{
+  from{opacity:0;transform:translateY(-4px)}
+  to{opacity:1;transform:translateY(0)}
+}
