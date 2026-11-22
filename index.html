@@ -21,6 +21,10 @@
   <link rel="stylesheet" href="assets/css/navegacion-v35.css?v=20261122-nav35">
   <link rel="stylesheet" href="assets/css/dialogo-estados-v36.css?v=20261122-modal36">
   <link rel="stylesheet" href="assets/css/productos-costo-promedio-v37.css?v=20261122-cost37">
+  <link rel="stylesheet" href="assets/css/proveedores-ubicaciones-v38.css?v=20261122-geo38">
+  <link rel="stylesheet" href="assets/css/acciones-buscadores-v39.css?v=20261122-v39">
+  <link rel="stylesheet" href="assets/css/mix-proveedores-v40.css?v=20261122-v40">
+  <link rel="stylesheet" href="assets/css/carga-global-v42.css?v=20261122-v42">
 </head>
 <body>
   <svg class="svg-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -75,6 +79,19 @@
             <button type="button" data-admin-catalog="tipos_envasado" class="nav-sublink" role="menuitem"><span>Tipos de envasado</span></button>
             <button type="button" data-admin-catalog="condiciones_tributarias" class="nav-sublink" role="menuitem"><span>Condición tributaria</span></button>
             <button type="button" data-admin-catalog="tipos_codigos_barras" class="nav-sublink" role="menuitem"><span>Tipos de códigos de barras</span></button>
+            <div class="hd-location-menu" id="ubicacionesMenu">
+              <button type="button" class="nav-sublink hd-location-parent" id="toggleUbicacionesSubnav"
+                aria-controls="ubicacionesSubnav" aria-expanded="false" hidden>
+                <span>Ubicaciones</span><svg class="icon small" aria-hidden="true"><use href="#i-chevron"/></svg>
+              </button>
+              <div id="ubicacionesSubnav" class="hd-tertiary-subnav" aria-label="Catálogos de ubicaciones" hidden>
+                <button type="button" data-nav="ubicaciones.paises" class="nav-sublink hd-tertiary-link"><span>Países</span></button>
+                <button type="button" data-nav="ubicaciones.regiones" class="nav-sublink hd-tertiary-link"><span>Regiones</span></button>
+                <button type="button" data-nav="ubicaciones.provincias" class="nav-sublink hd-tertiary-link"><span>Provincias</span></button>
+                <button type="button" data-nav="ubicaciones.comunas" class="nav-sublink hd-tertiary-link"><span>Comunas</span></button>
+                <button type="button" data-nav="ubicaciones.ciudades" class="nav-sublink hd-tertiary-link"><span>Ciudades</span></button>
+              </div>
+            </div>
             <button type="button" data-nav="usuarios" class="nav-sublink" id="navUsuarios" role="menuitem" hidden><span>Usuarios</span></button>
             <button type="button" data-nav="perfiles" class="nav-sublink" id="navPerfiles" role="menuitem" hidden><span>Perfiles y permisos</span></button>
           </div>
@@ -113,7 +130,7 @@
       </nav>
       <div class="sidebar-footer">
         Ruta H&amp;D2 · Gestión
-        <small>Servidor Laravel · Acceso JWT protegido</small>
+        <small>Acceso autorizado · Ruta H&D</small>
       </div>
     </aside>
     <div class="sidebar-scrim" data-close-sidebar></div>
@@ -142,7 +159,7 @@
         </div>
       </header>
       <main class="page">
-        <div class="environment-notice"><svg class="icon"><use href="#i-info"/></svg><span><strong>Sistema productivo:</strong> todos los registros provienen del servidor. Debes ingresar con tu cuenta autorizada.</span><button type="button" data-action="about" class="text-action">Más información</button></div>
+        <div class="environment-notice"><svg class="icon"><use href="#i-info"/></svg><span><strong>Bienvenido a Ruta H&D.</strong> Ingresa para gestionar tu información comercial.</span><button type="button" data-action="about" class="text-action">Más información</button></div>
         <section class="home" id="homeView">
           <div class="hero">
             <div class="hero-content">
@@ -166,7 +183,7 @@
           </div>
         </section>
         <section id="workspaceView" class="workspace" hidden>
-          <div class="workspace-header"><div><span class="overline" id="workspaceEyebrow">GESTIÓN DE DATOS</span><h1 id="workspaceTitle">Clientes</h1><p id="workspaceDescription">Información del servidor autenticado.</p></div><div class="workspace-actions"><button id="exportButton" type="button" class="button ghost"><svg class="icon"><use href="#i-download"/></svg> Exportar CSV</button><button id="newButton" type="button" class="button primary"><svg class="icon"><use href="#i-plus"/></svg><span id="newButtonText">Nuevo</span></button></div></div>
+          <div class="workspace-header"><div><span class="overline" id="workspaceEyebrow">GESTIÓN DE DATOS</span><h1 id="workspaceTitle">Clientes</h1><p id="workspaceDescription">Consulta y administra tus registros.</p></div><div class="workspace-actions"><button id="exportButton" type="button" class="button ghost"><svg class="icon"><use href="#i-download"/></svg> Exportar CSV</button><button id="newButton" type="button" class="button primary"><svg class="icon"><use href="#i-plus"/></svg><span id="newButtonText">Nuevo</span></button></div></div>
           <div class="workspace-content" id="workspaceContent"></div>
         </section>
         <footer class="page-footer"><span>© Ruta H&amp;D2 · Comercializadora H&amp;D</span><span>Interfaz Ruta H&amp;D V2 · Espectro violeta</span></footer>
@@ -182,32 +199,33 @@
   </dialog>
   <dialog id="confirmDialog" class="modal confirm-modal" aria-labelledby="confirmTitle">
     <div class="confirm-symbol"><svg class="icon"><use href="#i-warning"/></svg></div>
-    <h2 id="confirmTitle">¿Confirmar operación?</h2><p id="confirmDescription">Se comprobarán tus permisos en el servidor.</p>
+    <h2 id="confirmTitle">¿Confirmar operación?</h2><p id="confirmDescription">Confirma que deseas continuar con esta operación.</p>
     <div class="modal-footer centered"><button type="button" class="button ghost" id="confirmCancel">Cancelar</button><button type="button" class="button danger" id="confirmAccept"><svg class="icon"><use href="#i-trash"/></svg> Eliminar</button></div>
   </dialog>
   <dialog id="infoDialog" class="modal confirm-modal" aria-labelledby="infoTitle">
     <div class="info-symbol"><svg class="icon"><use href="#i-info"/></svg></div><h2 id="infoTitle">Información de conexión</h2>
-    <p id="infoDescription">La información se consulta y modifica exclusivamente mediante Laravel y MariaDB.</p>
+    <p id="infoDescription">Administra la información de tu empresa según los permisos de tu perfil.</p>
     <div class="modal-footer centered"><button type="button" class="button primary" id="infoClose">Entendido</button></div>
   </dialog>
   <div id="toastRegion" class="toast-region" role="status" aria-live="polite" aria-atomic="false"></div>
   <script src="assets/js/accesos.js?v=20261122-ui20" defer></script>
-  <script src="assets/js/listados-ui.js?v=20261122-modal36" defer></script>
+  <script src="assets/js/listados-ui.js?v=20261122-v39" defer></script>
   <script src="assets/js/validacion-ui.js?v=20261122-filters22" defer></script>
-  <script src="assets/js/menu-usuario.js?v=20261122-ui20" defer></script>
-  <script src="assets/js/catalogos-api.js?v=20261122-v31" defer></script>
-  <script src="assets/js/admin-remoto.js?v=20261122-nav35" defer></script>
-  <script src="assets/js/perfiles.js?v=20261122-ui20" defer></script>
-  <script src="assets/js/galeria-productos.js?v=20261122-page33" defer></script>
-  <script src="assets/js/productos-remotos.js?v=20261122-cost37" defer></script>
-  <script src="assets/js/usuarios.js?v=20261122-nav35" defer></script>
-  <script src="assets/js/recuperacion.js" defer></script>
+  <script src="assets/js/menu-usuario.js?v=20261122-copy39" defer></script>
+  <script src="assets/js/carga-global-v42.js?v=20261122-v42" defer></script>
+  <script src="assets/js/catalogos-api.js?v=20261122-v42" defer></script>
+  <script src="assets/js/admin-remoto.js?v=20261122-copy39" defer></script>
+  <script src="assets/js/perfiles.js?v=20261122-copy39" defer></script>
+  <script src="assets/js/galeria-productos.js?v=20261122-copy39" defer></script>
+  <script src="assets/js/productos-remotos.js?v=20261122-copy39" defer></script>
+  <script src="assets/js/usuarios.js?v=20261122-copy39" defer></script>
+  <script src="assets/js/recuperacion.js?v=20261122-copy39" defer></script>
   <dialog id="loginDialog" class="modal login-modal" aria-labelledby="loginDialogTitle">
     <form id="loginForm" class="login-form" novalidate>
       <div class="modal-heading"><div><span class="overline">RUTA H&amp;D2 · ACCESO SEGURO</span><h2 id="loginDialogTitle">Iniciar sesión</h2></div></div>
       <div class="login-body">
         <div class="login-identity"><img src="assets/img/prueba-rutahd2.webp" alt="Logotipo H&amp;D"><div><strong>Ruta H&amp;D V2</strong><span>Gestión comercial y operativa</span></div></div>
-        <p class="login-description">Accede con tu cuenta autorizada. La aplicación comprueba la conexión Laravel antes de enviar tus credenciales.</p>
+        <p class="login-description">Ingresa con tu cuenta para acceder a las herramientas de gestión.</p>
         <p class="login-server-status" id="loginServerStatus" role="alert" hidden></p>
         <label class="field"><span>Correo electrónico</span><input type="email" id="loginEmail" autocomplete="username" maxlength="190" placeholder="usuario@empresa.cl" required></label>
         <label class="field"><span>Contraseña</span><input type="password" id="loginPassword" autocomplete="current-password" required></label>
@@ -219,11 +237,15 @@
       </div>
     </form>
   </dialog>
-  <script src="assets/js/listas-precios.js?v=20261122-nav35" defer></script>
-  <script src="assets/js/ventas-precios.js?v=20261122-v31" defer></script>
-  <script src="assets/js/modulos-oficiales.js?v=20261122-nav35" defer></script>
-  <script src="assets/js/proveedores-productos.js?v=20261122-nav35" defer></script>
-  <script src="assets/js/login-produccion.js?v=20261122-ui20" defer></script>
-  <script src="assets/js/app-produccion.js?v=20261122-nav35" defer></script>
+  <script src="assets/js/listas-precios.js?v=20261122-copy39" defer></script>
+  <script src="assets/js/ventas-precios.js?v=20261122-copy39" defer></script>
+  <script src="assets/js/rut-chileno-v39.js?v=20261122-v39" defer></script>
+  <script src="assets/js/giros-sii-v39.js?v=20261122-v39" defer></script>
+  <script src="assets/js/buscador-productos-v39.js?v=20261122-v39" defer></script>
+  <script src="assets/js/ubicaciones.js?v=20261122-geo38" defer></script>
+  <script src="assets/js/modulos-oficiales.js?v=20261122-copy39" defer></script>
+  <script src="assets/js/proveedores-productos.js?v=20261122-v40" defer></script>
+  <script src="assets/js/login-produccion.js?v=20261122-copy39" defer></script>
+  <script src="assets/js/app-produccion.js?v=20261122-copy39" defer></script>
 </body>
 </html>

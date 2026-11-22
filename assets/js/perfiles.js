@@ -27,7 +27,7 @@
   }
   function unauthorized() {
     root.appendChild(el('p','catalog-footnote',
-      'Para gestionar perfiles inicia una sesión de administrador desde Administración. Los datos de prueba locales no conceden permisos de servidor.'));
+      'Inicia sesión con un perfil administrador para gestionar los accesos.'));
   }
   async function load(){
     if(!access().authenticated()||!access().isAdmin()){unauthorized();return;}
@@ -38,7 +38,7 @@
       if(!roles.some(r=>String(r.id)===String(selectedId))) selectedId=roles.find(r=>r.editable)?.id||roles[0]?.id;
       renderMatrix();
       await renderUsers();
-      status('Permisos cargados desde el servidor. Los cambios se aplican inmediatamente en las próximas solicitudes.');
+      status('Permisos actualizados. Los cambios se aplicarán en las próximas operaciones.');
     }catch(e){status('No fue posible consultar permisos (HTTP '+(e.status||'conexión')+').',true);}
   }
   function mount(parent){
@@ -47,7 +47,7 @@
     root=surface;parent.appendChild(root);
     root.appendChild(el('h2','','Perfiles y permisos por módulo'));
     root.appendChild(el('p','catalog-footnote',
-      'Cada perfil controla los accesos disponibles. Expande los módulos para revisar sus subítems; los permisos editables se validan en Laravel.'));
+      'Cada perfil define los accesos disponibles. Expande los módulos para revisar y editar sus opciones.'));
     const message=el('p','catalog-footnote');message.id='rolesStatus';
     root.appendChild(message);
     load();
@@ -151,7 +151,7 @@
     const intro=el('p','catalog-footnote',
       'Árbol de permisos por módulo. Los catálogos permiten configurar Ver y Gestionar. '+
       'Los listados de Productos y Proveedores tienen permisos independientes '+
-      'cuando Laravel incluye el esquema DDL23. Las demás opciones heredan permisos generales.');
+      'cuando esta función está habilitada. Las demás opciones heredan permisos generales.');
     form.appendChild(intro);
     const tree=el('div','permission-tree');tree.id='permissionTree';
     const heading=el('div','permission-tree-head');
@@ -202,7 +202,7 @@
             row.append(check('ver'),check('gestionar'));
           }else{
             const marker=el('small','permission-tree-readonly',
-              'Permiso general administrado por Laravel');
+              'Permiso general del módulo');
             row.append(marker);
           }
           children.appendChild(row);

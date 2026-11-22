@@ -1,0 +1,35 @@
+name: V39 · Validar proveedores SII, acciones y buscador de productos (sin desplegar)
+on:
+  push:
+    branches: [feature/v39-proveedores-rut-giros-buscador-20261122]
+  pull_request:
+    branches: [feature/proveedores-ubicaciones-sii-v38]
+permissions:
+  contents: read
+jobs:
+  verificar:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verificar sintaxis, artefactos y referencias
+        run: |
+          set -euo pipefail
+          for file in assets/js/{rut-chileno-v39,giros-sii-v39,buscador-productos-v39,catalogos-api,modulos-oficiales,proveedores-productos,listados-ui,ventas-precios,app-produccion}.js; do
+            node --check "$file"
+          done
+          test -s assets/css/acciones-buscadores-v39.css
+          grep -Fq 'rut-chileno-v39.js?v=20261122-v39' index.html
+          grep -Fq 'giros-sii-v39.js?v=20261122-v39' index.html
+          grep -Fq 'buscador-productos-v39.js?v=20261122-v39' index.html
+          ! grep -Fq "['correo_dte'" assets/js/modulos-oficiales.js
+      - name: Preparar Chromium aislado
+        run: |
+          npm install --no-audit --no-fund
+          npx playwright install --with-deps chromium
+      - name: Pruebas de integración contra API simulada, sin datos productivos
+        run: |
+          npx playwright test             tests/proveedores-giro-rut-buscador-v39.spec.mjs             tests/ubicaciones-proveedores-v38.spec.mjs             tests/productos-proveedores-codigos-v2.spec.mjs             tests/crud-entidades-comerciales.spec.mjs             tests/produccion-sin-demo.spec.mjs

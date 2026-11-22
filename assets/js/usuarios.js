@@ -11,7 +11,7 @@ async function guard(fn){if(busy)return;busy=true;try{await fn();}catch(e){statu
 async function load(){
  const res=await api().usersAll();
  if(!Array.isArray(res.usuarios)||!Array.isArray(res.roles))throw Error('Formato inválido');
- users=res.usuarios;roles=res.roles;draw();status('Datos reales actualizados desde Laravel/MySQL.');
+ users=res.usuarios;roles=res.roles;draw();status('Lista de usuarios actualizada.');
 }
 function mount(parent){
  parent.replaceChildren();
@@ -43,7 +43,7 @@ function draw(){
   const toggle=window.RutaHDListUI?.statusSwitch(u.nombre,Boolean(u.activo),async active=>{
     await api().updateUser(u.id,{
       nombre:u.nombre,correo_electronico:u.correo_electronico,
-      rol_id:Number(u.rol_id),activo:active
+      rol_id:Number(u.rol_id),ciudad_id:u.ciudad_id??null,activo:active
     });
     await load();
   },{disabled:protectedAccount});
@@ -66,7 +66,7 @@ function field(form,label,type,value=''){
  input.type=type;input.value=value;input.required=true;
  wrap.append(text,input);form.append(wrap);return input;
 }
-function form(user){
+async function form(user){
  if(!roles.length)return status('No se cargaron los perfiles.');
  const dlg=el('dialog',undefined,'modal catalog-dialog crud-dialog users-editor-dialog');
  const f=el('form',undefined,'crud-shell');f.noValidate=true;
@@ -83,6 +83,9 @@ function form(user){
  const wrap=el('label',undefined,'field crud-field'),role=el('select');
  roles.forEach(r=>{const opt=el('option',r.nombre);opt.value=r.id;role.append(opt);});
  role.value=String(user?.rol_id||roles[0].id);wrap.append(el('span','Perfil operativo'),role);grid.append(wrap);
+ const geoHost=el('div',undefined,'users-location-holder');
+ const geo=await window.RutaHDUbicaciones?.mountSelector(geoHost,user?.ciudad_id??null);
+ grid.append(geoHost);
  let active;
  if(user){
   const w=el('label',undefined,'field crud-field');active=el('select');
@@ -101,6 +104,7 @@ function form(user){
   busy=true;save.disabled=true;message.hidden=true;
   try{
    const dto={nombre:name.value.trim(),correo_electronico:email.value.trim(),rol_id:Number(role.value)};
+   if(geo)dto.ciudad_id=geo.value();
    if(user)await api().updateUser(user.id,{...dto,activo:active.value==='1'});
    else await api().createUser(dto);
    dlg.close();await load();status(user?'Usuario actualizado.':'Invitación enviada por correo.');

@@ -33,9 +33,15 @@ async function intercept(page,cb=()=>false){
     }
     if(path==='/api/v1/productos'&&r.method()==='GET')
       return reply(route,{data:[],last_page:1,total:0});
+    if(path==='/api/v1/productos/buscador'&&r.method()==='GET')
+      return reply(route,{data:[{id:50,sku:'SKU-CI-V2',nombre:'Artículo local',activo:true,
+        clasificacion:{rubro_id:1,marca_id:5},codigosVenta:[]}],last_page:1,total:1});
     if(path==='/api/v1/recursos/proveedores'&&r.method()==='GET')
       return reply(route,{data:[{id:16,nombre:'Proveedor principal',rut:'12345678-5'}],
         total:1,last_page:1});
+    if(path==='/api/v1/proveedores/mix'&&r.method()==='GET')
+      return reply(route,{data:[{id:16,nombre:'Proveedor principal',rut:'12345678-5',
+        activo:true,cantidad_productos_mix:0}],last_page:1,total:1});
     if(path==='/api/v1/proveedores-productos'&&r.method()==='GET')
       return reply(route,{data:[],last_page:1,total:0});
     return reply(route,{},404);
@@ -56,8 +62,13 @@ test('menús administrativos exactos y submenús de proveedores',async({page})=>
   const admin=await page.locator('#adminSubnav .nav-sublink').allTextContents();
   expect(admin.map(x=>x.trim())).toEqual([
     'Tipos de unidad','Tipos de envasado','Condición tributaria',
-    'Tipos de códigos de barras','Usuarios','Perfiles y permisos'
+    'Tipos de códigos de barras','Ubicaciones','Países','Regiones',
+    'Provincias','Comunas','Ciudades','Usuarios','Perfiles y permisos'
   ]);
+  await expect(page.locator('#ubicacionesSubnav')).toBeHidden();
+  await page.locator('#toggleUbicacionesSubnav').click();
+  await expect(page.locator('#ubicacionesSubnav')).toBeVisible();
+  await expect(page.locator('#ubicacionesSubnav [data-nav]')).toHaveCount(5);
   await page.locator('#toggleProviderSubnav').click();
   await expect(page.locator('#providerSubnav [data-nav="proveedores"]')).toBeVisible();
   await expect(page.locator('#providerSubnav [data-nav="proveedores_productos"]')).toBeVisible();
@@ -141,37 +152,177 @@ test('nuevo producto envía códigos de venta sin proveedor ni gramajes',async({
   });
 });
 
-test('módulo proveedores productos lista SKU/costo y relaciona dos entidades',async({page})=>{
-  let rows=[],saved=null;
+test('mix lista proveedores y permite asociar un producto con código de compra',async({page})=>{
+  let rows=[],saved=null,barcode=null;
   await intercept(page,async({route,r,path})=>{
+    if(path==='/api/v1/proveedores/mix'&&r.method()==='GET'){
+      return reply(route,{data:[{
+        id:16,nombre:'Proveedor principal',rut:'12345678-5',giro:'Mayorista',
+        activo:true,cantidad_productos_mix:rows.length
+      }],total:1,last_page:1}),true;
+    }
     if(path==='/api/v1/proveedores-productos'&&r.method()==='POST'){
       saved=r.postDataJSON();
       rows=[{...saved,id:100,producto:'Artículo local',codigo_producto:'SKU-CI-V2',
-        proveedor:'Proveedor principal',activo:1,costo_proveedor:'1099.0000',
-        ultima_recepcion_id:null,fecha_ultima_recepcion:null}];
-      return reply(route,rows[0],201),true;
+        proveedor:'Proveedor principal',activo:1,costo_proveedor:'1099.0000'}];
+      return reply(route,{id:100,...saved},201),true;
     }
     if(path==='/api/v1/proveedores-productos'&&r.method()==='GET')
       return reply(route,{data:rows,total:rows.length,last_page:1}),true;
+    if(path==='/api/v1/proveedores-productos/100/codigos-compra'&&r.method()==='GET')
+      return reply(route,{items:barcode?[{id:500,tipo_nombre:'EAN-13',
+        codigo_barras:barcode.codigo_barras,unidades_por_codigo:barcode.unidades_por_codigo,
+        tipo_codigo_barra_id:barcode.tipo_codigo_barra_id,activo:true}]:[]}),true;
+    if(path==='/api/v1/proveedores-productos/100/codigos-compra'&&r.method()==='POST'){
+      barcode=r.postDataJSON();
+      return reply(route,{id:500,...barcode},201),true;
+    }
     if(path==='/api/v1/productos'&&r.method()==='GET')
-      return reply(route,{data:[{id:50,sku:'SKU-CI-V2',nombre:'Artículo local',activo:true}],
-        total:1,last_page:1}),true;
+      return reply(route,{data:[{id:50,sku:'SKU-CI-V2',nombre:'Artículo local'}],last_page:1,total:1}),true;
     return false;
   });
   await login(page);
   await page.locator('#toggleProviderSubnav').click();
   await page.locator('#providerSubnav [data-nav="proveedores_productos"]').click();
-  await expect(page.locator('.supplier-products-module')).toBeVisible();
-  await page.getByRole('button',{name:'Asociar producto a proveedor'}).click();
-  const dlg=page.locator('dialog.supplier-product-dialog[open]');
-  await dlg.getByLabel('Proveedor *').selectOption('16');
-  await dlg.getByLabel('Producto del catálogo *').selectOption('50');
-  await dlg.getByLabel('Código de producto según proveedor').fill('P-CI-50');
-  await dlg.getByLabel('Costo neto acordado (CLP)').fill('1099');
-  await dlg.getByRole('button',{name:'Crear vínculo'}).click();
-  await expect(dlg).toBeHidden();
-  await expect(page.locator('.supplier-products-table')).toContainText('SKU-CI-V2');
-  expect(saved.producto_id).toBe(50);
-  expect(saved.proveedor_id).toBe(16);
-  expect(saved.codigo_proveedor_producto).toBe('P-CI-50');
+  const main=page.locator('.supplier-products-module');
+  await expect(main).toBeVisible();
+  await expect(main.locator('thead')).toContainText('Productos en mix');
+  await expect(main.locator('tbody')).toContainText('Proveedor principal');
+  await main.locator('.supplier-row-actions button').first().click();
+  const panel=page.locator('dialog.supplier-mix-dialog[open]');
+  await expect(panel).toBeVisible();
+  await panel.getByRole('button',{name:'Agregar individualmente'}).click();
+  const relation=page.locator('dialog.supplier-product-dialog:not(.supplier-mix-dialog)[open]');
+  await relation.getByLabel('Producto del catálogo *').selectOption('50');
+  await relation.getByLabel('Código de producto según proveedor').fill('P-CI-50');
+  await relation.getByLabel('Costo neto acordado (CLP)').fill('1099');
+  await relation.getByRole('button',{name:'Guardar',exact:true}).click();
+  await expect(relation).toBeHidden();
+  await expect(panel).toContainText('Artículo local');
+  expect(saved).toMatchObject({producto_id:50,proveedor_id:16,codigo_proveedor_producto:'P-CI-50'});
+  await panel.getByRole('button',{name:'Códigos de compra de Artículo local'}).click();
+  const codes=page.locator('dialog.supplier-product-dialog[open]').last();
+  await codes.getByRole('button',{name:'Añadir código de barras de compra'}).click();
+  const form=codes.locator('form.supplier-barcode-form');
+  await form.getByLabel('Tipo').selectOption('11');
+  await form.getByLabel('Código de compra').fill('7801234567890');
+  await form.getByLabel('Unidades por este código').fill('12');
+  await form.getByRole('button',{name:'Añadir código'}).click();
+  await expect(codes).toContainText('7801234567890');
+  expect(barcode).toMatchObject({tipo_codigo_barra_id:11,codigo_barras:'7801234567890',unidades_por_codigo:'12'});
+});
+
+
+test('mix proveedor selecciona varios productos en buscador, los prepara y guarda juntos',async({page})=>{
+  const searches=[],saves=[];
+  let existing=[];
+  await intercept(page,async({route,r,path,url})=>{
+    if(path==='/api/v1/proveedores/mix'&&r.method()==='GET'){
+      return reply(route,{data:[{
+        id:16,nombre:'Proveedor principal',rut:'12345678-5',giro:'Distribución',
+        activo:true,cantidad_productos_mix:existing.length
+      }],total:1,last_page:1}),true;
+    }
+    if(path==='/api/v1/productos/buscador'&&r.method()==='GET'){
+      searches.push({
+        page:url.searchParams.get('page'),
+        supplier:url.searchParams.get('solo_sin_proveedor_id')
+      });
+      const pg=Number(url.searchParams.get('page')||1);
+      const data=pg===1?[
+        {id:51,sku:'SKU-51',nombre:'Arroz',activo:true,clasificacion:{},codigosVenta:[]},
+        {id:52,sku:'SKU-52',nombre:'Aceite',activo:true,clasificacion:{},codigosVenta:[]}
+      ]:[
+        {id:53,sku:'SKU-53',nombre:'Azúcar',activo:true,clasificacion:{},codigosVenta:[]}
+      ];
+      return reply(route,{data,last_page:2,total:3}),true;
+    }
+    if(path==='/api/v1/proveedores-productos/lote'&&r.method()==='POST'){
+      const payload=r.postDataJSON();saves.push(payload);
+      existing=payload.productos.map((item,i)=>({
+        id:601+i,producto_id:item.producto_id,proveedor_id:16,
+        codigo_producto:'SKU-'+item.producto_id,
+        producto:({51:'Arroz',52:'Aceite',53:'Azúcar'})[item.producto_id],
+        codigo_proveedor_producto:item.codigo_proveedor_producto,
+        costo_proveedor:item.costo_proveedor,
+        activo:true
+      }));
+      return reply(route,{cantidad:existing.length,ids:existing.map(i=>i.id)},201),true;
+    }
+    if(path==='/api/v1/proveedores-productos'&&r.method()==='GET')
+      return reply(route,{data:existing,last_page:1,total:existing.length}),true;
+    return false;
+  });
+  await login(page);
+  await page.locator('#toggleProviderSubnav').click();
+  await page.locator('#providerSubnav [data-nav="proveedores_productos"]').click();
+  await page.locator('.supplier-products-module .supplier-row-actions button').first().click();
+  const panel=page.locator('dialog.supplier-mix-dialog[open]');
+  await expect(panel).toBeVisible();
+  await panel.getByRole('button',{name:'Buscar y agregar productos'}).click();
+  const search=page.locator('dialog.hd-product-finder[open]');
+  await expect(search).toBeVisible();
+  await search.getByRole('checkbox',{name:'Seleccionar Arroz'}).check();
+  await search.getByRole('checkbox',{name:'Seleccionar Aceite'}).check();
+  await search.getByRole('button',{name:'Siguiente ›'}).first().click();
+  await search.getByRole('checkbox',{name:'Seleccionar Azúcar'}).check();
+  await search.getByRole('button',{name:'Usar productos seleccionados'}).click();
+  await expect(search).toBeHidden();
+  const draft=panel.locator('.supplier-mix-staged');
+  await expect(draft).toBeVisible();
+  await expect(draft.locator('.supplier-mix-draft-row')).toHaveCount(3);
+  expect(saves).toHaveLength(0);
+  expect(searches.length).toBeGreaterThan(1);
+  expect(searches.every(x=>x.supplier==='16')).toBe(true);
+  await draft.getByRole('textbox',{name:'Código del proveedor para Arroz'}).fill('PROV-ARROZ');
+  await draft.getByRole('spinbutton',{name:'Costo neto para Arroz'}).fill('1200.5000');
+  await draft.getByRole('button',{name:'Quitar Aceite'}).click();
+  await expect(draft.locator('.supplier-mix-draft-row')).toHaveCount(2);
+  expect(saves).toHaveLength(0);
+  await draft.getByRole('button',{name:'Guardar 2 productos'}).click();
+  await expect(draft).toBeHidden();
+  expect(saves).toHaveLength(1);
+  expect(saves[0]).toEqual({
+    proveedor_id:16,
+    productos:[
+      {producto_id:51,codigo_proveedor_producto:'PROV-ARROZ',costo_proveedor:'1200.5000'},
+      {producto_id:53,codigo_proveedor_producto:null,costo_proveedor:null}
+    ]
+  });
+  await expect(panel.locator('.supplier-mix-list')).toContainText('Arroz');
+  await expect(panel.locator('.supplier-mix-list')).toContainText('Azúcar');
+  await expect(panel).toContainText('2 producto(s) agregados');
+});
+
+test('mix mantiene borrador cuando lote falla y no guarda relaciones parciales',async({page})=>{
+  let writes=0;
+  await intercept(page,async({route,r,path})=>{
+    if(path==='/api/v1/proveedores/mix'&&r.method()==='GET')
+      return reply(route,{data:[{id:16,nombre:'Proveedor principal',activo:true,
+        cantidad_productos_mix:0}],total:1,last_page:1}),true;
+    if(path==='/api/v1/productos/buscador'&&r.method()==='GET')
+      return reply(route,{data:[{id:51,sku:'SKU-51',nombre:'Arroz',activo:true,
+        clasificacion:{},codigosVenta:[]}],last_page:1,total:1}),true;
+    if(path==='/api/v1/proveedores-productos/lote'&&r.method()==='POST'){
+      writes++;return reply(route,{message:'Duplicado'},409),true;
+    }
+    if(path==='/api/v1/proveedores-productos'&&r.method()==='GET')
+      return reply(route,{data:[],last_page:1,total:0}),true;
+    return false;
+  });
+  await login(page);
+  await page.locator('#toggleProviderSubnav').click();
+  await page.locator('#providerSubnav [data-nav="proveedores_productos"]').click();
+  await page.locator('.supplier-products-module .supplier-row-actions button').first().click();
+  const panel=page.locator('dialog.supplier-mix-dialog[open]');
+  await panel.getByRole('button',{name:'Buscar y agregar productos'}).click();
+  const picker=page.locator('dialog.hd-product-finder[open]');
+  await picker.getByRole('checkbox',{name:'Seleccionar Arroz'}).check();
+  await picker.getByRole('button',{name:'Usar productos seleccionados'}).click();
+  const draft=panel.locator('.supplier-mix-staged');
+  await draft.getByRole('button',{name:'Guardar 1 producto'}).click();
+  await expect(draft.locator('.supplier-mix-draft-row')).toHaveCount(1);
+  await expect(panel.locator('.supplier-mix-list')).not.toContainText('SKU-51');
+  await expect(panel).toContainText('Ninguna selección pendiente fue descartada.');
+  expect(writes).toBe(1);
 });

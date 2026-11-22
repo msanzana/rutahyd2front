@@ -1,0 +1,155 @@
+/* Ruta H&D V2 · v38 · Ubicaciones y datos tributarios de proveedores.
+ * Menú de tercer nivel, editor SII y mix, densos sin sacrificar accesibilidad.
+ */
+#ubicacionesMenu{display:grid;gap:2px}
+#ubicacionesMenu .hd-location-parent{
+ display:flex;align-items:center;justify-content:space-between;width:100%;
+ border-radius:9px;padding-right:15px
+}
+#ubicacionesMenu .hd-location-parent .icon{width:14px;height:14px;transition:transform .16s ease}
+#ubicacionesMenu .hd-location-parent[aria-expanded=true] .icon{transform:rotate(90deg)}
+#ubicacionesMenu .hd-location-parent:not([hidden]):focus-visible,
+#ubicacionesMenu .hd-tertiary-link:focus-visible{outline:2px solid #ab78e7;outline-offset:2px}
+#ubicacionesMenu .hd-tertiary-subnav{
+ display:grid;gap:2px;margin-left:16px;padding:4px 0 4px 11px;
+ border-left:2px solid #9c6ace
+}
+#ubicacionesMenu .hd-tertiary-subnav[hidden],
+#ubicacionesMenu .hd-location-parent[hidden],
+#ubicacionesMenu .hd-tertiary-link[hidden]{display:none!important}
+#ubicacionesMenu .hd-tertiary-link{
+ display:flex;text-align:left;width:100%;border-radius:8px;
+ padding:8px 11px;font-size:11.5px;min-height:36px
+}
+#ubicacionesMenu .hd-tertiary-link.active{
+ background:#e7d7f7;color:#4c206f;font-weight:800
+}
+.location-module .panel-heading{display:grid;gap:4px}
+.location-module .panel-heading p{font-size:12px;color:#746086;margin:0}
+.location-toolbar,.supplier-mix-tools{display:flex;align-items:center;flex-wrap:wrap;gap:9px}
+.location-toolbar input[type=search]{
+ flex:1 1 210px;min-width:0;min-height:42px;
+ border:1px solid #ddcfe9;border-radius:10px;padding:9px 12px;
+ background:#fff;color:#39214c
+}
+.location-table{width:max-content;min-width:100%}
+.location-table .location-row-actions{text-align:right;white-space:nowrap}
+.location-table .location-row-actions .button{margin:2px;font-size:12px;min-height:37px}
+dialog.location-editor-dialog{
+ display:none;position:fixed;margin:auto;inset:0;
+ box-sizing:border-box;width:min(800px,calc(100vw - 24px));max-width:800px;
+ max-height:calc(100dvh - 24px);padding:0;overflow:auto;border:1px solid #e6d9f0;
+ border-radius:20px;background:#fff;color:#332043;
+ box-shadow:0 30px 100px rgba(35,9,57,.37)
+}
+dialog.location-editor-dialog[open]{display:block}
+dialog.location-editor-dialog::backdrop{background:rgba(20,7,39,.70);backdrop-filter:blur(5px)}
+.location-editor-shell{display:grid;gap:16px;padding:clamp(17px,3vw,29px)}
+.location-editor-heading{display:grid;gap:5px;padding-bottom:15px;border-bottom:1px solid #e8ddf0;position:relative}
+.location-editor-heading h2{font-size:clamp(20px,2.3vw,27px);margin:0;color:#4e2274}
+.location-editor-heading p{font-size:12px;color:#776487;margin:0}
+.location-editor-heading .crud-close{position:absolute;right:0;top:0}
+.location-editor-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px 16px}
+.location-editor-grid>.location-parent-lookup{grid-column:1/-1;
+ display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:10px;align-items:end}
+.location-editor-grid .field,.location-chain .field{
+ display:grid;gap:5px;min-width:0;color:#4d3563;font-size:12px;font-weight:750
+}
+.location-editor-grid :is(input,select),.location-chain select{
+ min-height:43px;max-width:100%;width:100%;box-sizing:border-box;
+ padding:9px 12px;border:1px solid #d9c9e9;border-radius:10px;
+ background:#fff;color:#362049;font:inherit;font-size:12px
+}
+.location-editor-grid :is(input,select):focus-visible,.location-chain select:focus-visible{
+ border-color:#8651c8;outline:3px solid rgba(137,70,200,.17)
+}
+.location-active-switch{display:flex;gap:10px;align-items:center;font-size:12px}
+.location-active-switch input{accent-color:#8041bb}
+.location-editor-status{min-height:18px;font-size:12px;color:#5b3977;margin:0}
+.location-editor-status.is-error{color:#a52c4a}
+.location-editor-actions{display:flex;gap:10px;justify-content:flex-end}
+.location-editor-actions .button{min-height:42px}
+.location-chain{
+ grid-column:1/-1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+ gap:12px 14px;align-items:start;padding:16px;border-radius:13px;
+ background:linear-gradient(130deg,#faf6ff,#fff);border:1px solid #e6d9f0
+}
+.location-chain .location-chain-help{grid-column:1/-1;line-height:1.4;font-size:10.5px;color:#76558d}
+.location-chain select:disabled{background:#f2edf5;color:#7e7187;opacity:.75}
+.modal.official-editor:has(.supplier-location-section){
+ width:min(1080px,calc(100vw - 28px));max-width:min(1080px,calc(100vw - 28px))
+}
+.modal.official-editor:has(.supplier-location-section) .official-editor-grid{
+ grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 14px
+}
+.official-editor-grid .official-editor-section{
+ grid-column:1/-1;padding:9px 12px;margin:8px 0 0;font-size:12px;
+ background:#f1e8fa;border-left:4px solid #8a4ab7;color:#523073;border-radius:8px
+}
+.official-editor-grid .supplier-location-section{grid-column:1/-1;display:grid;gap:6px}
+.official-editor-grid .supplier-location-section>.official-editor-description{margin:0;font-size:11px}
+.official-editor-grid .supplier-location-section .location-chain{margin-top:4px}
+.official-editor-grid :is(input,select,textarea){font-size:12.5px}
+.supplier-linked-provider{
+ padding:12px 14px;color:#532c7b;border-radius:10px;background:#f0e5fb;
+ border:1px solid #decaee;font-weight:780;font-size:13px
+}
+.modal.supplier-mix-dialog{width:min(1120px,calc(100vw - 28px));max-width:min(1120px,calc(100vw - 28px))}
+.supplier-mix-summary{
+ display:flex;gap:7px 16px;align-items:center;flex-wrap:wrap;
+ padding:13px;border:1px solid #e3d4ef;background:#f9f4ff;border-radius:11px
+}
+.supplier-mix-summary strong{color:#4d2878;font-size:14px}
+.supplier-mix-summary span{color:#6a547d;font-size:12px}
+.supplier-mix-tools{justify-content:space-between}
+.supplier-mix-tools .button{min-height:40px}
+.supplier-mix-list{width:100%;max-width:100%;overflow-x:auto}
+.supplier-mix-table{width:max-content;min-width:100%;font-size:12px}
+.supplier-mix-table td{vertical-align:middle}
+.supplier-mix-table td .button{min-height:36px;padding:7px 12px;font-size:11px}
+.supplier-products-table{width:max-content;min-width:100%;table-layout:auto}
+.supplier-mix-count{text-align:center!important}
+.supplier-mix-badge{
+ display:inline-block;min-width:31px;padding:6px 11px;background:#eee2fc;
+ color:#5c2a88;border-radius:999px;border:1px solid #d5bcef;font-weight:800;
+ text-align:center;font-variant-numeric:tabular-nums
+}
+.users-location-holder{grid-column:1/-1}
+html[data-theme=oscuro] .location-chain,html[data-theme=oscuro] .supplier-mix-summary{
+ background:#34253f;border-color:#5c4370
+}
+html[data-theme=oscuro] .supplier-mix-summary :is(span,strong),
+html[data-theme=oscuro] .supplier-linked-provider{color:#edd6ff}
+html[data-theme=oscuro] .supplier-linked-provider{
+ background:#483357;border-color:#775589
+}
+html[data-theme=oscuro] #ubicacionesMenu .hd-tertiary-subnav{border-color:#8a69ac}
+html[data-theme=oscuro] #ubicacionesMenu .hd-tertiary-link.active{background:#503267;color:#f8eaff}
+html[data-theme=oscuro] .location-editor-dialog{
+ background:#30223d;color:#f4eaff;border-color:#70558a
+}
+html[data-theme=oscuro] .location-editor-heading h2{color:#efd5ff}
+html[data-theme=oscuro] .location-editor-grid :is(input,select),
+html[data-theme=oscuro] .location-chain select{
+ background:#392a47;color:#f1e6ff;border-color:#624577
+}
+html[data-theme=oscuro] .location-editor-grid .official-editor-section,
+html[data-theme=oscuro] .official-editor-section{background:#40304e;color:#efd9fb}
+html[data-theme=oscuro] .supplier-mix-badge{background:#49345d;color:#f6dcff;border-color:#735491}
+@media(max-width:850px){
+ .modal.official-editor:has(.supplier-location-section) .official-editor-grid{
+  grid-template-columns:repeat(2,minmax(0,1fr))
+ }
+ .location-chain{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:560px){
+ .modal.official-editor:has(.supplier-location-section) .official-editor-grid,
+ .location-chain,.location-editor-grid{grid-template-columns:minmax(0,1fr)}
+ .location-editor-grid>.location-parent-lookup{
+  grid-template-columns:minmax(0,1fr);gap:8px
+ }
+ .location-editor-actions .button{flex:1}
+ .supplier-mix-tools{display:grid;grid-template-columns:1fr}
+ .supplier-mix-tools .button{width:100%}
+}
+@media(prefers-reduced-motion:reduce){#ubicacionesMenu .hd-location-parent .icon{transition:none}}

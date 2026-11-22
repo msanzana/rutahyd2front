@@ -23,17 +23,17 @@
   async function check(){
     if(checking)return online;
     checking=true;
-    report('checking','Conectando…','Verificando la disponibilidad de Laravel.');
+    report('checking','Conectando…','Verificando acceso al sistema.');
     try {
       api().configure(location.origin);
       const health=await api().status();
-      if(health.disponible)report('ok','Servidor conectado',
-        'Servidor Laravel disponible. Ingresa con tu usuario autorizado.');
-      else report('blocked','Servidor no habilitado',
-        'El servidor informó HTTP '+health.http+' ('+health.estado+'). El administrador debe habilitar la API para iniciar sesión.');
+      if(health.disponible)report('ok','Sistema disponible',
+        'Acceso disponible. Ingresa con tu usuario y contraseña.');
+      else report('blocked','Acceso no disponible',
+        'No se pudo habilitar el acceso (código '+health.http+'). Contacta al administrador.');
     } catch {
-      report('blocked','Sin conexión al servidor',
-        'No se pudo confirmar la conexión HTTPS con Laravel. No se enviarán credenciales.');
+      report('blocked','Sin conexión',
+        'No se pudo establecer una conexión segura. No se enviaron tus credenciales.');
     } finally {checking=false;}
     return online;
   }
@@ -72,7 +72,7 @@
   form.addEventListener('submit',async event=>{
     event.preventDefault();
     if(busy||!form.reportValidity())return;
-    if(!online){error.textContent='El servidor no está habilitado. No se enviaron tus credenciales.';error.hidden=false;return;}
+    if(!online){error.textContent='El acceso no está disponible. No se enviaron tus credenciales.';error.hidden=false;return;}
     busy=true;submit.disabled=true;error.hidden=true;
     const secret=pass.value;
     pass.value='';
@@ -86,7 +86,7 @@
       error.hidden=false;
       error.textContent=e?.status===422||e?.status===401?'Correo o contraseña incorrectos.':
         e?.status===429?'Demasiados intentos de acceso. Inténtalo más tarde.':
-        e?.status===503?'Laravel todavía no está preparado para autenticar usuarios.':
+        e?.status===503?'No fue posible iniciar sesión. Contacta al administrador si el problema continúa.':
         'No fue posible autenticarte. Comprueba el estado del servidor.';
     }finally{busy=false;submit.disabled=!online;}
   });

@@ -1,0 +1,39 @@
+name: V42 - preloader CRUD y búsquedas (frontend aislado)
+on:
+  push:
+    branches: [feature/v42-preloader-global-20261122]
+permissions:
+  contents: read
+jobs:
+  probar:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 24
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Comprobar sintaxis y recursos
+        run: |
+          set -euo pipefail
+          node --check assets/js/carga-global-v42.js
+          node --check assets/js/catalogos-api.js
+          node --check assets/js/modulos-oficiales.js
+          test -s assets/css/carga-global-v42.css
+          grep -Fq 'carga-global-v42.js?v=20261122-v42' index.html
+          grep -Fq 'carga-global-v42.css?v=20261122-v42' index.html
+          grep -Fq 'catalogos-api.js?v=20261122-v42' index.html
+          node --check tests/preloader-global-v42.spec.mjs
+      - name: Instalar navegador en CI sin producción
+        run: |
+          npm install --no-audit --no-fund
+          npx playwright install --with-deps chromium
+      - name: Ejecutar pruebas de popup y flujos CRUD existentes
+        run: |
+          npx playwright test \
+            tests/preloader-global-v42.spec.mjs \
+            tests/productos-proveedores-codigos-v2.spec.mjs \
+            tests/proveedores-giro-rut-buscador-v39.spec.mjs \
+            tests/ubicaciones-proveedores-v38.spec.mjs \
+            tests/crud-entidades-comerciales.spec.mjs \
+            tests/produccion-sin-demo.spec.mjs

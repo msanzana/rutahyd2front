@@ -104,7 +104,7 @@
     } finally { clearTimeout(timer); }
   }
 
-  async function send(path, method = 'GET', body) {
+  async function sendCore(path, method = 'GET', body) {
     if (!endpoint || !bearer) throw new Error('La API requiere configuración y sesión autenticada.');
     const sessionBearer = bearer;
     const controller = new AbortController();
@@ -157,7 +157,13 @@
     return response.json();
   }
 
-  async function sendBinary(path,method='GET',files=null) {
+  async function send(path,method='GET',body){
+    const finish=window.RutaHDCarga?.start({path,method});
+    try{return await sendCore(path,method,body);}
+    finally{finish?.();}
+  }
+
+  async function sendBinaryCore(path,method='GET',files=null) {
     if(!endpoint||!bearer)throw new Error('Debes iniciar sesión.');
     const token=bearer;
     const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),45000);
@@ -198,7 +204,13 @@
     }finally{clearTimeout(timer);}
   }
 
-  async function publico(path, payload) {
+  async function sendBinary(path,method='GET',files=null){
+    const finish=window.RutaHDCarga?.start({path,method});
+    try{return await sendBinaryCore(path,method,files);}
+    finally{finish?.();}
+  }
+
+  async function publicoCore(path,payload) {
     if (!endpoint) configure(window.location.origin);
     if(!['/recuperacion/solicitar','/recuperacion/restablecer'].includes(path))
       throw new Error('Ruta no autorizada');
@@ -212,6 +224,12 @@
       if(!(response.headers.get('Content-Type')||'').includes('application/json'))throw new Error('No se recibió JSON');
       return response.json();
     }finally{clearTimeout(timer);}
+  }
+
+  async function publico(path,payload){
+    const finish=window.RutaHDCarga?.start({path,method:'POST'});
+    try{return await publicoCore(path,payload);}
+    finally{finish?.();}
   }
 
   function key(catalogo) {
@@ -247,6 +265,57 @@
     saveRoleCatalogPermissions: (roleId, modulos, submodulos=null) =>
       send('/perfiles/' + id(roleId) + '/catalogos','PUT',
         submodulos?{modulos,submodulos}:{modulos}),
+    // Ubicaciones geográficas: CRUD JWT y una única FK ciudad_id en entidades.
+    locations: (tipo,{padreId=null,buscar='',page=1,perPage=100,incluirInactivos=false}={})=>{
+      const allowed=new Set(['paises','regiones','provincias','comunas','ciudades']);
+      if(!allowed.has(tipo))throw Error('Catálogo de ubicación inválido');
+      const q=new URLSearchParams({page:String(page),por_pagina:String(perPage)});
+      if(padreId!=null)q.set('padre_id',id(padreId));
+      if(buscar)q.set('buscar',String(buscar).slice(0,120));
+      if(incluirInactivos)q.set('incluye_inactivos','1');
+      return send('/ubicaciones/'+tipo+'?'+q);
+    },
+    locationPath: ciudadId=>send('/ubicaciones/jerarquia/'+id(ciudadId)),
+    createLocation: (tipo,datos)=>send('/ubicaciones/'+encodeURIComponent(tipo),'POST',datos),
+    updateLocation: (tipo,geoId,datos)=>
+      send('/ubicaciones/'+encodeURIComponent(tipo)+'/'+id(geoId),'PUT',datos),
+    deactivateLocation: (tipo,geoId)=>
+      send('/ubicaciones/'+encodeURIComponent(tipo)+'/'+id(geoId),'DELETE'),
+    // Catálogos SII vigentes y buscador de producto reutilizable para cualquier módulo.
+    girosSii: ({buscar='',page=1,perPage=25,codigo=null}={})=>{
+      const q=new URLSearchParams({buscar:String(buscar).slice(0,120),
+        page:String(page),por_pagina:String(perPage)});
+      if(codigo!==null)q.set('codigo',String(codigo));
+      return send('/giros-sii?'+q.toString());
+    },
+    buscarProductos: ({buscar='',page=1,filters={},orden='nombre',perPage=25}={})=>{
+      const allowed=new Set([
+        'codigo_barras','rubro_id','departamento_id','familia_id','linea_id',
+        'marca_id','modelo_id','tipo_unidad_id','tipo_envasado_id',
+        'condicion_tributaria_id','proveedor_id','solo_sin_proveedor_id',
+        'sku_desde','sku_hasta','id_desde','id_hasta'
+      ]);
+      if(!Number.isInteger(Number(page))||Number(page)<1||Number(page)>10000)
+        throw Error('Página de buscador inválida');
+      if(![ 'sku','nombre' ].includes(orden))throw Error('Orden inválido');
+      if(!Number.isInteger(Number(perPage))||Number(perPage)<1||Number(perPage)>25)
+        throw Error('Cantidad de productos fuera del límite');
+      const q=new URLSearchParams({page:String(page),por_pagina:String(perPage),
+        orden,buscar:String(buscar).slice(0,120)});
+      for(const [key,value] of Object.entries(filters||{})){
+        if(!allowed.has(key))throw Error('Filtro de producto no permitido: '+key);
+        if(value===null||value===undefined||value==='')continue;
+        const str=String(value);
+        if(str.length>100)throw Error('Filtro demasiado largo');
+        if(key.endsWith('_id')||key.startsWith('id_')){
+          if(!/^[1-9][0-9]*$/.test(str))throw Error('ID de filtro inválido');
+        }
+        q.set(key,str);
+      }
+      return send('/productos/buscador?'+q.toString());
+    },
+    supplierMix: (page=1,buscar='')=>send('/proveedores/mix?'+
+      new URLSearchParams({page:String(page),por_pagina:'25',buscar:String(buscar).slice(0,120)})),
     resources: (recurso, pagina = 1, buscar = '', perPage=25) => {
       if (!RESOURCES.has(recurso)) throw new Error('Recurso remoto no permitido.');
       if (!Number.isSafeInteger(pagina) || pagina < 1 || pagina > 10000 ||
@@ -377,6 +446,7 @@
       return send('/proveedores-productos?'+query.toString());
     },
     createProductSupplier: data => send('/proveedores-productos','POST',data),
+    createProductSuppliersBatch: data => send('/proveedores-productos/lote','POST',data),
     updateProductSupplier: (identificador,data) => send('/proveedores-productos/'+id(identificador),'PUT',data),
     deactivateProductSupplier: identificador => send('/proveedores-productos/'+id(identificador),'DELETE'),
     saleBarcodes: productId => send('/productos/'+id(productId)+'/codigos-venta'),

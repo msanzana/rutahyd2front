@@ -76,7 +76,7 @@
   const kicker=document.createElement('span');kicker.className='crud-kicker';kicker.textContent='RUTA H&D · MI CUENTA';
   const title=document.createElement('h2');title.textContent='Mi perfil';
   const subtitle=document.createElement('p');subtitle.className='crud-intro';
-  subtitle.textContent='Información de la cuenta autorizada en Laravel.';
+  subtitle.textContent='Datos de tu perfil y preferencias.';
   copy.append(kicker,title,subtitle);
   const closeButton=document.createElement('button');closeButton.className='crud-close';
   closeButton.type='button';closeButton.textContent='×';closeButton.setAttribute('aria-label','Cerrar perfil');

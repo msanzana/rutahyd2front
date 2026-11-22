@@ -51,14 +51,14 @@
     return {dialog,box};
   }
 
-  async function editRelation(record,refresh){
+  async function editRelation(record,refresh,fixedSupplier=null){
     const {dialog,box}=openDialog(record?'Editar producto del proveedor':'Relacionar proveedor y producto');
     const message=e('p','Cargando proveedores y productos…','supplier-status');
     box.append(message);
     try{
       const [suppliers,products]=await Promise.all([
-        api().resources('proveedores',1,'',100),
-        api().products(1,'')
+        fixedSupplier?Promise.resolve({data:[fixedSupplier]}):api().resources('proveedores',1,'',100),
+        api().buscarProductos({page:1})
       ]);
       const providerRows=(suppliers.data||[]).map(v=>({id:v.id,label:v.nombre+' · '+(v.rut||'Sin RUT')}));
       const productRows=(products.data||[]).map(v=>({id:v.id,label:(v.sku||'Sin SKU')+' · '+v.nombre}));
@@ -69,26 +69,47 @@
       const form=e('form',null,'supplier-dialog-form crud-supplier-form');
       const providerSearch=field('search','',120);
       providerSearch.placeholder='Nombre o RUT del proveedor…';
-      const provider=selection(providerRows,'Seleccionar proveedor',record?.proveedor_id);
+      const provider=selection(providerRows,'Seleccionar proveedor',
+        record?.proveedor_id??fixedSupplier?.id);
       provider.required=true;
       const productSearch=field('search','',120);
       productSearch.placeholder='Nombre o SKU del producto…';
       const product=selection(productRows,'Seleccionar producto',record?.producto_id);
       product.required=true;
-      if(record){provider.disabled=true;product.disabled=true;providerSearch.disabled=true;productSearch.disabled=true;}
+      if(record||fixedSupplier){provider.disabled=true;providerSearch.disabled=true;}
+      if(record){product.disabled=true;productSearch.disabled=true;}
       const searchProvider=button('Buscar proveedor',async()=>{
         const res=await api().resources('proveedores',1,providerSearch.value.trim(),100);
         provider.replaceChildren(new Option('Seleccionar proveedor',''));
         (res.data||[]).forEach(row=>provider.append(new Option(row.nombre+' · '+(row.rut||'Sin RUT'),String(row.id))));
       });
-      const searchProduct=button('Buscar producto',async()=>{
-        const res=await api().products(1,productSearch.value.trim());
-        product.replaceChildren(new Option('Seleccionar producto',''));
-        (res.data||[]).forEach(row=>product.append(new Option((row.sku||'Sin SKU')+' · '+row.nombre,String(row.id))));
+      const searchProduct=button('Buscar en catálogo de productos',async()=>{
+        try{
+          const picked=await window.RutaHDBuscadorProductos?.openSingle({
+            title:'Seleccionar producto para '+(fixedSupplier?.nombre||'el proveedor'),
+            initialSearch:productSearch.value.trim(),
+            lockedFilters:fixedSupplier?{solo_sin_proveedor_id:fixedSupplier.id}:{}
+          });
+          if(picked){
+            const id=String(picked.id);
+            if(![...product.options].some(opt=>opt.value===id))
+              product.append(new Option((picked.sku||'Sin SKU')+' · '+picked.nombre,id));
+            product.value=id;
+          }
+        }catch(error){
+          message.textContent=errorText(error);message.classList.add('is-error');
+          box.append(message);
+        }
       });
-      if(record){searchProvider.disabled=true;searchProduct.disabled=true;}
-      form.append(labeled('Buscar proveedor',providerSearch),searchProvider,
-        labeled('Proveedor *',provider),labeled('Buscar producto',productSearch),
+      if(record||fixedSupplier)searchProvider.disabled=true;
+      if(record)searchProduct.disabled=true;
+      if(fixedSupplier){
+        const badge=e('div',fixedSupplier.nombre+' · '+(fixedSupplier.rut||'Sin RUT'),
+          'supplier-linked-provider supplier-dialog-wide');
+        form.append(badge);
+      }else form.append(labeled('Buscar proveedor',providerSearch),searchProvider,
+        labeled('Proveedor *',provider));
+      form.append(labeled('Buscar producto',productSearch),
         searchProduct,labeled('Producto del catálogo *',product));
       const supplierCode=field('text',record?.codigo_proveedor_producto||'',80);
       const cost=field('number',record?.costo_proveedor??'',40);
@@ -104,7 +125,7 @@
       const status=e('p','', 'supplier-status supplier-dialog-wide');status.setAttribute('role','status');
       const actions=e('div',null,'supplier-dialog-actions supplier-dialog-wide');
       const cancel=button('Cancelar',()=>dialog.close());
-      const save=e('button',record?'Guardar cambios':'Crear vínculo','button primary');save.type='submit';
+      const save=e('button','Guardar','button primary');save.type='submit';
       actions.append(cancel,save);form.append(status,actions);message.remove();box.append(form);
       form.addEventListener('submit',async event=>{
         event.preventDefault();
@@ -115,7 +136,7 @@
           activo:active.checked
         };
         if(!record){data.proveedor_id=Number(provider.value);data.producto_id=Number(product.value);}
-        save.disabled=true;status.textContent='Guardando en Laravel…';
+        save.disabled=true;status.textContent='Guardando cambios…';
         try{
           if(record)await api().updateProductSupplier(record.id,data);
           else await api().createProductSupplier(data);
@@ -190,71 +211,317 @@
     box.append(button('Cerrar',()=>dialog.close(),'button ghost supplier-dialog-dismiss'));
   }
 
+  /**
+   * El mantenedor principal muestra PROVEEDORES (no vínculos individuales).
+   * Cada fila abre su mix con las relaciones y los códigos de compra ya existentes.
+   */
+  function mixEditor(supplier,refreshDirectory){
+    const {dialog,box}=openDialog('Mix de productos · '+supplier.nombre);
+    dialog.classList.add('supplier-mix-dialog');
+    const summary=e('div',null,'supplier-mix-summary');
+    summary.append(e('strong',supplier.razon_social||supplier.nombre),
+      e('span',(supplier.rut||'Sin RUT')+' · '+(supplier.giro||'Giro no informado')));
+    const tools=e('div',null,'supplier-mix-tools');
+    const status=e('p','Consultando productos del proveedor…','supplier-status');
+    status.setAttribute('role','status');
+    const staged=e('section',null,'supplier-mix-staged');
+    staged.setAttribute('aria-label','Productos seleccionados pendientes de guardar');
+    const stagedHeading=e('div',null,'supplier-mix-staged-heading');
+    const stagedTitle=e('strong','Productos seleccionados para agregar');
+    const stagedCount=e('span','0 pendientes','supplier-mix-badge');
+    stagedHeading.append(stagedTitle,stagedCount);
+    const stagedList=e('div',null,'catalog-table-scroll supplier-mix-staged-scroll');
+    const batchActions=e('div',null,'supplier-mix-batch-actions');
+    const saveBatch=button('Guardar productos seleccionados',()=>void saveSelected(),'button primary');
+    saveBatch.disabled=true;
+    batchActions.append(e('p','La selección no se incorpora al proveedor hasta pulsar Guardar.','supplier-status'),
+      saveBatch);
+    staged.append(stagedHeading,stagedList,batchActions);
+    staged.hidden=true;
+    const list=e('div',null,'catalog-table-scroll supplier-mix-list');
+    const pager=e('nav',null,'list-pagination');
+    pager.setAttribute('aria-label','Páginas del mix '+supplier.nombre);
+    const pending=new Map();
+    let page=1,loading=false,saving=false,currentRows=[];
+
+    const refresh=async()=>{await load();await refreshDirectory();};
+    const openPicker=async()=>{
+      if(saving)return;
+      if(!window.RutaHDBuscadorProductos?.openMultiple){
+        status.textContent='El buscador de productos no está disponible. Actualiza la página.';
+        status.classList.add('is-error');return;
+      }
+      try{
+        const picked=await window.RutaHDBuscadorProductos.openMultiple({
+          title:'Buscar productos para '+supplier.nombre,
+          context:'compras',
+          lockedFilters:{solo_sin_proveedor_id:Number(supplier.id)},
+          excludeIds:currentRows.map(row=>Number(row.producto_id)),
+          initial:[...pending.values()].map(row=>row.producto),
+        });
+        if(picked===null)return;
+        if(picked.length>50){
+          status.textContent='Puedes agregar hasta 50 productos por guardado. Divide la selección en dos grupos.';
+          status.classList.add('is-error');return;
+        }
+        const selectedIds=new Set(picked.map(row=>Number(row.id)));
+        for(const id of pending.keys())if(!selectedIds.has(id))pending.delete(id);
+        let added=0;
+        for(const product of picked){
+          const id=Number(product.id);
+          if(!Number.isSafeInteger(id)||id<1||pending.has(id))continue;
+          pending.set(id,{producto:product,codigo:'',costo:''});
+          added++;
+        }
+        renderPending();
+        status.classList.remove('is-error');
+        status.textContent=pending.size
+          ?pending.size+' producto(s) listos para guardar. Puedes completar código y costo por artículo.'
+          :'No hay productos pendientes de guardar.';
+      }catch(error){
+        status.classList.add('is-error');status.textContent=errorText(error);
+      }
+    };
+    const addMany=button('Buscar y agregar productos',()=>void openPicker(),'button primary');
+    const addOne=button('Agregar individualmente',()=>editRelation(null,refresh,supplier));
+    const update=button('Actualizar mix',()=>void load());
+    tools.append(addMany,addOne,update);
+    box.append(summary,tools,status,staged,list,pager);
+
+    function renderPending(){
+      staged.hidden=pending.size===0;
+      stagedCount.textContent=pending.size+' pendientes';
+      saveBatch.textContent='Guardar '+pending.size+' producto'+(pending.size===1?'':'s');
+      saveBatch.disabled=saving||pending.size===0;
+      addMany.disabled=saving;addOne.disabled=saving;
+      stagedList.replaceChildren();
+      if(!pending.size)return;
+      const table=e('table',null,'catalog-table supplier-mix-table supplier-mix-draft-table');
+      const head=e('tr');
+      ['SKU / producto','Código del proveedor','Costo neto CLP','Estado','Acciones']
+        .forEach(label=>head.append(e('th',label)));
+      const thead=e('thead');thead.append(head);table.append(thead);
+      const body=e('tbody');
+      for(const [id,item] of pending){
+        const tr=e('tr',null,'supplier-mix-draft-row');
+        const title=e('td');
+        title.append(e('strong',(item.producto.sku||'Sin SKU')+' · '+item.producto.nombre),
+          e('small','Pendiente de guardar','supplier-mix-pending-label'));
+        const codeCell=e('td');
+        const code=field('text',item.codigo,80);
+        code.placeholder='Opcional';
+        code.setAttribute('aria-label','Código del proveedor para '+item.producto.nombre);
+        code.addEventListener('input',()=>{item.codigo=code.value;});
+        codeCell.append(code);
+        const costCell=e('td');
+        const cost=field('number',item.costo,40);
+        cost.min='0';cost.step='0.0001';cost.max='99999999999';
+        cost.placeholder='Opcional';
+        cost.setAttribute('aria-label','Costo neto para '+item.producto.nombre);
+        cost.addEventListener('input',()=>{item.costo=cost.value;});
+        costCell.append(cost);
+        const state=e('td','Por guardar','supplier-mix-pending-state');
+        const actions=e('td',null,'supplier-row-actions');
+        const remove=window.RutaHDListUI?.action('Quitar '+item.producto.nombre,
+          ()=>{pending.delete(id);renderPending();},{kind:'quitar'})||
+          button('Quitar',()=>{pending.delete(id);renderPending();});
+        actions.append(remove);
+        tr.append(title,codeCell,costCell,state,actions);body.append(tr);
+      }
+      table.append(body);stagedList.append(table);
+    }
+
+    async function saveSelected(){
+      if(saving||!pending.size)return;
+      if(pending.size>50){
+        status.textContent='El máximo por guardado es 50 productos.';
+        status.classList.add('is-error');return;
+      }
+      const inputs=stagedList.querySelectorAll('input');
+      for(const input of inputs){
+        if(!input.checkValidity()){input.reportValidity();input.focus();return;}
+      }
+      const codes=new Set();
+      const products=[];
+      for(const [id,item] of pending){
+        const code=item.codigo.trim();
+        if(code){
+          const normalized=code.toLocaleLowerCase('es-CL');
+          if(codes.has(normalized)){
+            status.textContent='Hay códigos de proveedor repetidos. Cada producto debe tener un código distinto.';
+            status.classList.add('is-error');return;
+          }
+          codes.add(normalized);
+        }
+        products.push({
+          producto_id:id,
+          codigo_proveedor_producto:code||null,
+          costo_proveedor:item.costo===''?null:item.costo
+        });
+      }
+      saving=true;renderPending();
+      status.classList.remove('is-error');
+      status.textContent='Guardando '+products.length+' productos del proveedor…';
+      try{
+        const saved=await api().createProductSuppliersBatch({
+          proveedor_id:Number(supplier.id),productos:products
+        });
+        pending.clear();
+        page=1;renderPending();
+        await refresh();
+        status.textContent=(saved.cantidad||products.length)+' producto(s) agregados al mix correctamente.';
+        status.classList.remove('is-error');
+      }catch(error){
+        // La transacción del backend se revierte completa ante cualquier error.
+        // La selección permanece editable para corregir códigos y reintentar.
+        status.textContent=errorText(error)+' Ninguna selección pendiente fue descartada.';
+        status.classList.add('is-error');
+      }finally{
+        saving=false;renderPending();
+      }
+    }
+
+    async function load(){
+      if(loading)return;
+      loading=true;
+      status.classList.remove('is-error');
+      status.textContent='Consultando productos registrados del proveedor…';
+      try{
+        const result=await api().productSuppliers(page,{proveedor_id:supplier.id});
+        if(!dialog.open)return;
+        const rows=result.data||[];currentRows=rows;
+        list.replaceChildren();
+        if(!rows.length){
+          list.append(e('p','No hay productos guardados en esta página. Puedes buscarlos y seleccionarlos arriba.','supplier-status'));
+        }else{
+          const table=e('table',null,'catalog-table supplier-mix-table');
+          const head=e('tr');
+          ['SKU / producto','Código del proveedor','Costo neto','Códigos de compra','Estado','Acciones']
+            .forEach(label=>head.append(e('th',label)));
+          const thead=e('thead');thead.append(head);table.append(thead);
+          const body=e('tbody');
+          for(const item of rows){
+            const tr=e('tr');
+            tr.append(e('td',(item.codigo_producto||'—')+' · '+item.producto),
+              e('td',item.codigo_proveedor_producto||'—'),e('td',money(item.costo_proveedor)));
+            tr.append(e('td','Consulta desde Acciones','supplier-codes-summary'));
+            const stateCell=e('td',null,'catalog-status-cell');
+            const switchControl=window.RutaHDListUI?.statusSwitch(
+              item.producto+' · '+supplier.nombre,Boolean(item.activo),async active=>{
+                await api().updateProductSupplier(item.id,{activo:active});
+                await refresh();
+              });
+            stateCell.append(switchControl||e('span',item.activo?'Activo':'Inactivo'));
+            tr.append(stateCell);
+            const actions=e('td',null,'supplier-row-actions');
+            actions.append(
+              window.RutaHDListUI?.action('Editar producto '+item.producto,
+                ()=>editRelation(item,refresh,supplier),{kind:'editar'})||
+                button('Editar',()=>editRelation(item,refresh,supplier)),
+              window.RutaHDListUI?.action('Códigos de compra de '+item.producto,
+                ()=>barcodes(item),{kind:'barras'})||
+                button('Códigos de compra',()=>barcodes(item))
+            );
+            tr.append(actions);body.append(tr);
+          }
+          table.append(body);list.append(table);
+        }
+        status.textContent=(result.total||0)+' productos guardados para este proveedor'
+          +(pending.size?' · '+pending.size+' pendientes de guardar.':'.');
+        window.RutaHDListUI?.renderPager(pager,{
+          page,pages:Number(result.last_page||1),total:Number(result.total||0),
+          label:'productos',onPage:n=>{page=n;void load();}
+        });
+        pager.hidden=Number(result.last_page||1)<=1;
+      }catch(error){status.textContent=errorText(error);status.classList.add('is-error');}
+      finally{loading=false;}
+    }
+    const close=button('Cerrar panel',()=>dialog.close(),'button ghost supplier-dialog-dismiss');
+    const reminder=e('p','Los productos pendientes se descartan al cerrar sin guardar.',
+      'supplier-mix-draft-reminder');
+    box.append(reminder,close);
+    void load();
+  }
+
   function mount(parent){
     const current=++marker;
     const root=e('section',null,'surface-panel supplier-products-module');
     const head=e('div',null,'panel-heading');
-    head.append(e('h2','Productos de proveedores'),
-      e('p','SKU, proveedor, código propio del proveedor, costos y códigos de barras para compras.'));
-    const status=e('p','Consultando relaciones…','catalog-footnote');
+    head.append(e('h2','Proveedores · Mix de productos'),
+      e('p','Directorio de proveedores y cantidad real de artículos asociados. Edítalos desde su ficha de mix.'));
+    const status=e('p','Consultando proveedores…','catalog-footnote');
     const toolbar=e('form',null,'workspace-actions supplier-search-bar');
     const search=field('search','',120);
-    search.placeholder='Buscar proveedor, SKU, producto o código del proveedor';
+    search.placeholder='Buscar proveedor por razón social, RUT o correo';
+    search.setAttribute('aria-label','Buscar proveedor en directorio de mix');
     const submit=e('button','Buscar','button primary');submit.type='submit';
-    const create=button('Asociar producto a proveedor',()=>editRelation(null,load),'button primary');
-    create.classList.add('hd-list-create-action');
-    toolbar.append(search,submit,create);
+    toolbar.append(search,submit);
     const content=e('div',null,'catalog-table-scroll');
     const pager=e('nav',null,'list-pagination');
-    pager.setAttribute('aria-label','Páginas de productos por proveedor');
+    pager.setAttribute('aria-label','Páginas del mix de proveedores');
     root.append(head,status,toolbar,content,pager);parent.replaceChildren(root);
     if(!acl()?.authenticated()||!(acl().isAdmin()||acl().has('compras.gestionar'))){
-      toolbar.remove();status.textContent='Tu perfil no tiene autorización de compras para administrar productos de proveedores.';
+      toolbar.remove();
+      status.textContent='Tu perfil no tiene autorización para consultar el mix de proveedores.';
       return;
     }
     let page=1,query='',loading=false;
     async function load(){
-      if(loading)return;loading=true;status.textContent='Cargando relaciones de Laravel…';
+      if(loading)return;
+      loading=true;status.textContent='Cargando directorio de proveedores…';
       try{
-        const data=await api().productSuppliers(page,{buscar:query});
+        const data=await api().supplierMix(page,query);
         if(current!==marker||!root.isConnected)return;
         const rows=data?.data||[];
+        const columns=window.RutaHDProveedorColumns||[
+          ['nombre','Nombre / razón social'],['rut','RUT'],['giro','Giro'],
+          ['direccion','Dirección'],['ciudad','Ciudad'],['comuna_nombre','Comuna'],
+          ['telefono','Teléfono'],['correo_electronico','Correo'],['activo','Estado']
+        ];
         const table=e('table',null,'catalog-table supplier-products-table');
-        const h=e('tr');
-        ['Proveedor','Producto / SKU','Código proveedor','Costo neto','Última recepción','Estado','Acciones']
-          .forEach(x=>h.append(e('th',x)));
-        const thead=e('thead');thead.append(h);table.append(thead);
+        const head=e('tr');
+        columns.forEach(([,label])=>head.append(e('th',label)));
+        head.append(e('th','Productos en mix'),e('th','Acciones'));
+        const thead=e('thead');thead.append(head);table.append(thead);
         const body=e('tbody');
-        for(const record of rows){
+        for(const row of rows){
           const tr=e('tr');
-          tr.append(e('td',record.proveedor),e('td',record.producto+' · '+(record.codigo_producto||'—')),
-            e('td',record.codigo_proveedor_producto||'—'),e('td',money(record.costo_proveedor)),
-            e('td',record.fecha_ultima_recepcion||'Sin recepciones'));
-          const stateCell=e('td',null,'catalog-status-cell');
-          const toggle=window.RutaHDListUI?.statusSwitch(record.producto+' / '+record.proveedor,
-            Boolean(record.activo),async active=>{
-              await api().updateProductSupplier(record.id,{activo:active});
-              await load();
-            });
-          stateCell.append(toggle||e('span',record.activo?'Activo':'Inactivo'));
-          tr.append(stateCell);
-          const cell=e('td',null,'supplier-row-actions');
-          cell.append(button('Editar',()=>editRelation(record,load)));
-          cell.append(button('Códigos de compra',()=>barcodes(record)));
-          tr.append(cell);body.append(tr);
+          for(const [key] of columns){
+            const cell=e('td');
+            if(key==='activo'){
+              const toggle=window.RutaHDListUI?.statusSwitch(row.nombre,Boolean(row.activo),
+                async active=>{
+                  await api().updateResource('proveedores',row.id,{activo:active});
+                  await load();
+                });
+              cell.className='catalog-status-cell';
+              cell.append(toggle||e('span',row.activo?'Activo':'Inactivo'));
+            }else cell.textContent=String(row[key]??'—');
+            tr.append(cell);
+          }
+          const count=e('td',null,'supplier-mix-count');
+          count.append(e('span',Number(row.cantidad_productos_mix||0),'supplier-mix-badge'));
+          const actions=e('td',null,'supplier-row-actions');
+          const edit=window.RutaHDListUI?.action('Editar mix de '+row.nombre,
+            ()=>mixEditor(row,load),{kind:'editar'})||
+            button('Editar',()=>mixEditor(row,load),'button ghost');
+          edit.setAttribute('aria-label','Editar mix de '+row.nombre);
+          actions.append(edit);tr.append(count,actions);body.append(tr);
         }
         table.append(body);content.replaceChildren(table);
-        if(!rows.length)content.append(e('p','No hay relaciones proveedor-producto en esta búsqueda.','catalog-footnote'));
+        if(!rows.length)content.append(e('p','No hay proveedores registrados para esta búsqueda.','catalog-footnote'));
         window.RutaHDListUI?.renderPager(pager,{
           page,pages:Number(data.last_page||1),total:Number(data.total||0),
-          label:'relaciones',onPage:n=>{page=n;void load();}
+          label:'proveedores',onPage:n=>{page=n;void load();}
         });
         pager.hidden=Number(data.last_page||1)<=1;
         status.textContent='';
-      }catch(err){status.textContent=errorText(err);}
+      }catch(error){status.textContent=errorText(error);}
       finally{loading=false;}
     }
-    toolbar.addEventListener('submit',event=>{event.preventDefault();query=search.value.trim();page=1;void load();});
+    toolbar.addEventListener('submit',event=>{
+      event.preventDefault();query=search.value.trim();page=1;void load();
+    });
     void load();
   }
   window.RutaHDProveedoresProductos=Object.freeze({mount});

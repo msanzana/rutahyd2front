@@ -16,7 +16,7 @@ async function login(page,token=payload){
   await expect(page.locator('#loginDialog')).toBeHidden();
 }
 test('Clientes: lista real, alta, edición y baja lógica desde Laravel',async({page})=>{
-  const rows=[{id:8,codigo:'ANT-08',nombre:'Cliente anterior',rut:'11111111-1',
+  const rows=[{id:8,codigo:'ANT-08',nombre:'Cliente anterior',rut:'12345678-5',
     correo_electronico:null,telefono:null,direccion:null,comuna:'Temuco',
     sector:null,observaciones:null,activo:1}];
   const writes=[];
@@ -48,14 +48,14 @@ test('Clientes: lista real, alta, edición y baja lógica desde Laravel',async({
   await editor.locator('[name="codigo"]').fill('CLI-009');
   await editor.locator('[name="nombre"]').fill('Cliente nuevo real');
   await editor.locator('[name="correo_electronico"]').fill('nuevo@example.invalid');
-  await editor.getByRole('button',{name:'Crear registro'}).click();
+  await editor.getByRole('button',{name:'Guardar',exact:true}).click();
   await expect(editor).toBeHidden();
   await expect(page.locator('#workspaceContent')).toContainText('Cliente nuevo real');
   await page.locator('#workspaceContent tbody tr').filter({hasText:'Cliente nuevo real'})
     .getByRole('button',{name:'Editar'}).click();
   const edit=page.getByRole('dialog',{name:'Editar Clientes'});
   await edit.locator('[name="nombre"]').fill('Cliente actualizado real');
-  await edit.getByRole('button',{name:'Guardar cambios'}).click();
+  await edit.getByRole('button',{name:'Guardar',exact:true}).click();
   await expect(page.locator('#workspaceContent')).toContainText('Cliente actualizado real');
   await page.locator('#workspaceContent tbody tr').filter({hasText:'Cliente actualizado real'})
     .getByRole('checkbox',{name:'Desactivar Cliente actualizado real'}).click();
@@ -89,7 +89,7 @@ test('Proveedores y Bodegas administran solo sus campos autorizados',async({page
     await page.getByRole('button',{name:'Nuevo registro'}).click();
     const dlg=page.getByRole('dialog',{name:'Crear '+(nav==='bodega'?'Bodegas':'Proveedores')});
     for(const [key,value] of Object.entries(values))await dlg.locator('[name="'+key+'"]').fill(value);
-    await dlg.getByRole('button',{name:'Crear registro'}).click();
+    await dlg.getByRole('button',{name:'Guardar',exact:true}).click();
     await expect(dlg).toBeHidden();
   }
   expect(calls.map(v=>v.path)).toEqual([
@@ -106,7 +106,7 @@ test('Permisos y whitelist: usuarios sin gestión no pueden crear registros',asy
     usuario:{id:7,nombre:'Operador CI',rol:'vendedor',permisos:['clientes.ver']}};
   await login(page,vendedor);
   await page.locator('.nav-link[data-nav="clientes"]').click();
-  await expect(page.locator('#workspaceContent')).toContainText('No existen registros');
+  await expect(page.locator('#workspaceContent')).toContainText('No hay registros para mostrar en esta página.');
   await expect(page.getByRole('button',{name:'Nuevo registro'})).toHaveCount(0);
   const rejected=await page.evaluate(async()=>{
     try{

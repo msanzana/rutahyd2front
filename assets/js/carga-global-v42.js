@@ -1,0 +1,142 @@
+/* Ruta H&D V42 · Indicador de carga único para CRUD, consultas y buscadores.
+ * Solo presentación. No modifica rutas, datos ni métodos de negocio.
+ * Las peticiones API se contabilizan por ticket y siempre cierran en finally.
+ */
+(()=>{
+  'use strict';
+  const active=new Map();
+  const SHOW_DELAY_MS=130;
+  const MIN_VISIBLE_MS=240;
+  let serial=0,showTimer=null,closeTimer=null,visibleSince=0;
+  let dialog=null,caption=null,subtitle=null;
+  const labels={
+    'giros-sii':'giros SII',
+    'productos/buscador':'productos',
+    'proveedores-productos':'productos del proveedor',
+    'proveedores/mix':'productos de proveedores',
+    'productos':'productos',
+    'usuarios':'usuarios',
+    'perfiles':'perfiles y permisos',
+    'listas-precios':'listas de precios',
+    'listas_precios':'listas de precios',
+    'catalogos':'clasificaciones',
+    'ubicaciones':'ubicaciones',
+    'recursos/proveedores':'proveedores',
+    'recursos/clientes':'clientes',
+    'recursos/bodegas':'bodegas',
+    'fotos':'fotografías',
+    'ventas':'ventas',
+    'clientes':'clientes',
+    'proveedores':'proveedores',
+    'precios':'precios'
+  };
+  function label(path,method){
+    const clean=String(path||'').split('?')[0].replace(/^\/+/,'');
+    const key=Object.keys(labels).find(k=>clean===k||clean.startsWith(k+'/'));
+    const noun=key?labels[key]:'registros';
+    const upper=String(method||'GET').toUpperCase();
+    if(upper==='GET'){
+      if(clean.includes('buscador')||clean.includes('giros-sii')||/(\?|^\/)/.test(path)&&String(path).includes('buscar='))
+        return 'Buscando '+noun+'…';
+      return 'Cargando '+noun+'…';
+    }
+    if(upper==='DELETE')return 'Procesando cambio de estado…';
+    if(clean.includes('/lote'))return 'Guardando productos seleccionados…';
+    if(upper==='POST')return 'Guardando '+noun+'…';
+    return 'Actualizando '+noun+'…';
+  }
+  function ensureDialog(){
+    if(dialog?.isConnected)return;
+    if(!document.body)return;
+    dialog=document.createElement('dialog');
+    dialog.className='hd-loading-overlay';
+    dialog.setAttribute('aria-label','Solicitud en curso');
+    dialog.setAttribute('aria-modal','true');
+    dialog.setAttribute('data-hd-loading','');
+    const body=document.createElement('div');body.className='hd-loading-content';
+    const brand=document.createElement('span');brand.className='hd-loading-brand';
+    brand.textContent='RUTA H&D';
+    brand.setAttribute('aria-hidden','true');
+    const spinner=document.createElement('div');spinner.className='hd-loading-animation';
+    spinner.setAttribute('aria-hidden','true');
+    spinner.innerHTML='<span></span><span></span><span></span>';
+    caption=document.createElement('strong');caption.className='hd-loading-title';
+    caption.id='hd-loading-title';caption.textContent='Cargando información…';
+    subtitle=document.createElement('p');subtitle.className='hd-loading-subtitle';
+    subtitle.textContent='Estamos procesando tu solicitud.';
+    const status=document.createElement('div');status.className='hd-loading-status';
+    status.setAttribute('role','status');status.setAttribute('aria-live','polite');
+    status.setAttribute('aria-atomic','true');
+    status.append(caption,subtitle);
+    body.append(brand,spinner,status);
+    dialog.append(body);
+    dialog.setAttribute('aria-labelledby',caption.id);
+    dialog.addEventListener('cancel',event=>{
+      // Un Escape no debe ocultar un proceso que sigue en ejecución.
+      if(active.size)event.preventDefault();
+    });
+    document.body.append(dialog);
+  }
+  function clearTimers(){
+    if(showTimer!==null){clearTimeout(showTimer);showTimer=null;}
+    if(closeTimer!==null){clearTimeout(closeTimer);closeTimer=null;}
+  }
+  function updateText(){
+    if(!caption||!active.size)return;
+    const latest=[...active.values()].at(-1);
+    caption.textContent=latest?.text||'Cargando información…';
+    subtitle.textContent=active.size>1
+      ?'Procesando '+active.size+' solicitudes.':'Estamos procesando tu solicitud.';
+  }
+  function openNow(){
+    showTimer=null;
+    if(!active.size)return;
+    ensureDialog();
+    if(!dialog)return;
+    updateText();
+    if(!dialog.open){
+      try{dialog.showModal();visibleSince=Date.now();}
+      catch(_){/* No bloquear una operación si el DOM se desmontó. */}
+    }
+  }
+  function hideWhenDone(){
+    if(active.size)return;
+    if(showTimer!==null){clearTimeout(showTimer);showTimer=null;}
+    if(!dialog?.open)return;
+    const wait=Math.max(0,MIN_VISIBLE_MS-(Date.now()-visibleSince));
+    if(closeTimer!==null)clearTimeout(closeTimer);
+    closeTimer=setTimeout(()=>{
+      closeTimer=null;
+      if(!active.size&&dialog?.open)dialog.close();
+    },wait);
+  }
+  function start({path='',method='GET',message=''}={}){
+    // Es intencional que el popup no aparezca para lecturas instantáneas:
+    // evita parpadeos en listas y catálogos cacheados.
+    const ticket=++serial;
+    active.set(ticket,{text:String(message||label(path,method)).slice(0,120)});
+    if(closeTimer!==null){clearTimeout(closeTimer);closeTimer=null;}
+    if(dialog?.open)updateText();
+    else if(showTimer===null)showTimer=setTimeout(openNow,SHOW_DELAY_MS);
+    let closed=false;
+    return ()=>{
+      if(closed)return;closed=true;
+      active.delete(ticket);
+      if(active.size){updateText();return;}
+      hideWhenDone();
+    };
+  }
+  async function track(promise,options={}){
+    const finish=start(options);
+    try{return await promise;}finally{finish();}
+  }
+  function reset(){
+    clearTimers();
+    active.clear();
+    if(dialog?.open)dialog.close();
+  }
+  window.RutaHDCarga=Object.freeze({
+    start,track,reset,
+    isLoading:()=>active.size>0
+  });
+})();
