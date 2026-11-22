@@ -191,3 +191,27 @@ test('guardado de producto muestra error de margen del backend y nunca lo oculta
  await expect(dlg).toBeVisible();
  expect(state.calls.find(c=>c.m==='PUT'&&c.p==='/api/v1/productos/9')).toBeDefined();
 });
+
+
+test('nuevo producto bloquea EAN-13 de doce dígitos sin enviar POST y permite corregirlo',async({page})=>{
+ const state=await fixture(page);
+ await page.getByRole('button',{name:'Nuevo Producto'}).click();
+ const dlg=page.locator('dialog.product-editor-dialog[open]');
+ await dlg.getByLabel('SKU / Código').fill('SKU-CB-VALIDACION');
+ await dlg.getByLabel('Nombre del producto').fill('Código GS1 validado');
+ const fields=dlg.locator('.product-editor-form > label.field select');
+ for(let i=0;i<9;i++)await fields.nth(i).selectOption(String(i+1));
+ await dlg.getByRole('button',{name:'Agregar código de barras'}).click();
+ const barcode=dlg.locator('.product-barcode-row').last();
+ await barcode.locator('select').selectOption('10');
+ await barcode.getByLabel('Código de barras',{exact:true}).fill('978020137962');
+ await dlg.getByRole('button',{name:'Guardar en MySQL'}).click();
+ await expect(dlg.locator('.form-error')).toContainText('exactamente 13 dígitos');
+ await expect(dlg).toBeVisible();
+ expect(state.calls.some(x=>x.m==='POST'&&x.p==='/api/v1/productos')).toBe(false);
+ await barcode.getByLabel('Código de barras',{exact:true}).fill('9780201379624');
+ await dlg.getByRole('button',{name:'Guardar en MySQL'}).click();
+ await expect(dlg).toBeHidden();
+ const dto=state.calls.find(x=>x.m==='POST'&&x.p==='/api/v1/productos')?.dto;
+ expect(dto?.codigosVenta?.[0]?.codigoBarras).toBe('9780201379624');
+});
