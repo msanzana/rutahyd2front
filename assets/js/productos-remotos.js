@@ -12,7 +12,6 @@
     ['marcaId','marcas','Marca',null],
     ['modeloId','modelos','Modelo','marcaId'],
     ['tipoUnidadId','tipos_unidad','Tipo de unidad',null],
-    ['gramajeId','gramajes','Gramos',null],
     ['tipoEnvasadoId','tipos_envasado','Tipo de envasado',null],
     ['condicionTributariaId','condiciones_tributarias','Condición tributaria',null],
   ];
@@ -89,6 +88,9 @@
   }
   async function loadCatalogs(){
     const res=await Promise.all(ATTRS.map(([,cat])=>api().list(cat)));
+    const barcodeTypes=await api().list('tipos_codigos_barras');
+    if(!Array.isArray(barcodeTypes?.items))throw Error('Tipos de código de barras no disponibles');
+    cache.tipos_codigos_barras=barcodeTypes.items;
     ATTRS.forEach(([,cat],index)=>{
       if(!Array.isArray(res[index]?.items))throw new Error('Catálogos incompletos');
       cache[cat]=res[index].items;
@@ -182,19 +184,23 @@
     if(!canManage())throw Error('No autorizado');
     await loadCatalogs();
     const producto=id?await api().getProduct(id):null;
-    const modal=el('dialog','modal catalog-dialog');
-    const form=el('form','form-grid');
+    const modal=el('dialog','modal catalog-dialog product-editor-dialog');
+    const form=el('form','form-grid product-editor-form');
     form.noValidate=false;
     modal.appendChild(form);
-    form.appendChild(el('h2','',producto?'Editar producto real':'Nuevo producto real'));
-    form.appendChild(el('p','catalog-footnote',
-      'Rubro → Departamento → Familia → Línea · Marca → Modelo. Los campos de clasificación son obligatorios.'));
+    const heading=el('div','product-editor-heading');
+    heading.append(el('span','overline','RUTA H&D · CATÁLOGO DE PRODUCTOS'),
+      el('h2','',producto?'Editar producto':'Nuevo producto'),
+      el('p','','Clasifica el artículo por jerarquía, registra su presentación y añade los códigos de venta para cada unidad logística.'));
+    form.appendChild(heading);
+    form.appendChild(el('h3','product-editor-section','Información del producto'));
     const sku=inputField('SKU / Código','text',form,producto?.sku,{required:true,maxLength:80});
     const nombre=inputField('Nombre del producto','text',form,producto?.nombre,{required:true,maxLength:190});
     const descripcion=inputField('Descripción','textarea',form,producto?.descripcion,{maxLength:10000});
+    descripcion.parentElement.classList.add('product-editor-wide');
     const activo=el('input');activo.type='checkbox';activo.checked=producto?.activo!==false;
-    const activeLabel=el('label','field');add(activeLabel,activo,el('span','','Producto activo'));form.appendChild(activeLabel);
-    const proveedor=inputField('ID de proveedor (opcional)','number',form,producto?.proveedorId,{min:1,step:1});
+    const activeLabel=el('label','product-active-toggle');add(activeLabel,activo,el('span','','Producto activo'));form.appendChild(activeLabel);
+    form.appendChild(el('h3','product-editor-section','Clasificación comercial'));
     const controls={};
     ATTRS.forEach(([field,,label])=>controls[field]=selectField(label,[],form,null));
     const initial=producto?.clasificacion||{};
@@ -230,13 +236,12 @@
       });
       clearChildren(field);redraw();
     }));
-    form.appendChild(el('h3','','Presentación, precio e IVA'));
-    form.appendChild(el('p','catalog-footnote',
-      'El precio es neto y se guarda en presentaciones_productos. El IVA se deriva de Afecto/Exento; no se manipula el stock.'));
+    form.appendChild(el('h3','product-editor-section','Presentación, precio e IVA'));
+    form.appendChild(el('p','catalog-footnote product-editor-wide',
+      'Precio neto en CLP. La condición tributaria calcula el IVA; el stock se mantiene en Inventario.'));
     const presName=inputField('Nombre de presentación','text',form,producto?.presentacion?.nombre||'Unidad',
       {required:true,maxLength:150});
-    const barcode=inputField('Código de barras (opcional)','text',form,producto?.presentacion?.codigoBarras||'',
-      {maxLength:80});
+
     const units=inputField('Unidades por envase','number',form,producto?.presentacion?.unidadesPorEnvase??'1',
       {required:true,min:0.001,step:0.001});
     const price=inputField('Precio neto (CLP)','number',form,producto?.presentacion?.precioNeto??'0',
@@ -244,8 +249,34 @@
     if(producto)form.appendChild(el('p','catalog-footnote',
       'Presentación principal ID '+(producto.presentacion?.id??'sin asignar')+
       ' · Existencias actuales: '+producto.stock+' (solo lectura).'));
+    form.appendChild(el('h3','product-editor-section','Códigos de barras de venta'));
+    form.appendChild(el('p','catalog-footnote product-editor-wide',
+      'Cada código identifica una cantidad de unidades para venta. No se ingresa aquí código ni costo de proveedor.'));
+    const barcodeRows=el('div','product-barcodes-list product-editor-wide');
+    const selectedBarcodes=[];
+    function addBarcode(data={}){
+      const row=el('div','product-barcode-row');
+      const type=selectField('Tipo de código de barras',cache.tipos_codigos_barras.filter(x=>x.activo),row,
+        data.tipoCodigoBarraId??null);
+      type.required=true;
+      const code=inputField('Código de barras','text',row,data.codigoBarras||'',{required:true,maxLength:100});
+      const quantity=inputField('Unidades por código','number',row,data.unidadesPorCodigo||'1',
+        {required:true,min:0.001,step:0.001});
+      const active=el('label','product-barcode-enabled');
+      const checked=el('input');checked.type='checkbox';checked.checked=data.activo!==false;
+      active.append(checked,el('span','','Activo'));row.append(active);
+      const rm=button('Quitar código',()=>{row.remove();},'button ghost product-barcode-remove');
+      row.append(rm);
+      barcodeRows.append(row);
+      selectedBarcodes.push({row,type,code,quantity,checked,id:data.id||null});
+    }
+    (producto?.codigosVenta||[]).forEach(addBarcode);
+    form.append(barcodeRows,button('Añadir código de venta',()=>addBarcode(),
+      'button ghost product-add-barcode'));
+    form.appendChild(el('p','product-editor-hint product-editor-wide',
+      'Puedes registrar EAN-13, DUN-14, Code 39, Code 128 y otros tipos. Cada código debe ser único y tener unidades mayores que cero.'));
     const feedback=el('p','form-error','');feedback.hidden=true;form.appendChild(feedback);
-    const actions=el('div','modal-footer');
+    const actions=el('div','modal-footer product-editor-actions');
     const cancel=button('Cancelar',()=>modal.close());
     const submit=el('button','button primary','Guardar en MySQL');submit.type='submit';
     add(actions,cancel,submit);form.appendChild(actions);
@@ -255,18 +286,27 @@
       if(!form.reportValidity())return;
       const classification=Object.fromEntries(ATTRS.map(([field])=>[field,Number(controls[field].value)]));
       if(Object.values(classification).some(x=>!Number.isSafeInteger(x)||x<1)){
-        feedback.textContent='Completa las diez clasificaciones antes de guardar.';
+        feedback.textContent='Completa todas las clasificaciones antes de guardar.';
         feedback.hidden=false;return;
       }
       const dto={
         sku:sku.value.trim(),nombre:nombre.value.trim(),descripcion:descripcion.value.trim(),
-        activo:activo.checked,proveedorId:proveedor.value?Number(proveedor.value):null,
+        activo:activo.checked,
         clasificacion:classification,
         presentacion:{
           ...(producto?.presentacion?.id?{id:Number(producto.presentacion.id)}:{}),
-          nombre:presName.value.trim(),codigoBarras:barcode.value.trim()||null,
+          nombre:presName.value.trim(),
+          // Preservar el código legado de presentación, no modificar su historial.
+          codigoBarras:producto?.presentacion?.codigoBarras||null,
           unidadesPorEnvase:units.value,precioNeto:price.value
         },
+        codigosVenta:selectedBarcodes.filter(x=>x.row.isConnected).map(item=>({
+          ...(item.id?{id:Number(item.id)}:{}),
+          tipoCodigoBarraId:Number(item.type.value),
+          codigoBarras:item.code.value.trim(),
+          unidadesPorCodigo:item.quantity.value,
+          activo:item.checked.checked
+        })),
       };
       busy=true;submit.disabled=true;feedback.hidden=true;
       try{
