@@ -61,10 +61,33 @@
    if(field.options){
     input=document.createElement('select');
     input.appendChild(new Option('Todos',''));
-    for(const [val,label] of field.options)input.appendChild(new Option(label,val));
+    for(const [val,title] of field.options)input.appendChild(new Option(title,val));
    }else{input=document.createElement('input');input.type=field.type||'search';}
    input.name=field.key;input.value=field.value||'';input.placeholder=field.placeholder||'Buscar…';input.autocomplete='off';
+   if(field.type==='number'){input.min=field.min??'0';input.step=field.step??'any';}
    label.append(input);fieldsArea.append(label);controls[field.key]=input;
+  }
+  // Selectores dependientes. Sin padre elegido se permiten todas las opciones;
+  // al seleccionar un padre se restringen a sus descendientes legítimos.
+  const refill=field=>{
+   if(!field.dependsOn||!controls[field.key])return;
+   const select=controls[field.key],parentId=controls[field.dependsOn]?.value||'';
+   const before=select.value;
+   select.replaceChildren(new Option('Todos',''));
+   for(const [val,title,relatedId] of field.options||[]){
+    if(!parentId||String(relatedId)===String(parentId))
+      select.append(new Option(title,val));
+   }
+   select.value=[...select.options].some(option=>option.value===before)?before:'';
+  };
+  const redrawDescendants=parentKey=>{
+   fields.filter(field=>field.dependsOn===parentKey).forEach(field=>{
+    refill(field);redrawDescendants(field.key);
+   });
+  };
+  fields.filter(field=>field.dependsOn).forEach(refill);
+  for(const field of fields){
+   if(controls[field.key])controls[field.key].addEventListener('change',()=>redrawDescendants(field.key));
   }
   form.append(fieldsArea);
   const footer=document.createElement('div');footer.className='crud-footer modal-footer';
@@ -78,6 +101,7 @@
   dialog.append(form);document.body.append(dialog);
   dialog.addEventListener('close',()=>dialog.remove(),{once:true});
   dialog.showModal();fieldsArea.querySelector('input,select')?.focus();
+  return dialog;
  }
  const filterButton=(fields,onApply,config)=>{
   const b=document.createElement('button');b.type='button';b.className='button ghost advanced-filter-trigger';
@@ -152,7 +176,7 @@
      state.filters=filters;apply(root);
     },{title:'Búsqueda avanzada · '+(root.querySelector('h2,h3')?.textContent||'Listado')});
    });
-   toolbar.append(filter);
+   if(!toolbar.dataset.productAdvanced)toolbar.append(filter);
   }
   if(table)apply(root);
   if(activeRoot!==root){
