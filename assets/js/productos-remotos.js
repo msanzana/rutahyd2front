@@ -50,7 +50,7 @@
     if(e?.status===403)return 'Tu perfil no tiene permisos para esta operación.';
     if(e?.status===404)return 'Producto inexistente o recurso sin publicar.';
     if(e?.status===409)return 'Conflicto: SKU, código de barras o registro relacionado duplicado.';
-    if(e?.status===500)return 'Error interno del servidor (HTTP 500). El producto no pudo confirmarse; revisa la estructura SQL y el registro de Laravel antes de intentar otra vez.';
+    if(e?.status===500)return 'No fue posible guardar el producto. Comprueba los datos e inténtalo nuevamente.';
     if(e?.userMessage)return e.userMessage;
     if(e?.status===422)return 'Datos incompletos. Revisa el campo destacado o el margen mínimo en Precios.';
     if(e?.name==='AbortError')return 'El servidor agotó el tiempo de respuesta.';
