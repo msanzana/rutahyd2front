@@ -16,7 +16,7 @@
     rubros:{title:'Rubros'},departamentos:{title:'Departamentos'},
     familias:{title:'Familias'},lineas:{title:'Líneas'},
     marcas:{title:'Marcas'},modelos:{title:'Modelos'},
-    tipos_unidad:{title:'Tipos de unidad'},gramajes:{title:'Gramajes'},
+    tipos_unidad:{title:'Tipos de unidad'},tipos_codigos_barras:{title:'Tipos de códigos de barras'},
     tipos_envasado:{title:'Tipos de envasado'},
     condiciones_tributarias:{title:'Condiciones tributarias'}
   };
