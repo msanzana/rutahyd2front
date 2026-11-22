@@ -49,7 +49,8 @@ test('JWT permite entrar, consultar Compras y cerrar sesión sin mezclar registr
   await expect(page.locator('#workspaceContent')).toContainText('OC-REAL-CI');
   expect(queryCalls).toBeGreaterThanOrEqual(1);
   expect(loginCalls).toBe(1);
-  await page.locator('#authButton').click();
+  await page.locator('#userMenuTrigger').click();
+  await page.locator('#menuSignOut').click();
   await expect(page.locator('#loginDialog')).toBeVisible();
   await expect(page.locator('#appShell')).toBeHidden();
 });
