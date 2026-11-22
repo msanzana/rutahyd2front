@@ -666,7 +666,21 @@
         const typeCode=String(chosen?.codigo||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
         const code=item.code.value.trim();
         const length=barcodeLengths[typeCode];
-        if(length && !(new RegExp('^[0-9]{'+length+'}
+        if(length && (code.length!==length || !/^[0-9]+$/.test(code))){
+          item.code.focus();item.code.scrollIntoView({behavior:'smooth',block:'center'});
+          feedback.textContent='Código '+(chosen?.nombre||chosen?.codigo||'de barras')+
+            ' inválido: debe tener exactamente '+length+' dígitos numéricos. '+
+            'Corrige el código o selecciona el tipo correspondiente.';
+          feedback.hidden=false;return;
+        }
+        if(codesSeen.has(code)){
+          item.code.focus();
+          feedback.textContent='No puedes registrar el mismo código de barras dos veces en un producto.';
+          feedback.hidden=false;return;
+        }
+        codesSeen.add(code);
+      }
+      const activePrices=prices.filter(item=>item.row.isConnected&&item.active.checked);
       const invalidPrice=activePrices.find(item=>{
         const monto=Number(item.price.value),margen=Number(item.margin.value);
         return !Number.isFinite(monto)||monto<0||(
