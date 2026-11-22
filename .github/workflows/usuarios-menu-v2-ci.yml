@@ -21,6 +21,8 @@ jobs:
           node --check assets/js/app-produccion.js
           node --check assets/js/login-produccion.js
           node --check assets/js/proveedores-productos.js
+          node --check assets/js/ubicaciones.js
+          node --check assets/js/modulos-oficiales.js
           node --check assets/js/catalogos-api.js
           node --check assets/js/admin-remoto.js
           node --check assets/js/productos-remotos.js
@@ -28,6 +30,8 @@ jobs:
           node --check assets/js/recuperacion.js
           test "$(grep -o 'data-admin-catalog=' index.html | wc -l)" -eq 4
           test "$(grep -o 'data-catalog-key=' index.html | wc -l)" -eq 6
+          test -s assets/css/proveedores-ubicaciones-v38.css
+          grep -Fq 'id="ubicacionesSubnav"' index.html
           grep -Fq 'id="navUsuarios"' index.html
           grep -Fq 'id="providerSubnav"' index.html
           ! grep -Fq 'id="loginDemo"' index.html
@@ -36,4 +40,4 @@ jobs:
           npm install --no-audit --no-fund
           npx playwright install --with-deps chromium
       - name: Pruebas automáticas sin credenciales reales
-        run: npx playwright test tests/produccion-sin-demo.spec.mjs tests/productos-proveedores-codigos-v2.spec.mjs
+        run: npx playwright test tests/produccion-sin-demo.spec.mjs tests/productos-proveedores-codigos-v2.spec.mjs tests/ubicaciones-proveedores-v38.spec.mjs
