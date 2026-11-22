@@ -75,7 +75,7 @@ const asset=p=>path.join(root,p);
   await page.screenshot({path:'v46-checkbox-antes.png'});
   await page.locator('.hd-lookup-checkbox').click();
   assert.equal(await page.locator('.hd-lookup-check').isChecked(),true);
-  assert.equal(await page.locator('.hd-lookup-box svg').evaluate(e=>getComputedStyle(e).opacity),'1');
+  await page.waitForFunction(()=>getComputedStyle(document.querySelector('.hd-lookup-box svg')).opacity==='1',null,{timeout:1800});
   await page.screenshot({path:'v46-checkbox-seleccionado.png'});
   await page.locator('.hd-lookup-check').focus();
   await page.keyboard.press('Space');
