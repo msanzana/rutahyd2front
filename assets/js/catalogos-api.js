@@ -245,7 +245,7 @@
         if(!value)continue;
         if(integerKeys.has(key)&&(!/^[1-9][0-9]*$/.test(value)||!Number.isSafeInteger(Number(value))))
           throw new Error('Identificador de filtro inválido');
-        if(numericKeys.has(key)&&(!/^\\d+(?:\\.\\d+)?$/.test(value)||!Number.isFinite(Number(value))))
+        if(numericKeys.has(key)&&(!/^\d+(?:\.\d+)?$/.test(value)||!Number.isFinite(Number(value))))
           throw new Error('Rango numérico inválido');
         if(key==='activo'&&value!=='0'&&value!=='1')throw new Error('Estado de filtro inválido');
         if(value.length>200)throw new Error('Filtro demasiado largo');
