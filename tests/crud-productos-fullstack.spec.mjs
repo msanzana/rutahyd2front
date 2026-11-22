@@ -80,20 +80,20 @@ test('menú oficial y CRUD real de productos con todas las clasificaciones',asyn
     await modal.locator('select').nth(index).selectOption(String(rows[0].id));
   }
   await modal.locator('input[type=number]').last().fill('1250');
-  await modal.getByRole('button',{name:'Guardar en MySQL'}).click();
+  await modal.getByRole('button',{name:'Guardar'}).click();
   await expect(page.locator('#productosRealesListado')).toContainText('SKU-FULLSTACK-TEST');
   expect(creates).toBe(1);
 
   await page.locator('#productosRealesListado').getByRole('button',{name:'Editar'}).click();
   await page.locator('dialog[open] input[type=text]').nth(1).fill('Producto modificado');
-  await page.locator('dialog[open]').getByRole('button',{name:'Guardar en MySQL'}).click();
+  await page.locator('dialog[open]').getByRole('button',{name:'Guardar'}).click();
   await expect(page.locator('#productosRealesListado')).toContainText('Producto modificado');
   expect(updates).toBe(1);
 
-  await page.locator('#productosRealesListado').getByRole('button',{name:'Desactivar'}).click();
-  await page.locator('dialog[open]').getByRole('button',{name:'Confirmar desactivación'}).click();
+  page.once('dialog',dialog=>dialog.accept());
+  await page.locator('#productosRealesListado').getByRole('checkbox',{name:/Desactivar/}).uncheck();
   await expect(page.locator('#productosRealesListado')).toContainText('Inactivo');
-  expect(deletes).toBe(1);
+  expect(updates).toBe(2);
   const local=await page.evaluate(()=>localStorage.getItem('rutahd2-demo-local-v1'));
   expect(local===null||JSON.parse(local).productos.length===0).toBeTruthy();
 });
