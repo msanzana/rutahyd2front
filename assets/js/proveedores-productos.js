@@ -232,7 +232,6 @@
         };
         form.addEventListener('submit',async ev=>{
           ev.preventDefault();
-          if(!form.reportValidity())return;
           clearMessage();
           const chosen=avail.find(t=>String(t.id)===String(sel.value));
           const invalid=purchaseBarcodeValidation(chosen,code.value,units.value);
@@ -243,6 +242,7 @@
                 .test(code.value.trim()))?code:units;
             report(invalid,target);return;
           }
+          if(!form.reportValidity())return;
           const payload={tipo_codigo_barra_id:Number(sel.value),
             codigo_barras:code.value.trim(),unidades_por_codigo:units.value.trim(),activo:true};
           save.disabled=true;status.textContent='Guardando código…';
