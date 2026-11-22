@@ -211,3 +211,118 @@ test('mix lista proveedores y permite asociar un producto con código de compra'
   await expect(codes).toContainText('7801234567890');
   expect(barcode).toMatchObject({tipo_codigo_barra_id:11,codigo_barras:'7801234567890',unidades_por_codigo:'12'});
 });
+
+
+test('mix proveedor selecciona varios productos en buscador, los prepara y guarda juntos',async({page})=>{
+  const searches=[],saves=[];
+  let existing=[];
+  await intercept(page,async({route,r,path,url})=>{
+    if(path==='/api/v1/proveedores/mix'&&r.method()==='GET'){
+      return reply(route,{data:[{
+        id:16,nombre:'Proveedor principal',rut:'12345678-5',giro:'Distribución',
+        activo:true,cantidad_productos_mix:existing.length
+      }],total:1,last_page:1}),true;
+    }
+    if(path==='/api/v1/productos/buscador'&&r.method()==='GET'){
+      searches.push({
+        page:url.searchParams.get('page'),
+        supplier:url.searchParams.get('solo_sin_proveedor_id')
+      });
+      const pg=Number(url.searchParams.get('page')||1);
+      const data=pg===1?[
+        {id:51,sku:'SKU-51',nombre:'Arroz',activo:true,clasificacion:{},codigosVenta:[]},
+        {id:52,sku:'SKU-52',nombre:'Aceite',activo:true,clasificacion:{},codigosVenta:[]}
+      ]:[
+        {id:53,sku:'SKU-53',nombre:'Azúcar',activo:true,clasificacion:{},codigosVenta:[]}
+      ];
+      return reply(route,{data,last_page:2,total:3}),true;
+    }
+    if(path==='/api/v1/proveedores-productos/lote'&&r.method()==='POST'){
+      const payload=r.postDataJSON();saves.push(payload);
+      existing=payload.productos.map((item,i)=>({
+        id:601+i,producto_id:item.producto_id,proveedor_id:16,
+        codigo_producto:'SKU-'+item.producto_id,
+        producto:({51:'Arroz',52:'Aceite',53:'Azúcar'})[item.producto_id],
+        codigo_proveedor_producto:item.codigo_proveedor_producto,
+        costo_proveedor:item.costo_proveedor,
+        activo:true
+      }));
+      return reply(route,{cantidad:existing.length,ids:existing.map(i=>i.id)},201),true;
+    }
+    if(path==='/api/v1/proveedores-productos'&&r.method()==='GET')
+      return reply(route,{data:existing,last_page:1,total:existing.length}),true;
+    return false;
+  });
+  await login(page);
+  await page.locator('#toggleProviderSubnav').click();
+  await page.locator('#providerSubnav [data-nav="proveedores_productos"]').click();
+  await page.locator('.supplier-products-module .supplier-row-actions button').first().click();
+  const panel=page.locator('dialog.supplier-mix-dialog[open]');
+  await expect(panel).toBeVisible();
+  await panel.getByRole('button',{name:'Buscar y agregar productos'}).click();
+  const search=page.locator('dialog.hd-product-finder[open]');
+  await expect(search).toBeVisible();
+  await search.getByRole('checkbox',{name:'Seleccionar Arroz'}).check();
+  await search.getByRole('checkbox',{name:'Seleccionar Aceite'}).check();
+  await search.getByRole('button',{name:'Siguiente ›'}).first().click();
+  await search.getByRole('checkbox',{name:'Seleccionar Azúcar'}).check();
+  await search.getByRole('button',{name:'Usar productos seleccionados'}).click();
+  await expect(search).toBeHidden();
+  const draft=panel.locator('.supplier-mix-staged');
+  await expect(draft).toBeVisible();
+  await expect(draft.locator('.supplier-mix-draft-row')).toHaveCount(3);
+  expect(saves).toHaveLength(0);
+  expect(searches.length).toBeGreaterThan(1);
+  expect(searches.every(x=>x.supplier==='16')).toBe(true);
+  await draft.getByRole('textbox',{name:'Código del proveedor para Arroz'}).fill('PROV-ARROZ');
+  await draft.getByRole('spinbutton',{name:'Costo neto para Arroz'}).fill('1200.5000');
+  await draft.getByRole('button',{name:'Quitar Aceite'}).click();
+  await expect(draft.locator('.supplier-mix-draft-row')).toHaveCount(2);
+  expect(saves).toHaveLength(0);
+  await draft.getByRole('button',{name:'Guardar 2 productos'}).click();
+  await expect(draft).toBeHidden();
+  expect(saves).toHaveLength(1);
+  expect(saves[0]).toEqual({
+    proveedor_id:16,
+    productos:[
+      {producto_id:51,codigo_proveedor_producto:'PROV-ARROZ',costo_proveedor:'1200.5000'},
+      {producto_id:53,codigo_proveedor_producto:null,costo_proveedor:null}
+    ]
+  });
+  await expect(panel.locator('.supplier-mix-list')).toContainText('Arroz');
+  await expect(panel.locator('.supplier-mix-list')).toContainText('Azúcar');
+  await expect(panel).toContainText('2 producto(s) agregados');
+});
+
+test('mix mantiene borrador cuando lote falla y no guarda relaciones parciales',async({page})=>{
+  let writes=0;
+  await intercept(page,async({route,r,path})=>{
+    if(path==='/api/v1/proveedores/mix'&&r.method()==='GET')
+      return reply(route,{data:[{id:16,nombre:'Proveedor principal',activo:true,
+        cantidad_productos_mix:0}],total:1,last_page:1}),true;
+    if(path==='/api/v1/productos/buscador'&&r.method()==='GET')
+      return reply(route,{data:[{id:51,sku:'SKU-51',nombre:'Arroz',activo:true,
+        clasificacion:{},codigosVenta:[]}],last_page:1,total:1}),true;
+    if(path==='/api/v1/proveedores-productos/lote'&&r.method()==='POST'){
+      writes++;return reply(route,{message:'Duplicado'},409),true;
+    }
+    if(path==='/api/v1/proveedores-productos'&&r.method()==='GET')
+      return reply(route,{data:[],last_page:1,total:0}),true;
+    return false;
+  });
+  await login(page);
+  await page.locator('#toggleProviderSubnav').click();
+  await page.locator('#providerSubnav [data-nav="proveedores_productos"]').click();
+  await page.locator('.supplier-products-module .supplier-row-actions button').first().click();
+  const panel=page.locator('dialog.supplier-mix-dialog[open]');
+  await panel.getByRole('button',{name:'Buscar y agregar productos'}).click();
+  const picker=page.locator('dialog.hd-product-finder[open]');
+  await picker.getByRole('checkbox',{name:'Seleccionar Arroz'}).check();
+  await picker.getByRole('button',{name:'Usar productos seleccionados'}).click();
+  const draft=panel.locator('.supplier-mix-staged');
+  await draft.getByRole('button',{name:'Guardar 1 producto'}).click();
+  await expect(draft.locator('.supplier-mix-draft-row')).toHaveCount(1);
+  await expect(panel.locator('.supplier-mix-list')).not.toContainText('SKU-51');
+  await expect(panel).toContainText('Ninguna selección pendiente fue descartada.');
+  expect(writes).toBe(1);
+});
