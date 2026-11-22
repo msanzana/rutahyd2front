@@ -40,7 +40,7 @@
    const {
      mode='single', title='Seleccionar productos', preset={},
      lockedFilters={}, initial=[], excludeIds=[], source=null,onSelect=null,
-     fields=null,context='general'
+     fields=null,context='general',initialSearch=''
    }=settings;
    if(!['single','multiple'].includes(mode))return Promise.reject(Error('Modo de búsqueda inválido'));
    for(const x of [preset,lockedFilters]){
@@ -65,6 +65,7 @@
      const query=make('input');query.type='search';query.maxLength=120;
      query.placeholder='SKU, nombre, descripción o código de barras';
      query.setAttribute('aria-label','Buscar productos en todo el catálogo');
+     query.value=String(initialSearch).slice(0,120);
      const find=make('button','Buscar productos','button primary');find.type='submit';
      form.append(query,find);shell.append(form);
      const controls=make('div',null,'hd-lookup-controls');
