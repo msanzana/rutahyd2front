@@ -363,6 +363,9 @@
       navigate(key,from);return;
     }
     if(event.target.closest('#menuToggle')){
+      // En móvil restaurar buscador al reabrir el menú después de navegar.
+      // Nunca exhibirlo fuera de una sesión autenticada.
+      if(menuFind())menuFind().hidden=!logged();
       $('#appShell').classList.toggle('sidebar-open');return;
     }
     if(event.target.closest('[data-close-sidebar]')){
