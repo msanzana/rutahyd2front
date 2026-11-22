@@ -20,7 +20,52 @@
   b.dataset.tip=text;b.innerHTML=icon(kind);
   b.addEventListener('click',click);return b;
  };
- // Interruptor de estado reversible; no elimina datos. 
+ // Confirmación de estados compartida por todos los mantenedores.
+ // <dialog>.showModal() aporta capa superior, foco modal y Escape nativos.
+ function confirmStatus(name,wanted){
+  return new Promise(resolve=>{
+   const dialog=document.createElement('dialog');
+   dialog.className='modal hd-status-confirm';
+   dialog.setAttribute('aria-labelledby','hd-state-title');
+   dialog.setAttribute('aria-describedby','hd-state-description');
+   const shell=document.createElement('div');shell.className='hd-status-confirm-shell';
+   const top=document.createElement('div');top.className='hd-status-confirm-top';
+   const symbol=document.createElement('span');symbol.className='hd-status-confirm-symbol';
+   symbol.setAttribute('aria-hidden','true');
+   symbol.textContent=wanted?'✓':'!';
+   const heading=document.createElement('div');heading.className='hd-status-confirm-heading';
+   const eyebrow=document.createElement('span');eyebrow.className='hd-status-confirm-eyebrow';
+   eyebrow.textContent='RUTA H&D · CONFIRMACIÓN';
+   const title=document.createElement('h2');title.id='hd-state-title';
+   title.textContent=wanted?'¿Activar registro?':'¿Desactivar registro?';
+   heading.append(eyebrow,title);top.append(symbol,heading);
+   const text=document.createElement('p');text.id='hd-state-description';
+   text.className='hd-status-confirm-description';
+   text.textContent='¿Deseas '+(wanted?'activar':'desactivar')+' «'+name+'»? '+
+    (wanted?'Volverá a estar disponible según tus permisos.':
+      'Su información e historial se conservarán. No se eliminará de la base de datos.');
+   const actions=document.createElement('div');actions.className='hd-status-confirm-actions';
+   const cancel=document.createElement('button');cancel.type='button';
+   cancel.className='button ghost';cancel.textContent='Cancelar';
+   const accept=document.createElement('button');accept.type='button';
+   accept.className='button '+(wanted?'primary':'danger');
+   accept.textContent=wanted?'Sí, activar':'Sí, desactivar';
+   actions.append(cancel,accept);shell.append(top,text,actions);dialog.append(shell);
+   let decision=false;
+   cancel.addEventListener('click',()=>dialog.close());
+   accept.addEventListener('click',()=>{decision=true;dialog.close();});
+   dialog.addEventListener('click',event=>{
+    if(event.target===dialog)dialog.close();
+   });
+   dialog.addEventListener('close',()=>{
+    dialog.remove();resolve(decision);
+   },{once:true});
+   document.body.append(dialog);
+   try{dialog.showModal();cancel.focus();}
+   catch(_){dialog.remove();resolve(false);}
+  });
+ }
+ // Interruptor reversible: estado confirmado por Laravel, nunca una baja física.
  const statusSwitch=(name,active,onChange,{disabled=false,confirmOff=true}={})=>{
   const label=document.createElement('label');label.className='hd-inline-status-switch';
   const input=document.createElement('input');input.type='checkbox';
@@ -29,17 +74,25 @@
   input.dataset.tip=(input.checked?'Desactivar ':'Activar ')+name;
   const description=document.createElement('span');description.className='hd-status-word';
   description.textContent=input.checked?'Activo':'Inactivo';label.append(input,description);
+  let pending=false;
   input.addEventListener('change',async()=>{
+   if(pending)return;
    const wanted=input.checked,previous=!wanted;
-   if(!wanted&&confirmOff&&!window.confirm('¿Desactivar «'+name+'»? Se conservará su historial.')){
-    input.checked=previous;return;
-   }
-   input.disabled=true;
+   // No mostrar el cambio hasta que el usuario acepte y el servidor confirme.
+   input.checked=previous;
+   pending=true;input.disabled=true;
    try{
+    hideTip();
+    const accepted=(wanted||confirmOff)?await confirmStatus(name,wanted):true;
+    if(!accepted)return;
     await onChange(wanted);
-    description.textContent=wanted?'Activo':'Inactivo';
-    input.setAttribute('aria-label',(wanted?'Desactivar ':'Activar ')+name);
-    input.dataset.tip=(wanted?'Desactivar ':'Activar ')+name;
+    // El callback puede haber vuelto a dibujar la tabla, en cuyo caso
+    // el elemento antiguo ya no está conectado al documento.
+    if(input.isConnected){
+     input.checked=wanted;description.textContent=wanted?'Activo':'Inactivo';
+     input.setAttribute('aria-label',(wanted?'Desactivar ':'Activar ')+name);
+     input.dataset.tip=(wanted?'Desactivar ':'Activar ')+name;
+    }
    }catch(err){
     input.checked=previous;description.textContent=previous?'Activo':'Inactivo';
     input.setAttribute('aria-label',(previous?'Desactivar ':'Activar ')+name);
@@ -47,7 +100,7 @@
     const alert=document.createElement('span');alert.className='hd-switch-error';
     alert.setAttribute('role','alert');alert.textContent=err?.message||'No se pudo actualizar el estado.';
     label.append(alert);window.setTimeout(()=>alert.remove(),5000);
-   }finally{input.disabled=Boolean(disabled);}
+   }finally{pending=false;input.disabled=Boolean(disabled);}
   });
   return label;
  };

@@ -57,9 +57,13 @@ test('Clientes: lista real, alta, edición y baja lógica desde Laravel',async({
   await edit.locator('[name="nombre"]').fill('Cliente actualizado real');
   await edit.getByRole('button',{name:'Guardar cambios'}).click();
   await expect(page.locator('#workspaceContent')).toContainText('Cliente actualizado real');
-  page.once('dialog',dialog=>dialog.accept());
   await page.locator('#workspaceContent tbody tr').filter({hasText:'Cliente actualizado real'})
     .getByRole('checkbox',{name:'Desactivar Cliente actualizado real'}).uncheck();
+  const confirmation=page.locator('dialog.hd-status-confirm[open]');
+  await expect(confirmation).toBeVisible();
+  await expect(confirmation).toContainText('Cliente actualizado real');
+  await expect(confirmation.getByRole('heading',{name:'¿Desactivar registro?'})).toBeVisible();
+  await confirmation.getByRole('button',{name:'Sí, desactivar'}).click();
   await expect(page.locator('#workspaceContent tbody tr')
     .filter({hasText:'Cliente actualizado real'})).toContainText('Inactivo');
   expect(writes.some(x=>x.method==='POST'&&x.data.nombre==='Cliente nuevo real')).toBe(true);
@@ -111,4 +115,65 @@ test('Permisos y whitelist: usuarios sin gestión no pueden crear registros',asy
     }catch{return true;}
   });
   expect(rejected).toBe(true);
+});
+
+test('Switch de estado: cancelar no escribe y activar usa diálogo central accesible',async({page})=>{
+  const rows=[{id:18,codigo:'C-18',nombre:'Cliente temporal',activo:1}];
+  const writes=[];
+  await page.route('**/api/v1/recursos/clientes**',route=>{
+    const req=route.request();
+    if(req.method()==='GET')return reply(route,{data:rows,last_page:1,total:rows.length});
+    writes.push(req.postDataJSON());
+    Object.assign(rows[0],req.postDataJSON());
+    return reply(route,rows[0]);
+  });
+  await login(page);
+  await page.locator('.nav-link[data-nav="clientes"]').click();
+  let toggle=page.getByRole('checkbox',{name:'Desactivar Cliente temporal'});
+  await toggle.uncheck();
+  let dlg=page.locator('dialog.hd-status-confirm[open]');
+  await expect(dlg).toBeVisible();
+  await expect(dlg).toHaveAttribute('aria-describedby','hd-state-description');
+  await expect(dlg.getByRole('heading',{name:'¿Desactivar registro?'})).toBeVisible();
+  await expect(toggle).toBeChecked();
+  await dlg.getByRole('button',{name:'Cancelar'}).click();
+  await expect(dlg).toBeHidden();
+  await expect(toggle).toBeChecked();
+  expect(writes).toHaveLength(0);
+  await toggle.uncheck();
+  dlg=page.locator('dialog.hd-status-confirm[open]');
+  await dlg.getByRole('button',{name:'Sí, desactivar'}).click();
+  await expect(page.getByRole('checkbox',{name:'Activar Cliente temporal'})).not.toBeChecked();
+  expect(writes).toHaveLength(1);
+  expect(writes[0].activo).toBe(false);
+  toggle=page.getByRole('checkbox',{name:'Activar Cliente temporal'});
+  await toggle.check();
+  dlg=page.locator('dialog.hd-status-confirm[open]');
+  await expect(dlg.getByRole('heading',{name:'¿Activar registro?'})).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(dlg).toBeHidden();
+  expect(writes).toHaveLength(1);
+  await toggle.check();
+  dlg=page.locator('dialog.hd-status-confirm[open]');
+  await dlg.getByRole('button',{name:'Sí, activar'}).click();
+  await expect(page.getByRole('checkbox',{name:'Desactivar Cliente temporal'})).toBeChecked();
+  expect(writes).toHaveLength(2);
+  expect(writes[1].activo).toBe(true);
+});
+
+test('Switch de estado: error del servidor devuelve el interruptor a su estado original',async({page})=>{
+  await page.route('**/api/v1/recursos/clientes**',route=>{
+    if(route.request().method()==='GET')return reply(route,{
+      data:[{id:31,codigo:'C-31',nombre:'Cliente protegido',activo:1}],
+      last_page:1,total:1
+    });
+    return reply(route,{message:'No autorizado para cambiar este estado'},403);
+  });
+  await login(page);
+  await page.locator('.nav-link[data-nav="clientes"]').click();
+  const toggle=page.getByRole('checkbox',{name:'Desactivar Cliente protegido'});
+  await toggle.uncheck();
+  await page.locator('dialog.hd-status-confirm[open]').getByRole('button',{name:'Sí, desactivar'}).click();
+  await expect(toggle).toBeChecked();
+  await expect(page.getByRole('alert')).toContainText('No autorizado');
 });

@@ -1,0 +1,45 @@
+/* Ruta H&D V2 · v36 · Confirmación centralizada de cambio de estado. */
+dialog.hd-status-confirm{
+ position:fixed!important;inset:0!important;margin:auto!important;
+ box-sizing:border-box!important;display:none;
+ width:min(448px,calc(100vw - 32px))!important;max-width:448px!important;
+ max-height:min(88dvh,650px)!important;padding:0!important;
+ border:1px solid #e2d4ef!important;border-radius:22px!important;
+ color:#321e45!important;background:#fff!important;
+ box-shadow:0 28px 95px rgba(24,8,45,.36)!important;
+ overflow:auto!important;z-index:2147483000!important
+}
+dialog.hd-status-confirm[open]{display:block!important;animation:hd-status-pop .18s ease-out}
+dialog.hd-status-confirm::backdrop{
+ background:rgba(17,7,33,.66)!important;backdrop-filter:blur(5px)
+}
+.hd-status-confirm-shell{display:grid;gap:20px;padding:clamp(22px,4.5vw,32px)}
+.hd-status-confirm-top{display:flex;align-items:center;gap:16px}
+.hd-status-confirm-symbol{
+ display:grid;place-items:center;flex:0 0 55px;width:55px;height:55px;
+ border-radius:17px;color:#7134af;background:#f1e6fd;
+ font:800 27px/1 system-ui,-apple-system,sans-serif
+}
+.hd-status-confirm-heading{min-width:0;display:grid;gap:5px}
+.hd-status-confirm-eyebrow{font-size:10px;font-weight:800;letter-spacing:.11em;color:#8153a2}
+.hd-status-confirm-heading h2{margin:0;font-size:clamp(20px,4.5vw,24px);line-height:1.2;color:#381d55}
+.hd-status-confirm-description{margin:0;color:#654f76;font-size:14px;line-height:1.65;overflow-wrap:anywhere}
+.hd-status-confirm-actions{display:flex;justify-content:flex-end;gap:10px;border-top:1px solid #efe8f5;padding-top:18px}
+.hd-status-confirm-actions .button{margin:0;min-height:44px;border-radius:11px;padding:10px 17px;font-weight:750}
+.hd-status-confirm-actions .button.primary{background:#7134af;color:white;border-color:#7134af}
+.hd-status-confirm-actions .button.danger{background:#853c70;color:white;border-color:#853c70}
+.hd-status-confirm-actions .button:focus-visible{outline:3px solid #ae7fdb;outline-offset:3px}
+html[data-theme=oscuro] dialog.hd-status-confirm{
+ color:#f3ebfa!important;background:#2b1a3a!important;border-color:#604778!important
+}
+html[data-theme=oscuro] .hd-status-confirm-symbol{background:#443057;color:#e6c5ff}
+html[data-theme=oscuro] .hd-status-confirm-heading h2{color:#f7e9ff}
+html[data-theme=oscuro] .hd-status-confirm-description{color:#dbcbe8}
+html[data-theme=oscuro] .hd-status-confirm-eyebrow{color:#c8a6ea}
+html[data-theme=oscuro] .hd-status-confirm-actions{border-top-color:#604778}
+@media(max-width:420px){
+ .hd-status-confirm-actions{display:grid;grid-template-columns:1fr 1fr}
+ .hd-status-confirm-actions .button{min-width:0;padding-inline:8px}
+}
+@media(prefers-reduced-motion:reduce){dialog.hd-status-confirm[open]{animation:none}}
+@keyframes hd-status-pop{from{opacity:0;transform:translateY(9px) scale(.98)}to{opacity:1;transform:none}}
