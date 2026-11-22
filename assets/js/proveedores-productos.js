@@ -196,6 +196,7 @@
       const reload=async()=>{entries=(await api().purchaseBarcodes(record.id)).items||[];draw();};
       const editCode=(item=null)=>{
         const form=e('form',null,'supplier-barcode-form');
+        form.noValidate=true; // Validación corporativa antes del envío; sin globo nativo.
         const sel=selection(avail.map(t=>({id:t.id,label:t.nombre})),
           'Tipo de código *',item?.tipo_codigo_barra_id);
         sel.required=true;
@@ -242,7 +243,6 @@
                 .test(code.value.trim()))?code:units;
             report(invalid,target);return;
           }
-          if(!form.reportValidity())return;
           const payload={tipo_codigo_barra_id:Number(sel.value),
             codigo_barras:code.value.trim(),unidades_por_codigo:units.value.trim(),activo:true};
           save.disabled=true;status.textContent='Guardando código…';
