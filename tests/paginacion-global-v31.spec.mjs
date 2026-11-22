@@ -169,3 +169,21 @@ test('página numérica 3 consulta el servidor y mantiene la selección violeta'
  await expect(pager.getByRole('button',{name:'Página 3',exact:true})).toHaveAttribute('aria-current','page');
  expect(calls.some(x=>x.per===25&&x.page===3)).toBe(true);
 });
+
+test('catálogos sustituyen Eliminar por switch reversible y mantienen hasta 25 filas',async({page})=>{
+ await setup(page);
+ await page.locator('#toggleProductSubnav').click();
+ await page.locator('#productSubnav [data-nav="catalogos.rubros"]').click();
+ const root=page.locator('#adminRemoto');
+ await expect(root.locator('.catalog-table tbody tr:visible')).toHaveCount(25);
+ await expect(root.getByRole('button',{name:'Eliminar'})).toHaveCount(0);
+ const switchInput=root.locator('.catalog-table tbody tr').first().getByRole('checkbox',{name:'Desactivar Rubro 001'});
+ await expect(switchInput).toBeChecked();
+ const size=await switchInput.evaluate(n=>({
+  width:parseFloat(getComputedStyle(n).width),height:parseFloat(getComputedStyle(n).height),
+  radius:getComputedStyle(n).borderRadius
+ }));
+ expect(size.width).toBeLessThan(45);
+ expect(size.height).toBeLessThan(27);
+ expect(parseFloat(size.radius)).toBeGreaterThan(8);
+});
