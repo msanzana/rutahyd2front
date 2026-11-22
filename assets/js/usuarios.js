@@ -22,7 +22,9 @@ function mount(parent){
  const bar=el('div',undefined,'workspace-actions');
  const q=el('input');q.type='search';q.placeholder='Buscar usuario o correo';q.setAttribute('aria-label','Buscar usuario');
  q.addEventListener('input',()=>{filter=q.value.toLocaleLowerCase('es-CL');draw();});
- bar.append(q,btn('Crear usuario',()=>form(null),'button primary'),btn('Actualizar',()=>guard(load)));
+ const create=btn('Crear usuario',()=>form(null),'button primary');
+ create.classList.add('hd-list-create-action');
+ bar.append(q,btn('Actualizar',()=>guard(load)),create);
  root.append(bar);
  const box=el('div',undefined,'catalog-table-scroll');box.id='usersList';root.append(box);
  guard(load);
