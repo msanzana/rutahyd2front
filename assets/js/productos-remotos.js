@@ -352,7 +352,7 @@
         producto.activo?'Activo':'Inactivo'));
     heading.append(identity);
     const closeTop=button('×',()=>modal.close(),'crud-close');
-    closeTop.setAttribute('aria-label','Cerrar ficha de producto');
+    closeTop.setAttribute('aria-label','Cerrar ventana de consulta');
     header.append(heading,closeTop);shell.append(header);
     const content=el('div','product-detail-content');
     const info=el('section','product-detail-section');
