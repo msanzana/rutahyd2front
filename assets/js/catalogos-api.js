@@ -134,7 +134,20 @@
         bearer = null;
         window.RutaHDAccesos?.clear();
       }
-      // No exponer respuestas de error de servidores no verificados ni tokens.
+      // Mostrar validaciones Laravel de forma segura, sin datos de sesión ni SQL.
+      if ([409,413,415,422,503].includes(response.status) &&
+          (response.headers.get('Content-Type')||'').includes('application/json')) {
+        try {
+          const details=await response.json();
+          const values=details?.errors&&typeof details.errors==='object'?
+            Object.values(details.errors).flat().filter(x=>typeof x==='string'):[];
+          const explanation=values[0]||(typeof details?.message==='string'?details.message:'');
+          if(explanation && explanation.length<350 &&
+             !/SQLSTATE|stack trace|password|token|database connection/i.test(explanation))
+            error.userMessage=explanation;
+          error.validationErrors=details?.errors||null;
+        }catch(_ignored){}
+      }
       throw error;
     }
     if (response.status === 204) return null;
@@ -142,6 +155,47 @@
       throw new Error('La API no devolvió una respuesta JSON válida.');
     }
     return response.json();
+  }
+
+  async function sendBinary(path,method='GET',files=null) {
+    if(!endpoint||!bearer)throw new Error('Debes iniciar sesión.');
+    const token=bearer;
+    const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),45000);
+    try {
+      const response=await fetch(endpoint+path,{
+        method,
+        headers:{Authorization:'Bearer '+token,Accept:files?'application/json':'image/*'},
+        ...(files?{body:files}:{}),
+        credentials:'same-origin',cache:'no-store',signal:controller.signal
+      });
+      if(!response.ok){
+        const error=new Error('Error HTTP '+response.status);error.status=response.status;
+        if(response.status===401&&token===bearer){
+          bearer=null;window.RutaHDAccesos?.clear();
+        }
+        if((response.headers.get('Content-Type')||'').includes('application/json')){
+          try {
+            const body=await response.json();
+            const first=Object.values(body.errors||{}).flat()[0];
+            const msg=typeof first==='string'?first:body.message;
+            if(typeof msg==='string'&&msg.length<350&&
+              !/SQLSTATE|stack trace|password|token/i.test(msg))error.userMessage=msg;
+          }catch(_ignored){}
+        }
+        throw error;
+      }
+      if(files){
+        if(!(response.headers.get('Content-Type')||'').includes('application/json'))
+          throw Error('El servidor no confirmó el guardado de las fotografías.');
+        return response.json();
+      }
+      const kind=(response.headers.get('Content-Type')||'').split(';')[0];
+      if(!['image/jpeg','image/png','image/webp'].includes(kind))
+        throw Error('La API no devolvió una fotografía válida.');
+      const blob=await response.blob();
+      if(blob.size>2097152+2048)throw Error('La imagen supera el límite de carga.');
+      return blob;
+    }finally{clearTimeout(timer);}
   }
 
   async function publico(path, payload) {
@@ -250,7 +304,7 @@
       send('/ventas/precio-cliente?'+new URLSearchParams({
         cliente_id:id(customerId),producto_id:id(productId)
       })),
-    products: (page=1, buscar='', filters={}) => {
+    products: (page=1, buscar='', filters={},sort={}) => {
       if(!Number.isSafeInteger(page)||page<1||page>10000)throw new Error('Página inválida');
       if(typeof buscar!=='string'||buscar.length>120)throw new Error('Búsqueda inválida');
       if(!filters||typeof filters!=='object'||Array.isArray(filters))throw new Error('Filtros inválidos');
@@ -281,8 +335,30 @@
         if(value.length>200)throw new Error('Filtro demasiado largo');
         query.set(key,value);
       }
+      if(sort&&sort.key){
+        if(!['sku','nombre','rubro','departamento','familia','linea','marca','modelo','activo']
+          .includes(sort.key))throw Error('Columna de ordenación inválida');
+        if(!['asc','desc'].includes(sort.direction))throw Error('Dirección de ordenación inválida');
+        query.set('orden',sort.key);query.set('direccion',sort.direction);
+      }
       return send('/productos?'+query.toString());
     },
+    productPhotos: productId => send('/productos/'+id(productId)+'/fotos'),
+    productPhotoBlob: (productId,photoId) =>
+      sendBinary('/productos/'+id(productId)+'/fotos/'+id(photoId)),
+    uploadProductPhotos: (productId,files) => {
+      if(!Array.isArray(files)||files.length<1||files.length>6)throw Error('Selecciona de 1 a 6 fotos');
+      const form=new FormData();
+      files.forEach(file=>{
+        if(!(file instanceof File)||file.size<1||file.size>2097152||
+           !['image/jpeg','image/png','image/webp'].includes(file.type))
+          throw Error('Solo imágenes JPG, PNG o WebP de hasta 2 MB.');
+        form.append('fotos[]',file,file.name);
+      });
+      return sendBinary('/productos/'+id(productId)+'/fotos','POST',form);
+    },
+    deleteProductPhoto: (productId,photoId) =>
+      send('/productos/'+id(productId)+'/fotos/'+id(photoId),'DELETE'),
     getProduct: (identificador) => send('/productos/'+id(identificador)),
     createProduct: datos => send('/productos','POST',datos),
     updateProduct: (identificador,datos) => send('/productos/'+id(identificador),'PUT',datos),
