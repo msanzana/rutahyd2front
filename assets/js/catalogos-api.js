@@ -220,6 +220,7 @@
       send('/catalogos/' + key(catalogo) + '/' + id(identificador), 'PUT', datos),
     remove: (catalogo, identificador) =>
       send('/catalogos/' + key(catalogo) + '/' + id(identificador), 'DELETE'),
+    createSale: data => send('/ventas','POST',data),
     priceLists: (buscar='',activo=null) => {
       const q=new URLSearchParams({por_pagina:'100'});
       if(buscar)q.set('buscar',String(buscar).slice(0,120));
