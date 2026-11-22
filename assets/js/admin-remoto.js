@@ -111,17 +111,7 @@
       return;
     }
     const bar=el('div','workspace-actions');
-    bar.style.flexWrap='wrap';
-    add(bar,button('Actualizar datos',()=>guarded(refresh)),
-      button('Cerrar sesión remota',()=>guarded(async()=>{
-        try { await API().logout(); }
-        catch(e) { API().signOut(); }
-        authorized=false;
-        access()?.clear();
-        KEYS.forEach(k=>cache[k]=[]);
-        render();
-        status('Sesión remota cerrada y token descartado.');
-      })));
+    bar.appendChild(button('Actualizar datos',()=>guarded(refresh),'button ghost'));
     root.appendChild(bar);
     if(!restrictedKey){
       const tabs=el('div','catalog-tabs');
@@ -164,36 +154,51 @@
     root.appendChild(button('Iniciar sesión',()=>window.RutaHDLogin?.show(),'button primary'));
   }
   function dialog(title,formBody,onSubmit,deleteMode=false){
-    const dialog=el('dialog','modal catalog-dialog'),form=el('form');
+    const dialog=el('dialog','modal catalog-dialog crud-dialog remote-catalog-dialog'),form=el('form','crud-shell');
     form.noValidate=true;
-    form.appendChild(el('h2','',title));form.appendChild(formBody);
-    const footer=el('div','modal-footer');
-    footer.appendChild(button('Cancelar',()=>dialog.close()));
-    const confirm=el('button',deleteMode?'button danger':'button primary',deleteMode?'Eliminar':'Guardar');
+    const heading=el('div','crud-heading');
+    const copy=el('div','crud-heading-copy');
+    copy.append(el('span','crud-kicker','RUTA H&D · CATÁLOGOS'),
+      el('h2','',title),
+      el('p','crud-intro',deleteMode?'Esta acción requiere confirmación y se validará en el servidor.':'Completa la información para mantener actualizado el catálogo comercial.'));
+    const close=button('×',()=>dialog.close(),'crud-close');
+    close.setAttribute('aria-label','Cerrar ventana');
+    heading.append(copy,close);
+    form.append(heading);
+    formBody.classList.add('crud-fields');
+    form.append(formBody);
+    const msg=el('p','form-error crud-message');msg.hidden=true;msg.setAttribute('role','alert');form.append(msg);
+    const footer=el('div','modal-footer crud-footer');
+    footer.appendChild(button('Cancelar',()=>dialog.close(),'button ghost'));
+    const confirm=el('button',deleteMode?'button danger':'button primary',deleteMode?'Eliminar':'Guardar cambios');
     confirm.type='submit';footer.appendChild(confirm);form.appendChild(footer);
-    const msg=el('p','form-error');msg.hidden=true;form.appendChild(msg);
     form.addEventListener('submit',event=>{
       event.preventDefault();
+      if(!form.reportValidity())return;
       guarded(async()=>{
+        confirm.disabled=true;msg.hidden=true;
         try{await onSubmit();dialog.close();}
         catch(e){msg.textContent=errorText(e);msg.hidden=false;}
+        finally{confirm.disabled=false;}
       });
     });
     dialog.appendChild(form);document.body.appendChild(dialog);
     dialog.addEventListener('close',()=>dialog.remove(),{once:true});
     dialog.showModal();
+    form.querySelector('input:not([type="hidden"])')?.focus();
   }
   function edit(rec){
     if(!canManage(selected)){status('Tu perfil no puede modificar este catálogo.',true);return;}
-    const key=selected,parentKey=CONFIG[key][1],body=el('div','form-grid');
+    const key=selected,parentKey=CONFIG[key][1],body=el('div','crud-form-grid');
+    const wrap=(label,control)=>{const field=el('label','field crud-field');field.append(el('span','',label),control);return field;};
     const name=el('input');name.required=true;name.maxLength=100;name.value=rec?.nombre??'';
-    add(body,el('label','','Nombre o valor'),name);
+    body.append(wrap('Nombre o valor *',name));
     const state=el('select');
     [['1','Activo'],['0','Inactivo']].forEach(([id,label])=>{
       const opt=el('option','',label);opt.value=id;state.appendChild(opt);
     });
     state.value=rec?.activo===false?'0':'1';
-    add(body,el('label','','Estado'),state);
+    body.append(wrap('Estado',state));
     let parent=null;
     if(parentKey){
       parent=el('select');parent.required=true;
@@ -202,7 +207,7 @@
         const option=el('option','',p.nombre);option.value=p.id;parent.appendChild(option);
       });
       parent.value=rec?.parentId??'';
-      add(body,el('label','','Pertenece a '+CONFIG[parentKey][0]),parent);
+      body.append(wrap('Pertenece a '+CONFIG[parentKey][0]+' *',parent));
     }
     if(key==='condiciones_tributarias'&&rec){
       name.readOnly=true;
