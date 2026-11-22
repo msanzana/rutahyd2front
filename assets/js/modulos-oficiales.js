@@ -23,7 +23,7 @@
     compras:{resource:'ordenes_compra',title:'Órdenes de compra',fields:[['id','ID'],['numero','Número'],['estado','Estado'],['total_bruto','Total bruto']]},
     ventas:{resource:'ventas',title:'Ventas',fields:[['id','ID'],['numero','Número'],['estado','Estado'],['total_bruto','Total bruto']]},
     proveedores:{resource:'proveedores',title:'Proveedores',permission:'compras.gestionar',fields:[['id','ID'],['nombre','Razón social'],['rut','RUT'],['correo_electronico','Correo'],['activo','Estado']]},
-    clientes:{resource:'clientes',title:'Clientes',permission:'clientes.gestionar',fields:[['id','ID'],['codigo','Código'],['nombre','Nombre'],['rut','RUT'],['activo','Estado']]},
+    clientes:{resource:'clientes',title:'Clientes',permission:'clientes.gestionar',fields:[['id','ID'],['codigo','Código'],['nombre','Nombre'],['rut','RUT'],['lista_precio_nombre','Lista de precios'],['activo','Estado']]},
     bodega:{resource:'bodegas',title:'Bodegas',permission:'inventario.gestionar',fields:[['id','ID'],['codigo','Código'],['nombre','Nombre'],['tipo','Tipo'],['activo','Estado']]},
     cuentas_corrientes:{resource:null,title:'Cuentas corrientes',fields:[]}
   });
@@ -48,7 +48,7 @@
     return 'No se pudo completar la solicitud (HTTP '+(e?.status||'sin respuesta')+').';
   };
 
-  function openEditor(cfg,row,onSaved){
+  async function openEditor(cfg,row,onSaved){
     const editing=Boolean(row),definition=FIELDS[cfg.resource];
     if(!definition)return;
     const dialog=create('dialog',undefined,'modal official-editor crud-official-dialog');
@@ -76,6 +76,35 @@
       grid.append(field);inputs[key]=input;
     }
     form.append(grid);
+    let clientPriceList=null;
+    if(cfg.resource==='clientes'){
+      const label=create('label',undefined,'field official-customer-price-field');
+      label.append(create('span','Lista de precios para ventas'));
+      if(editing){
+        try{
+          const [available,current]=await Promise.all([
+            api().priceLists(),api().customerPriceList(row.id)
+          ]);
+          clientPriceList=create('select');
+          clientPriceList.setAttribute('aria-label','Lista de precios asignada al cliente');
+          for(const list of available.data||[]){
+            if(!list.activo&&Number(list.id)!==Number(current?.lista?.id))continue;
+            const option=create('option',list.nombre+(list.es_base?' (general)':''));option.value=String(list.id);
+            clientPriceList.append(option);
+          }
+          clientPriceList.value=String(current?.lista?.id||'');
+          if(!clientPriceList.value&&clientPriceList.options.length)
+            clientPriceList.selectedIndex=0;
+          clientPriceList.required=true;label.append(clientPriceList);
+        }catch(error){
+          label.append(create('p','No fue posible cargar la lista del cliente. Reintenta la edición.','form-error'));
+          throw error;
+        }
+      }else{
+        label.append(create('p','Al crear este cliente se le asignará automáticamente la LISTA BASE. Puedes asignarle una lista especial después.','catalog-footnote'));
+      }
+      form.append(label);
+    }
     if(editing){
       const field=create('label',undefined,'official-active-field');
       const input=create('input');input.type='checkbox';input.checked=Boolean(row.activo);
@@ -99,6 +128,7 @@
         datos[key]=v===''&&!required?null:v;
       }
       if(inputs.activo)datos.activo=inputs.activo.checked;
+      if(clientPriceList&&clientPriceList.value)datos.lista_precio_id=Number(clientPriceList.value);
       submit.disabled=true;cancel.disabled=true;
       note.textContent='Guardando en el servidor…';note.classList.remove('is-error');
       try {
@@ -170,11 +200,11 @@
     const searchBar=create('form',undefined,'official-search-bar');
     const searchInput=create('input');searchInput.type='search';
     searchInput.maxLength=120;
-    searchInput.placeholder='Buscar proveedor por nombre, RUT o correo';
-    searchInput.setAttribute('aria-label','Buscar en listado de proveedores');
+    searchInput.placeholder='Buscar '+(cfg.resource==='clientes'?'cliente':'proveedor')+' por nombre, RUT o correo';
+    searchInput.setAttribute('aria-label','Buscar en listado de '+cfg.title);
     const searchButton=create('button','Buscar','button primary');
     searchButton.type='submit';
-    if(cfg.resource==='proveedores'){
+    if(cfg.resource==='proveedores'||cfg.resource==='clientes'){
       searchBar.append(searchInput,searchButton);
       searchBar.addEventListener('submit',event=>{
         event.preventDefault();page=1;searchTerm=searchInput.value.trim();void load();
