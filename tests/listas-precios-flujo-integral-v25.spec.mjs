@@ -141,7 +141,7 @@ test('cliente elige solo una lista, y ventas muestran el precio exclusivo de esa
  await page.locator('.nav-link[data-nav="ventas"]').click();
  const sale=page.locator('#salePriceModule');
  await sale.getByLabel('Cliente').selectOption('5');
- await sale.getByLabel('Producto').selectOption('9');
+ await sale.getByLabel('Producto',{exact:true}).selectOption('9');
  await expect(sale.locator('.sale-effective-price')).toContainText('Mayoristas');
  await expect(sale.locator('.sale-effective-price')).toContainText('$115');
  await sale.getByLabel('Cantidad').fill('2');
