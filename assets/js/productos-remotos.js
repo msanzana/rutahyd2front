@@ -158,7 +158,7 @@
       {key:'proveedor_id',label:'ID del proveedor asociado',type:'number',min:'1',step:'1',value:filters.proveedor_id||''}
     );
     const modal=window.RutaHDListUI?.advanced(fields,values=>{
-      filters=Object.fromEntries(Object.entries(values).filter(([,v])=>v!==''&&!(/^0+$/.test(v)&&v!==values.activo)));
+      filters=Object.fromEntries(Object.entries(values).filter(([,value])=>value!==''));
       selectedPage=1;
       void guarded(loadProducts);
     },{
