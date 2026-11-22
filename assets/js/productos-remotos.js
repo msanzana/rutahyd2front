@@ -86,7 +86,7 @@
     const search=el('input');search.type='search';search.placeholder='Buscar SKU o nombre';search.setAttribute('aria-label','Buscar productos reales');
     search.maxLength=120;
     const searchBtn=button('Buscar',()=>guarded(async()=>{selectedPage=1;query=search.value.trim();await loadProducts();}),'button ghost');
-    const create=button('Nuevo producto real',()=>guarded(()=>editProduct(null)),'button primary');
+    const create=button('Nuevo Producto',()=>guarded(()=>editProduct(null)),'button primary');
     const refresh=button('Actualizar',()=>guarded(loadProducts));
     const advanced=button('Búsqueda avanzada',()=>guarded(openAdvancedSearch),'button ghost advanced-filter-trigger');
     advanced.innerHTML=window.RutaHDListUI?.icon('filtros')+'<span>Búsqueda avanzada</span>';
