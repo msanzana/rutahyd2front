@@ -202,11 +202,15 @@
              const check=make('input');check.type='checkbox';check.value=String(p.id);
              check.checked=selected.has(Number(p.id));check.disabled=isDisabled;
              check.setAttribute('aria-label','Seleccionar '+p.nombre);
+             check.className='hd-lookup-check';
              check.addEventListener('change',()=>{
                if(check.checked)selected.set(Number(p.id),p);else selected.delete(Number(p.id));
                redrawSelected();
              });
-             pick.append(check);
+             const control=make('label',null,'hd-lookup-checkbox');
+             control.append(check);
+             pick.classList.add('hd-lookup-select-cell');
+             pick.append(control);
            }else{
              const choose=window.RutaHDListUI?.action('Seleccionar '+p.nombre,
                ()=>finish(p),{kind:'seleccionar'})||
