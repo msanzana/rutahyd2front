@@ -5,7 +5,7 @@
   'use strict';
   const catalogos = [
     'rubros','departamentos','familias','lineas','marcas','modelos',
-    'tipos_unidad','gramajes','tipos_envasado','condiciones_tributarias'
+    'tipos_unidad','tipos_envasado','condiciones_tributarias','tipos_codigos_barras'
   ];
   let sesion = null;
   function actualizar() {
