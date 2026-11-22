@@ -9,7 +9,7 @@
   const acl=()=>window.RutaHDAccesos;
   const SERVICES=Object.freeze({
     administracion:'Administración',compras:'Compras',ventas:'Ventas',
-    proveedores:'Proveedores',proveedores_productos:'Proveedores productos',clientes:'Clientes',productos:'Productos',
+    proveedores:'Proveedores',proveedores_productos:'Proveedores productos',clientes:'Clientes',productos:'Productos',listas_precios:'Listas de precios',
     bodega:'Bodega',cuentas_corrientes:'Cuentas corrientes',
     usuarios:'Usuarios',perfiles:'Perfiles y permisos',inicio:'Inicio'
   });
@@ -86,7 +86,7 @@
     if(section==='usuarios'||section==='perfiles')return acl().isAdmin();
     if(section==='proveedores_productos')return acl().canSeeSubmodule('proveedores_productos');
     if(section==='proveedores')return acl().canSeeSubmodule('proveedores_listado');
-    if(section==='productos')return acl().canSeeSubmodule('productos_listado');
+    if(section==='productos'||section==='listas_precios')return acl().canSeeSubmodule('productos_listado');
     if(section.startsWith('catalogos.')){
       const key=section.split('.')[1];
       return CATALOGS.has(key)&&acl().canViewCatalog(key);
@@ -146,6 +146,8 @@
       window.RutaHDPerfiles?.mount(content);
     }else if(section==='productos'){
       window.RutaHDProductosRemotos?.mount(content);
+    }else if(section==='listas_precios'){
+      window.RutaHDListasPrecios?.mount(content);
     }else if(section==='administracion'){
       $('#workspaceDescription').textContent='Administración de clasificaciones, accesos y productos reales.';
       window.RutaHDRemoto?.mount(content);
@@ -153,7 +155,9 @@
       window.RutaHDRemoto?.mount(content,section.split('.')[1]);
     }else if(section==='proveedores_productos'){
       window.RutaHDProveedoresProductos?.mount(content);
-    }else if(['compras','ventas','proveedores','clientes','bodega','cuentas_corrientes'].includes(section)){
+    }else if(section==='ventas'){
+      window.RutaHDVentasPrecios?.mount(content);
+    }else if(['compras','proveedores','clientes','bodega','cuentas_corrientes'].includes(section)){
       window.RutaHDOficial?.mount(content,section);
     }else message(content,'Módulo sin implementar','Esta opción no tiene un contrato de API publicado.');
   }
