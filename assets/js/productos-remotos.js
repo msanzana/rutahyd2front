@@ -322,8 +322,17 @@
     catch(error){catalogErrorDialog(error);return;}
     const producto=id?await api().getProduct(id):null;
     // Tarifario del servidor: la Lista Base es obligatoria para todo producto.
-    const listReply=await api().priceLists();
-    const priceLists=Array.isArray(listReply?.data)?listReply.data:[];
+    let priceLists=[],compatibility=false;
+    try{
+      const listReply=await api().priceLists();
+      priceLists=Array.isArray(listReply?.data)?listReply.data:[];
+    }catch(error){
+      // Backend anterior al módulo de listas: conservar el CRUD heredado,
+      // sin inventar IDs ni enviar vínculos FK inexistentes.
+      if(error?.status!==404)throw error;
+      compatibility=true;
+      priceLists=[{id:null,codigo:'BASE',nombre:'LISTA BASE',es_base:true,activo:true}];
+    }
     const baseList=priceLists.find(item=>item.es_base);
     if(!baseList)throw new Error('No existe una LISTA BASE activa. Verifica el DDL24.');
     const modal=el('dialog','modal catalog-dialog product-editor-dialog crud-product-dialog');
@@ -386,6 +395,8 @@
       {required:true,min:0,step:0.0001});
     cost.id='productoCostoNeto';
     form.appendChild(el('h3','product-editor-section','Precios'));
+    if(compatibility)form.appendChild(el('p','hd-filter-warning product-editor-wide',
+      'El servidor aún no publica listas de precios. El formulario conservará únicamente el precio general de presentación.'));
     form.appendChild(el('p','catalog-footnote product-editor-wide',
       'La Lista Base es obligatoria. El precio y el margen se calculan desde el costo. El precio es neto y el IVA se determina por condición tributaria.'));
     const minimum=inputField('Mínimo margen precio venta de la línea (%)','number',form,
@@ -569,7 +580,7 @@
           precioNeto:prices.find(item=>item.list.es_base)?.price.value||'0'
         },
         costoNeto:cost.value,
-        precios:prices.filter(item=>item.row.isConnected).map(item=>({
+        precios:prices.filter(item=>item.row.isConnected&&item.list.id!==null).map(item=>({
           listaPrecioId:Number(item.list.id),
           activo:item.list.es_base?true:item.active.checked,
           ...(item.last==='margen'&&item.margin.value!==''?
