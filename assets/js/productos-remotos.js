@@ -76,7 +76,7 @@
       add(el('div'),el('span','overline','BASE PRODUCTIVA'),el('h2','','Productos y presentaciones'))
     );
     root.appendChild(el('p','catalog-footnote',
-      'CRUD real con JWT. La clasificación se valida en MySQL y el stock se gestiona exclusivamente en Inventario. Las bajas son lógicas.'));
+      ''));
     parent.replaceChildren(root);
     if(!canManage()){
       message('Inicia sesión en Administración con permiso productos.gestionar para consultar o modificar productos.',true);
@@ -153,8 +153,8 @@
         options:(cache.tipos_codigos_barras||[]).map(item=>[String(item.id),item.nombre]),
         value:filters.tipo_codigo_barra_id||''},
       {key:'presentacion',label:'Nombre de presentación',value:filters.presentacion||''},
-      {key:'precio_min',label:'Precio neto desde (CLP)',type:'number',min:'0',value:filters.precio_min||''},
-      {key:'precio_max',label:'Precio neto hasta (CLP)',type:'number',min:'0',value:filters.precio_max||''},
+      {key:'precio_min',label:'Precio desde (CLP)',type:'number',min:'0',value:filters.precio_min||''},
+      {key:'precio_max',label:'Precio hasta (CLP)',type:'number',min:'0',value:filters.precio_max||''},
       {key:'iva',label:'Tasa IVA (%)',type:'number',min:'0',value:filters.iva||''},
       {key:'unidades_min',label:'Unidades por envase desde',type:'number',min:'0',value:filters.unidades_min||''},
       {key:'unidades_max',label:'Unidades por envase hasta',type:'number',min:'0',value:filters.unidades_max||''},
@@ -304,7 +304,11 @@
         'Código',prod.presentacion.codigoBarras,'barcode'));
       else codeCell.append(el('span','product-empty-label','Sin códigos'));
       row.append(codeCell);
-      row.append(el('td','product-status-cell',prod.activo?'Activo':'Inactivo'));
+      const stateCell=el('td','product-status-cell');
+      const toggle=window.RutaHDListUI?.statusSwitch(prod.nombre,prod.activo,
+        async active=>{await api().updateProduct(prod.id,{activo:active});await loadProducts();});
+      stateCell.append(toggle||el('span','',prod.activo?'Activo':'Inactivo'));
+      row.append(stateCell);
       const actions=el('td','catalog-actions product-index-actions');
       actions.append(indexedAction('Ver',()=>guarded(()=>detailProduct(prod.id)),'ver'));
       actions.append(indexedAction('Editar',()=>guarded(()=>editProduct(prod.id)),'editar'));
@@ -318,7 +322,7 @@
       photos.setAttribute('aria-label','Fotos de '+prod.nombre);
       photos.title='Abrir galería de fotografías de '+prod.nombre;
       actions.append(photos);
-      if(prod.activo)actions.append(indexedAction('Desactivar',()=>deactivate(prod),'desactivar',true));
+
       row.append(actions);body.append(row);
     });
     table.append(body);
@@ -333,7 +337,7 @@
       onPage:n=>guarded(async()=>{selectedPage=n;await loadProducts();})
     });
     result.appendChild(footer);
-    message('Productos consultados directamente en Laravel/MySQL. Sin sincronizar datos locales.');
+    message('');
   }
   async function detailProduct(id){
     const producto=await api().getProduct(id);
@@ -406,7 +410,7 @@
     if(prices.length){
       const table=el('table','product-detail-table');
       const head=el('thead'),tr=el('tr');
-      ['Lista','Estado','Costo neto','Margen','Precio venta neto'].forEach(x=>tr.append(el('th','',x)));
+      ['Lista','Estado','Costo neto','Margen','Precio'].forEach(x=>tr.append(el('th','',x)));
       head.append(tr);table.append(head);
       const body=el('tbody');
       prices.forEach(price=>{
@@ -588,7 +592,7 @@
     const priceArea=el('div','price-list-editor product-editor-wide');
     const priceTable=el('table','catalog-table product-price-table');
     const phead=el('thead'),prHead=el('tr');
-    ['Lista de precio','Activo','Costo neto','Margen %','Precio venta (CLP)','Acción'].forEach(label=>
+    ['Lista de precio','Activo','Costo neto','Margen %','Precio','Acción'].forEach(label=>
       prHead.appendChild(el('th','',label)));
     phead.appendChild(prHead);priceTable.appendChild(phead);
     const priceBody=el('tbody');priceTable.appendChild(priceBody);
@@ -754,7 +758,7 @@
     const feedback=el('p','form-error','');feedback.hidden=true;form.appendChild(feedback);
     const actions=el('div','modal-footer product-editor-actions');
     const cancel=button('Cancelar',()=>modal.close());
-    const submit=el('button','button primary','Guardar en MySQL');submit.type='submit';
+    const submit=el('button','button primary','Guardar');submit.type='submit';
     add(actions,cancel,submit);form.appendChild(actions);
     form.addEventListener('submit',async(event)=>{
       event.preventDefault();
@@ -843,7 +847,7 @@
         if(producto)await api().updateProduct(producto.id,dto);
         else await api().createProduct(dto);
         modal.close();await loadProducts();
-        message(producto?'Producto actualizado en MariaDB.':'Producto creado en MariaDB.');
+        message('');
       }catch(e){
         feedback.textContent=errorMessage(e);feedback.hidden=false;
         feedback.scrollIntoView({behavior:'smooth',block:'center'});
