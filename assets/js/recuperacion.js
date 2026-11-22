@@ -1,57 +1,121 @@
-/* Recuperación de cuenta: tokens solo en memoria y fragmento URL. */
+/* Recuperación real de Ruta H&D V2: nunca permite que el login invada el flujo.
+ * Los tokens se conservan solo en memoria y se eliminan del fragmento visible. */
 (() => {
-'use strict';
-const match=/^#recuperar\?token=([a-f0-9]{64})$/.exec(location.hash);
-const pending=match?.[1]||null;
-const api=()=>window.RutaHDApiCatalogos;
-function show(mode='solicitar',token=null){
- const dlg=document.createElement('dialog');dlg.className='modal catalog-dialog';
- const form=document.createElement('form');form.noValidate=true;form.className='form-grid';
- const title=document.createElement('h2');title.textContent=mode==='solicitar'?'Recuperar cuenta':'Cambiar contraseña';form.append(title);
- const field=(labelText,type,minLength=0)=>{
-  const label=document.createElement('label');label.className='field';
-  const name=document.createElement('span');name.textContent=labelText;
-  const input=document.createElement('input');input.type=type;input.required=true;input.minLength=minLength;
-  label.append(name,input);form.append(label);return input;
- };
- const email=mode==='solicitar'?field('Correo electrónico','email'):null;
- const password=mode==='restablecer'?field('Nueva contraseña (mínimo 12 caracteres)','password',12):null;
- const confirmation=mode==='restablecer'?field('Confirmar contraseña','password',12):null;
- const note=document.createElement('p');note.className='catalog-footnote';note.setAttribute('role','status');form.append(note);
- const footer=document.createElement('div');footer.className='modal-footer';
- const cancel=document.createElement('button');cancel.type='button';cancel.textContent='Cancelar';cancel.className='button ghost';
- cancel.addEventListener('click',()=>dlg.close());
- const send=document.createElement('button');send.type='submit';send.className='button primary';
- send.textContent=mode==='solicitar'?'Enviar enlace':'Guardar contraseña';
- footer.append(cancel,send);form.append(footer);
- form.addEventListener('submit',async e=>{
-  e.preventDefault();
-  if(mode==='solicitar'&&!email.validity.valid){note.textContent='Ingresa un correo válido.';return;}
-  if(mode==='restablecer'&&(password.value.length<12||password.value!==confirmation.value)){
-   note.textContent='Las contraseñas deben coincidir y tener al menos 12 caracteres.';return;
+  'use strict';
+  const incoming=/^#recuperar\?token=([a-f0-9]{64})$/i.exec(location.hash);
+  let pending=incoming?.[1]||null;
+  let active=Boolean(pending), dialog=null, completed=false;
+  const api=()=>window.RutaHDApiCatalogos;
+  const node=(tag,cls,text)=>{
+    const element=document.createElement(tag);
+    if(cls)element.className=cls;
+    if(text!==undefined)element.textContent=text;
+    return element;
+  };
+  const status=(note,text,isError=false)=>{
+    note.textContent=text;
+    note.classList.toggle('recovery-error',isError);
+    note.setAttribute('role',isError?'alert':'status');
+  };
+  const input=(form,labelText,type,minLength=0)=>{
+    const label=node('label','field'),name=node('span',null,labelText),field=node('input');
+    field.type=type;field.required=true;field.minLength=minLength;
+    field.autocomplete=type==='email'?'email':'new-password';
+    field.id='recovery-'+(type==='email'?'email':form.querySelector('#recovery-password')?'confirmation':'password');
+    if(type==='email')field.maxLength=190;
+    label.append(name,field);form.append(label);
+    return field;
+  };
+  function finish(){
+    if(dialog?.open)dialog.close();
+    else done();
   }
-  send.disabled=true;
-  try{
-   api().configure(location.origin);
-   if(mode==='solicitar'){
-    await api().requestRecovery(email.value.trim());email.value='';
-    note.textContent='Si la cuenta existe y está activa, recibirás un enlace por correo.';
-   }else{
-    await api().resetPassword(token,password.value,confirmation.value);
-    password.value='';confirmation.value='';
-    note.textContent='Contraseña cambiada. Ahora puedes iniciar sesión.';
-   }
-  }catch(error){
-   note.textContent=error?.status===503?'El servicio de recuperación no está configurado.':
-    'No fue posible procesar la solicitud. Revisa los datos o solicita otro enlace.';
-  }finally{send.disabled=false;}
- });
- dlg.append(form);document.body.append(dlg);
- dlg.addEventListener('close',()=>{
-  dlg.remove();
-  document.dispatchEvent(new Event('rutahd:recuperacion-finalizada'));
-},{once:true});dlg.showModal();
-}
-window.RutaHDRecuperacion=Object.freeze({mostrarSolicitud:()=>show('solicitar')});
-document.addEventListener('DOMContentLoaded',()=>{if(pending)show('restablecer',pending);});
+  function done(){
+    dialog?.remove();dialog=null;
+    active=false;pending=null;
+    if(/^#recuperar(?:\?|$)/i.test(location.hash))history.replaceState(null,'','#inicio');
+    document.body.classList.remove('is-recovering');
+    document.dispatchEvent(new Event('rutahd:recuperacion-finalizada'));
+  }
+  function show(mode='solicitar',token=null){
+    if(dialog?.open)return;
+    active=true;completed=false;
+    document.body.classList.add('is-recovering');
+    const reset=mode==='restablecer';
+    const dlg=node('dialog','modal recovery-dialog');
+    dialog=dlg;
+    dlg.setAttribute('aria-label',reset?'Crear nueva contraseña':'Recuperar cuenta');
+    const layout=node('div','recovery-layout');
+    const brand=node('aside','recovery-brand');
+    brand.append(node('span','recovery-eyebrow','RUTA H&D V2 · ACCESO SEGURO'));
+    const logo=node('img','recovery-logo');
+    logo.src='hd-branding/logo-hd-site.png';logo.alt='Logotipo oficial H&D';
+    brand.append(logo,node('h2',null,'Protegemos tu acceso.'),node('p',null,
+      'Tu información comercial permanece en el servidor. Esta solicitud se procesa de forma cifrada mediante Laravel.'));
+    const form=node('form','recovery-form');form.noValidate=true;
+    form.append(node('span','recovery-eyebrow','SEGURIDAD DE LA CUENTA'),
+      node('h2',null,reset?'Crear nueva contraseña':'Recuperar cuenta'),
+      node('p','recovery-description',reset?
+      'Escribe y confirma una nueva contraseña para recuperar el acceso a Ruta H&D V2.':
+      'Indica el correo asociado a tu usuario. Te enviaremos un enlace privado para recuperar el acceso.'));
+    const email=reset?null:input(form,'Correo electrónico','email');
+    const password=reset?input(form,'Nueva contraseña','password',12):null;
+    const confirmation=reset?input(form,'Confirmar contraseña','password',12):null;
+    if(reset)form.append(node('p','recovery-hint','Mínimo 12 caracteres. Usa una contraseña única que no hayas utilizado en otros sistemas.'));
+    const note=node('p','recovery-message','');
+    note.id='recoveryStatus';note.setAttribute('role','status');note.setAttribute('aria-live','polite');
+    form.append(note);
+    const actions=node('div','recovery-actions');
+    const cancel=node('button','button ghost','Volver al inicio de sesión');
+    cancel.type='button';cancel.addEventListener('click',finish);
+    const send=node('button','button primary',reset?'Guardar nueva contraseña':'Enviar enlace');
+    send.type='submit';send.id='recoverySubmit';
+    actions.append(cancel,send);form.append(actions);
+    form.addEventListener('submit',async event=>{
+      event.preventDefault();
+      if(completed)return;
+      if(!form.reportValidity())return;
+      if(reset&&(password.value!==confirmation.value)){
+        status(note,'Las contraseñas no coinciden.',true);return;
+      }
+      send.disabled=true;status(note,'Comprobando el servidor…');
+      try {
+        api().configure(location.origin);
+        if(!reset){
+          await api().requestRecovery(email.value.trim());
+          email.value='';
+          status(note,'Si la cuenta está activa, recibirás un enlace para restablecer tu contraseña.');
+        }else{
+          await api().resetPassword(token,password.value,confirmation.value);
+          password.value='';confirmation.value='';pending=null;completed=true;
+          if(/^#recuperar(?:\?|$)/i.test(location.hash))history.replaceState(null,'','#inicio');
+          status(note,'Contraseña actualizada correctamente. Ya puedes iniciar sesión.');
+          send.hidden=true;
+          cancel.textContent='Continuar al inicio de sesión';
+        }
+      }catch(error){
+        const code=error?.status;
+        status(note,code===422?
+          'El enlace no es válido, ha expirado o la contraseña no cumple los requisitos. Solicita uno nuevo.':
+          code===429?'Se han realizado demasiadas solicitudes. Inténtalo más tarde.':
+          code===503?'El servicio de recuperación no está disponible. Inténtalo nuevamente.':
+          'No fue posible completar la solicitud. Comprueba tu conexión y vuelve a intentarlo.',true);
+      }finally{send.disabled=completed;}
+    });
+    layout.append(brand,form);dlg.append(layout);document.body.append(dlg);
+    dlg.addEventListener('cancel',event=>event.preventDefault());
+    dlg.addEventListener('close',done,{once:true});
+    dlg.showModal();
+    if(reset&&token){
+      // Después de abrir el formulario, borrar el token de la barra URL sin invalidarlo en memoria.
+      history.replaceState(null,'','#recuperacion');
+    }
+    (email||password)?.focus();
+  }
+  const isActive=()=>active;
+  window.RutaHDRecuperacion=Object.freeze({mostrarSolicitud:()=>show('solicitar'),
+    isActive});
+  document.addEventListener('DOMContentLoaded',()=>{
+    if(pending)show('restablecer',pending);
+  });
 })();
