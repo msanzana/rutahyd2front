@@ -64,7 +64,7 @@ test('menús administrativos exactos y submenús de proveedores',async({page})=>
   await expect(page.locator('#productSubnav')).toBeHidden();
   const productNames=await page.locator('#productSubnav .nav-sublink').allTextContents();
   expect(productNames.map(x=>x.trim())).toEqual([
-    'Listado de productos','Rubros','Departamentos','Familias','Líneas','Marcas','Modelos'
+    'Listado de productos','Listas de precios','Rubros','Departamentos','Familias','Líneas','Marcas','Modelos'
   ]);
   expect(page.locator('text=Gramajes')).toHaveCount(0);
 });
@@ -95,7 +95,7 @@ for(const width of [1440,820,390]){
   await expect(dlg).not.toContainText('ID de proveedor');
   await expect(dlg).not.toContainText('Gramajes');
   await expect(dlg).toContainText('Códigos de barras de venta');
-  expect(await dlg.locator('select').count()).toBe(9);
+  expect(await dlg.locator('select').count()).toBe(10);
  });
 }
 
