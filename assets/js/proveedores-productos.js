@@ -38,11 +38,13 @@
     return s;
   }
   function openDialog(title){
-    const dialog=e('dialog',null,'modal supplier-product-dialog');
+    const dialog=e('dialog',null,'modal supplier-product-dialog crud-supplier-dialog');
     const box=e('div',null,'supplier-dialog-body');
     const heading=e('div',null,'supplier-dialog-header');
-    heading.append(e('span','RUTA H&D · ABASTECIMIENTO','overline'),e('h2',title));
-    box.append(heading);dialog.append(box);
+    heading.append(e('span','RUTA H&D · ABASTECIMIENTO','overline'),e('h2',title),
+      e('p','Administra la relación comercial y los códigos logísticos asociados.','crud-supplier-subtitle'));
+    const close=button('×',()=>dialog.close(),'crud-close');close.setAttribute('aria-label','Cerrar ventana');
+    heading.append(close);box.append(heading);dialog.append(box);
     document.body.append(dialog);
     dialog.addEventListener('close',()=>dialog.remove(),{once:true});
     dialog.showModal();
@@ -64,7 +66,7 @@
         providerRows.unshift({id:record.proveedor_id,label:record.proveedor});
       if(record&&!productRows.some(x=>x.id===record.producto_id))
         productRows.unshift({id:record.producto_id,label:record.codigo_producto+' · '+record.producto});
-      const form=e('form',null,'supplier-dialog-form');
+      const form=e('form',null,'supplier-dialog-form crud-supplier-form');
       const providerSearch=field('search','',120);
       providerSearch.placeholder='Nombre o RUT del proveedor…';
       const provider=selection(providerRows,'Seleccionar proveedor',record?.proveedor_id);
@@ -184,7 +186,7 @@
       box.append(button('Añadir código de barras de compra',()=>editCode(),
         'button primary supplier-dialog-add'));
     }catch(err){message.textContent=errorText(err);message.classList.add('is-error');}
-    box.append(button('Cerrar',()=>dialog.close()));
+    box.append(button('Cerrar',()=>dialog.close(),'button ghost supplier-dialog-dismiss'));
   }
 
   function mount(parent){
