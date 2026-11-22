@@ -185,7 +185,7 @@ test('mix lista proveedores y permite asociar un producto con código de compra'
   await expect(main).toBeVisible();
   await expect(main.locator('thead')).toContainText('Productos en mix');
   await expect(main.locator('tbody')).toContainText('Proveedor principal');
-  await main.getByRole('button',{name:'Editar mix de Proveedor principal'}).click();
+  await main.locator('.supplier-row-actions button').first().click();
   const panel=page.locator('dialog.supplier-mix-dialog[open]');
   await expect(panel).toBeVisible();
   await panel.getByRole('button',{name:'Añadir producto al mix'}).click();
