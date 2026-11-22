@@ -100,7 +100,8 @@
     $$('.nav-link').forEach(button=>{
       const active=button.dataset.nav===section || (section.startsWith('catalogos.')&&
         button.dataset.nav===(from==='administracion'?'administracion':'productos')) ||
-        ((section==='usuarios'||section==='perfiles')&&button.dataset.nav==='administracion');
+        ((section==='usuarios'||section==='perfiles')&&button.dataset.nav==='administracion') ||
+        (section==='proveedores_productos'&&button.dataset.nav==='proveedores');
       button.classList.toggle('active',active);
       if(active)button.setAttribute('aria-current','page');
       else button.removeAttribute('aria-current');
