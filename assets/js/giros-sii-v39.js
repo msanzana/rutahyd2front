@@ -54,7 +54,8 @@
      }
      async function load(){
        if(loading){request++;return;}
-       const seq=++request;loading=true;status.textContent='Consultando giros SII…';
+       const seq=++request;loading=true;status.classList.remove('is-error');
+       status.textContent='Consultando giros SII…';
        try{
          const response=await api().girosSii({buscar:search.value.trim(),page,perPage:25});
          if(seq!==request||!dialog.open)return;
@@ -82,7 +83,14 @@
          pager(below,pages,Number(response.total||0));
          status.textContent=Number(response.total||0)+' giros encontrados.';
        }catch(e){
-         if(seq===request){status.textContent=e?.userMessage||e?.message||'No fue posible consultar el SII local.';status.classList.add('is-error');}
+         if(seq===request){
+           // Evitar mostrar una página antigua que no corresponde al texto buscado.
+           list.replaceChildren();
+           above.replaceChildren();below.replaceChildren();
+           above.hidden=true;below.hidden=true;
+           status.textContent=e?.userMessage||e?.message||'No fue posible consultar los giros.';
+           status.classList.add('is-error');
+         }
        }finally{loading=false;if(request>seq&&dialog.open)void load();}
      }
      form.addEventListener('submit',ev=>{ev.preventDefault();page=1;void load();});
