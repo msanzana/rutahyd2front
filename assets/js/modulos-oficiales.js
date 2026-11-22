@@ -180,7 +180,7 @@
         }catch(error){
           if(error?.status===404){
             // Compatibilidad con API antigua, sin inventar IDs de listas.
-            label.append(create('p','El servidor aún no tiene habilitada la selección de listas. Los datos del cliente siguen editables.','catalog-footnote'));
+            label.append(create('p','La selección de listas de precios no está disponible. Puedes seguir editando los datos del cliente.','catalog-footnote'));
           }else throw error;
         }
       }else{
