@@ -14,12 +14,15 @@
     usuarios:'Usuarios',perfiles:'Perfiles y permisos',inicio:'Inicio'
   });
   const ADMIN_CATALOGS=new Set(['tipos_unidad','tipos_envasado','condiciones_tributarias','tipos_codigos_barras']);
+  const LOCATION_CATALOGS=new Set(['paises','regiones','provincias','comunas','ciudades']);
   const CATALOGS=new Set(['rubros','departamentos','familias','lineas','marcas','modelos',
     'tipos_unidad','tipos_envasado','condiciones_tributarias','tipos_codigos_barras']);
   const NAMES={rubros:'Rubros',departamentos:'Departamentos',familias:'Familias',
     lineas:'Líneas',marcas:'Marcas',modelos:'Modelos',tipos_unidad:'Tipos de unidad',
     tipos_codigos_barras:'Tipos de códigos de barras',tipos_envasado:'Tipos de envasado',
-    condiciones_tributarias:'Condiciones tributarias'};
+    condiciones_tributarias:'Condiciones tributarias',
+    paises:'Países',regiones:'Regiones',provincias:'Provincias',
+    comunas:'Comunas',ciudades:'Ciudades'};
   let current='inicio',online=false;
   const logged=()=>Boolean(acl()?.authenticated());
   const recoveringNow=()=>Boolean(window.RutaHDRecuperacion?.isActive());
@@ -40,6 +43,13 @@
     $('#navUsuarios').hidden=!logged()||!acl().isAdmin();
     $('#navPerfiles').hidden=!logged()||!acl().isAdmin();
     $('#toggleAdminSubnav').hidden=!logged();
+    const geoToggle=$('#toggleUbicacionesSubnav');
+    if(geoToggle)geoToggle.hidden=!logged()||!acl().isAdmin();
+    $('#ubicacionesSubnav [data-nav]').forEach(btn=>btn.hidden=!logged()||!acl().isAdmin());
+    if(!logged()||!acl().isAdmin()){
+      const inner=$('#ubicacionesSubnav');if(inner)inner.hidden=true;
+      if(geoToggle)geoToggle.setAttribute('aria-expanded','false');
+    }
     $('#toggleProviderSubnav').hidden=!logged();
     const providerProducts=$('#providerSubnav [data-nav="proveedores_productos"]');
     if(providerProducts)providerProducts.hidden=!logged()||!acl().canSeeSubmodule('proveedores_productos');
@@ -83,7 +93,9 @@
         const key=element.dataset.adminCatalog
           ?'catalogos.'+element.dataset.adminCatalog:element.dataset.nav;
         const group=element.closest('.nav-group');
-        const parent=group?.querySelector('.nav-parent .nav-link span')?.textContent?.trim()||'Menú principal';
+        const parent=element.closest('#ubicacionesSubnav')?
+          'Administración · Ubicaciones':
+          group?.querySelector('.nav-parent .nav-link span')?.textContent?.trim()||'Menú principal';
         return {key,text:element.querySelector('span')?.textContent?.trim()
           ||element.textContent.trim(),parent,
           from:group?.id==='adminNavGroup'?'administracion':
@@ -157,6 +169,9 @@
     $('#productSubnav').hidden=true;
     $('#adminSubnav').hidden=true;
     $('#providerSubnav').hidden=true;
+    const geo=$('#ubicacionesSubnav'),geoToggle=$('#toggleUbicacionesSubnav');
+    if(geo)geo.hidden=true;
+    if(geoToggle)geoToggle.setAttribute('aria-expanded','false');
     $('#toggleProviderSubnav').setAttribute('aria-expanded','false');
     $('#toggleProductSubnav').setAttribute('aria-expanded','false');
     $('#toggleAdminSubnav').setAttribute('aria-expanded','false');
@@ -176,6 +191,8 @@
     // Una comprobación transitoria del estado no debe congelar menús de una sesión JWT válida.
     if(!logged())return false;
     if(section==='usuarios'||section==='perfiles')return acl().isAdmin();
+    if(section.startsWith('ubicaciones.'))
+      return LOCATION_CATALOGS.has(section.split('.')[1])&&acl().isAdmin();
     if(section==='proveedores_productos')return acl().canSeeSubmodule('proveedores_productos');
     if(section==='proveedores')return acl().canSeeSubmodule('proveedores_listado');
     if(section==='productos'||section==='listas_precios')return acl().canSeeSubmodule('productos_listado');
@@ -185,8 +202,11 @@
     }
     return Object.prototype.hasOwnProperty.call(SERVICES,section);
   }
-  function titleFor(section){return section.startsWith('catalogos.')?
-    NAMES[section.split('.')[1]]||'Clasificación':SERVICES[section]||'Inicio';}
+  function titleFor(section){
+    if(section.startsWith('ubicaciones.'))return NAMES[section.split('.')[1]]||'Ubicaciones';
+    return section.startsWith('catalogos.')?
+      NAMES[section.split('.')[1]]||'Clasificación':SERVICES[section]||'Inicio';
+  }
   function navigate(section,from=null){
     if(!allowed(section)){
       if(!logged())window.RutaHDLogin?.show();
@@ -194,7 +214,8 @@
     }
     current=section;
     const categoryKey=section.startsWith('catalogos.')?section.split('.')[1]:null;
-    const categoryOrigin=categoryKey?(ADMIN_CATALOGS.has(categoryKey)?'administracion':'productos'):from;
+    const categoryOrigin=section.startsWith('ubicaciones.')?'administracion':
+      categoryKey?(ADMIN_CATALOGS.has(categoryKey)?'administracion':'productos'):from;
     const isHome=section==='inicio';
     $('#homeView').hidden=!isHome;
     $('#workspaceView').hidden=isHome;
@@ -202,6 +223,7 @@
     $$('.nav-link').forEach(button=>{
       const active=button.dataset.nav===section || (section.startsWith('catalogos.')&&
         button.dataset.nav===categoryOrigin) ||
+        (section.startsWith('ubicaciones.')&&button.dataset.nav==='administracion') ||
         ((section==='usuarios'||section==='perfiles')&&button.dataset.nav==='administracion') ||
         (section==='proveedores_productos'&&button.dataset.nav==='proveedores');
       button.classList.toggle('active',active);
@@ -213,7 +235,11 @@
         'catalogos.'+button.dataset.adminCatalog:button.dataset.nav;
       button.classList.toggle('active',key===section);
     });
-    if(section.startsWith('catalogos.'))expand(categoryOrigin);
+    if(section.startsWith('ubicaciones.')){
+      expand('administracion');
+      $('#ubicacionesSubnav').hidden=false;
+      $('#toggleUbicacionesSubnav').setAttribute('aria-expanded','true');
+    }else if(section.startsWith('catalogos.'))expand(categoryOrigin);
     else if(['administracion','usuarios','perfiles'].includes(section))expand('administracion');
     else if(section==='productos'||section==='listas_precios')expand('productos');
     else if(section==='proveedores'||section==='proveedores_productos')expand('proveedores');
@@ -245,6 +271,9 @@
       window.RutaHDRemoto?.mount(content);
     }else if(section.startsWith('catalogos.')){
       window.RutaHDRemoto?.mount(content,section.split('.')[1]);
+    }else if(section.startsWith('ubicaciones.')){
+      $('#workspaceDescription').textContent='Catálogos oficiales de territorio: país, región, provincia, comuna y ciudad.';
+      window.RutaHDUbicaciones?.mount(content,section.split('.')[1]);
     }else if(section==='proveedores_productos'){
       window.RutaHDProveedoresProductos?.mount(content);
     }else if(section==='ventas'){
@@ -299,6 +328,15 @@
       event.preventDefault();
       const dialog=$('#infoDialog');
       if(dialog?.open)dialog.close();
+      return;
+    }
+    const geoExpand=event.target.closest('#toggleUbicacionesSubnav');
+    if(geoExpand){
+      event.preventDefault();
+      if(!logged()||!acl().isAdmin())return;
+      const target=$('#ubicacionesSubnav');
+      target.hidden=!target.hidden;
+      geoExpand.setAttribute('aria-expanded',String(!target.hidden));
       return;
     }
     const exp=event.target.closest('#toggleProductSubnav,#toggleAdminSubnav,#toggleProviderSubnav');
