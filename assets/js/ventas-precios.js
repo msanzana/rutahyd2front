@@ -38,7 +38,27 @@
   date.input.value=new Date().toISOString().slice(0,10);
   option(client.input,'','Selecciona un cliente');option(product.input,'','Selecciona un producto');
   option(typeDte.input,'39','Boleta (39)');option(typeDte.input,'33','Factura (33)');
-  grid.append(client.wrap,searchProduct.wrap,product.wrap,qty.wrap,
+  const picker=el('button','Elegir con buscador de productos','button ghost hd-product-launch');
+  picker.type='button';picker.disabled=true;
+  picker.addEventListener('click',async()=>{
+    const customerId=Number(client.input.value);
+    if(!customerId){priceInfo.textContent='Selecciona primero un cliente.';return;}
+    try{
+      const chosen=await window.RutaHDBuscadorProductos?.openSingle({
+        title:'Producto con precio válido para el cliente',
+        context:'ventas',fields:[],initialSearch:searchProduct.input.value.trim(),
+        source:({buscar,page})=>api().saleProducts(customerId,buscar,page)
+      });
+      if(!chosen)return;
+      product.input.replaceChildren();
+      option(product.input,'','Selecciona producto');
+      option(product.input,chosen.id,chosen.nombre+' · '+(chosen.sku||'Sin SKU'));
+      product.input.value=String(chosen.id);
+      loadedProducts=[chosen];
+      await showPrice();
+    }catch(error){priceInfo.textContent='No se pudo consultar el catálogo autorizado del cliente.';}
+  });
+  grid.append(client.wrap,searchProduct.wrap,picker,product.wrap,qty.wrap,
     typeDte.wrap,document.wrap,name.wrap,address.wrap,date.wrap);
   const priceInfo=el('p','Selecciona cliente y producto para consultar el precio.','sale-effective-price');
   priceInfo.setAttribute('role','status');
@@ -116,8 +136,13 @@
       tr.append(el('td',it.nombre),el('td',it.lista),el('td',it.cantidad),
         el('td',money(it.precio)),el('td',money(it.precio*it.cantidad)));
       const td=el('td');
-      const rm=el('button','Quitar','button ghost');rm.type='button';
-      rm.addEventListener('click',()=>{items.splice(i,1);redrawCart();});
+      td.className='sale-row-actions';
+      const rm=window.RutaHDListUI?.action('Quitar producto '+it.nombre,
+        ()=>{items.splice(i,1);redrawCart();},{kind:'quitar'})||
+        el('button','Quitar','button ghost');
+      if(!window.RutaHDListUI){
+        rm.type='button';rm.addEventListener('click',()=>{items.splice(i,1);redrawCart();});
+      }
       td.append(rm);tr.append(td);tb.append(tr);
     });
     table.append(tb);cartArea.append(table);
@@ -153,6 +178,7 @@
    name.input.value=selected?.nombre||'';
    address.input.value=selected?.direccion||'';
    // No mezclar productos cotizados con la tarifa de otro cliente.
+   picker.disabled=!client.input.value;
    items=[];redrawCart();void loadSaleProducts();
   });
   searchProduct.input.addEventListener('input',()=>{
