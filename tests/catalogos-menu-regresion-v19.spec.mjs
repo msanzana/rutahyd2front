@@ -125,3 +125,24 @@ test('catálogo vacío genuino permite crear el primer registro',async({page})=>
  await page.getByRole('button',{name:'Nuevo registro de Marcas'}).click();
  await expect(page.locator('dialog.remote-catalog-dialog[open]')).toBeVisible();
 });
+
+for(const width of [1440,390]){
+ test('submenús conservan columnas y orden visual '+width,async({page})=>{
+  await page.setViewportSize({width,height:800});
+  await setup(page);
+  if(width<900)await page.locator('#menuToggle').click();
+  await page.locator('#toggleProductSubnav').click();
+  const positions=await page.locator('#productSubnav .nav-sublink:visible').evaluateAll(nodes=>
+    nodes.map(el=>{const r=el.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width};}));
+  expect(positions).toHaveLength(7);
+  for(let i=1;i<positions.length;i++){
+    expect(positions[i].y).toBeGreaterThan(positions[i-1].y);
+    expect(Math.abs(positions[i].x-positions[0].x)).toBeLessThan(2);
+    expect(Math.abs(positions[i].width-positions[0].width)).toBeLessThan(2);
+  }
+  const viewport=await page.locator('#productSubnav').evaluate(n=>({
+    scroll:n.scrollWidth,client:n.clientWidth
+  }));
+  expect(viewport.scroll).toBeLessThanOrEqual(viewport.client+2);
+ });
+}
