@@ -275,8 +275,13 @@
     remove: (catalogo, identificador) =>
       send('/catalogos/' + key(catalogo) + '/' + id(identificador), 'DELETE'),
     createSale: data => send('/ventas','POST',data),
-    priceLists: (buscar='',activo=null) => {
-      const q=new URLSearchParams({por_pagina:'100'});
+    // Los selectores heredados conservan hasta 100 opciones; el mantenedor
+    // solicita explícitamente páginas de 25 para recorrer TODAS las listas.
+    priceLists: (buscar='',activo=null,page=1,perPage=100) => {
+      if(!Number.isSafeInteger(page)||page<1||page>10000||
+         !Number.isSafeInteger(perPage)||perPage<1||perPage>100)
+        throw Error('Paginación de listas inválida');
+      const q=new URLSearchParams({por_pagina:String(perPage),page:String(page)});
       if(buscar)q.set('buscar',String(buscar).slice(0,120));
       if(activo!==null)q.set('activo',activo?'1':'0');
       return send('/listas-precios?'+q);
