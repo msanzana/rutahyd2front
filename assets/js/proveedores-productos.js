@@ -217,7 +217,7 @@
         const h=e('tr');
         ['Proveedor','Producto / SKU','Código proveedor','Costo neto','Última recepción','Estado','Acciones']
           .forEach(x=>h.append(e('th',x)));
-        table.append(e('thead')).append(h);
+        const thead=e('thead');thead.append(h);table.append(thead);
         const body=e('tbody');
         for(const record of rows){
           const tr=e('tr');
