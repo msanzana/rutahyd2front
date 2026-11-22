@@ -82,7 +82,7 @@
     const selectedKey=restrictedKey||selected;
     const parent=CONFIG[selectedKey]?.[1]||null;
     const keys=[...new Set([...visible,...(restrictedKey&&parent&&canSee(parent)?[parent]:[])])];
-    status('Consultando '+(restrictedKey?CONFIG[restrictedKey][0]:'los catálogos de Administración')+' en Laravel…');
+    status('Cargando '+(restrictedKey?CONFIG[restrictedKey][0]:'los catálogos de Administración')+'…');
     const results=await Promise.allSettled(keys.map(key=>API().list(key)));
     if(version!==viewVersion||root!==target||!target.isConnected)return;
     catalogErrors=new Map();
@@ -123,13 +123,13 @@
     if(!root)return;
     root.replaceChildren();
     const header=el('div','panel-heading');
-    add(header,add(el('div'),el('span','overline','CONEXIÓN SEGURA'),el('h3','','Administración MySQL')),
-      el('p','','Los cambios se guardan en MariaDB bajo control de permisos.'));
+    add(header,add(el('div'),el('span','overline','CONFIGURACIÓN'),el('h3','','Administración')),
+      el('p','','Organiza y actualiza los catálogos del sistema.'));
     root.appendChild(header);
     const message=el('p','catalog-footnote','');message.id='remoteStatus';root.appendChild(message);
     if(!authorized){
       if(access()?.authenticated()){
-        root.appendChild(el('p','catalog-footnote','Cargando los registros autorizados desde Laravel…'));
+        root.appendChild(el('p','catalog-footnote','Cargando los registros disponibles…'));
       }else renderLogin();
       return;
     }
@@ -197,7 +197,7 @@
   }
   function renderLogin(){
     root.appendChild(el('p','catalog-footnote',
-      'Debes iniciar sesión mediante la pantalla principal de acceso para administrar catálogos de MariaDB.'));
+      'Inicia sesión para administrar los catálogos de la plataforma.'));
     root.appendChild(button('Iniciar sesión',()=>window.RutaHDLogin?.show(),'button primary'));
   }
   function dialog(title,formBody,onSubmit,deleteMode=false){
@@ -286,18 +286,18 @@
     const permitted=Object.entries(REMOTE_RESOURCES).filter(([,config])=>access()?.has(config.permiso));
     if(!permitted.length)return;
     const panel=el('section','catalog-main');
-    panel.appendChild(el('h3','','Consultas reales del servidor'));
-    panel.appendChild(el('p','catalog-footnote','Lecturas paginadas desde MySQL autenticado. Los registros de demostración permanecen separados y no se sincronizan.'));
+    panel.appendChild(el('h3','','Consulta de registros'));
+    panel.appendChild(el('p','catalog-footnote','Explora los registros disponibles según tus permisos.'));
     const bar=el('div','workspace-actions');
     bar.style.flexWrap='wrap';
     const selection=el('select');
-    selection.setAttribute('aria-label','Recurso real de MySQL');
+    selection.setAttribute('aria-label','Tipo de registro');
     permitted.forEach(([key,config])=>{
       const option=el('option','',config.titulo);option.value=key;selection.appendChild(option);
     });
     const results=el('div','catalog-table-scroll');
     const pagination=el('nav','list-pagination','');
-    pagination.setAttribute('aria-label','Páginas de consultas MySQL');
+    pagination.setAttribute('aria-label','Páginas de consulta');
     let pageNumber=1,lastPage=1;
     const load=async()=>{
       const key=selection.value,definition=REMOTE_RESOURCES[key];
@@ -326,9 +326,9 @@
         label:'registros',onPage:n=>guarded(async()=>{pageNumber=n;await load();})
       });
       pagination.hidden=lastPage<=1;
-      status('Datos consultados desde Laravel/MySQL. Solo lectura; no se modificó ningún registro.');
+      status('Consulta completada. No se modificaron registros.');
     };
-    const consult=button('Consultar MySQL',()=>guarded(load));
+    const consult=button('Consultar registros',()=>guarded(load));
     selection.addEventListener('change',()=>{
       pageNumber=1;lastPage=1;results.replaceChildren();
       pagination.replaceChildren();pagination.hidden=true;
@@ -344,7 +344,7 @@
     panel.appendChild(el('h3','','Clasificar un producto existente'));
     panel.appendChild(el('p','catalog-footnote','Este formulario solo cambia la clasificación; no crea productos ni altera precios o stock.'));
     const form=el('form','form-grid');
-    const idRow=el('label','field','ID numérico del producto en MySQL');
+    const idRow=el('label','field','ID del producto');
     const productId=el('input');productId.type='number';productId.min='1';productId.step='1';productId.required=true;
     idRow.appendChild(productId);form.appendChild(idRow);
     const identity=el('p','catalog-footnote','Primero consulta el producto para comprobar su identidad y clasificación actual.');
@@ -378,7 +378,7 @@
     }
     PRODUCTS.forEach(([field])=>controls[field].addEventListener('change',update));
     update();
-    form.appendChild(button('Consultar producto en MySQL',()=>guarded(async()=>{
+    form.appendChild(button('Consultar producto',()=>guarded(async()=>{
       const id=Number(productId.value);
       if(!Number.isSafeInteger(id)||id<1){status('Ingresa un ID válido para consultar.',true);return;}
       const registro=await API().getProductClassification(id);
