@@ -206,6 +206,13 @@
   function money(price){
     return new Intl.NumberFormat('es-CL',{style:'currency',currency:'CLP',maximumFractionDigits:2}).format(Number(price)||0);
   }
+  // El costo promedio puede requerir fracciones de peso; conservar las 4
+  // cifras decimales de DECIMAL(15,4) en vez de redondear como precio de venta.
+  function averageMoney(value){
+    return new Intl.NumberFormat('es-CL',{
+      style:'currency',currency:'CLP',minimumFractionDigits:4,maximumFractionDigits:4
+    }).format(Number(value)||0);
+  }
   async function loadProducts(){
     if(!canManage())return;
     const data=await api().products(selectedPage,query,filters,sort);
@@ -412,7 +419,7 @@
     const priceIntro=el('div','product-detail-price-summary');
     priceIntro.append(el('span','','Costo neto: '+money(cost)),
       el('span','product-detail-average-cost','Costo promedio ponderado: '+
-        (producto.costoPromedioPonderado==null?'—':money(producto.costoPromedioPonderado))),
+        (producto.costoPromedioPonderado==null?'—':averageMoney(producto.costoPromedioPonderado))),
       el('span','','Margen mínimo línea: '+Number(producto.minimoMargenPrecioVenta||0).toFixed(2)+' %'));
     pricesSection.append(priceIntro);
     const prices=Array.isArray(producto.precios)?producto.precios:[];
