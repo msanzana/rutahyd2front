@@ -111,7 +111,7 @@ test('recuperación segura permite volver al login sin una sesión falsa',async(
   await page.locator('#loginRecover').click();
   const recovery=page.locator('dialog').filter({hasText:'Recuperar cuenta'});
   await expect(recovery).toBeVisible();
-  await recovery.getByRole('button',{name:'Cancelar'}).click();
+  await recovery.getByRole('button',{name:'Volver al inicio de sesión'}).click();
   await expect(page.locator('#loginDialog')).toBeVisible();
   await expect(page.locator('#loginSubmit')).toBeDisabled();
 });
@@ -155,4 +155,64 @@ test('un 403 conserva sesión y muestra acceso denegado sin inventar datos',asyn
   await expect(page.locator('#workspaceContent')).toContainText('no tiene permisos');
   await expect(page.locator('#loginDialog')).toBeHidden();
   expect(await page.evaluate(()=>window.RutaHDAccesos.authenticated())).toBe(true);
+});
+
+
+test('enlace directo de recuperación mantiene formulario visible sin volver al login',async({page})=>{
+  const token='a'.repeat(64);
+  await page.route('**/api/v1/estado',async route=>{
+    await new Promise(resolve=>setTimeout(resolve,450));
+    await json(route,{servicio:'Ruta H&D2 API',estado:'disponible'});
+  });
+  let body=null;
+  await page.route('**/api/v1/recuperacion/restablecer',async route=>{
+    body=route.request().postDataJSON();
+    await json(route,{mensaje:'Contraseña actualizada'});
+  });
+  await page.goto('/#recuperar?token='+token);
+  const recovery=page.getByRole('dialog',{name:'Crear nueva contraseña'});
+  await expect(recovery).toBeVisible();
+  await expect(page.locator('#loginDialog')).toBeHidden();
+  await expect(page.locator('#appShell')).toBeHidden();
+  await page.waitForTimeout(1300);
+  await expect(recovery).toBeVisible();
+  await expect(page.locator('#loginDialog')).toBeHidden();
+  await expect(page).not.toHaveURL(/token=/);
+  await recovery.locator('#recovery-password').fill('Unica-Recuperacion-2026!');
+  await recovery.locator('#recovery-confirmation').fill('Unica-Recuperacion-2026!');
+  await recovery.locator('#recoverySubmit').click();
+  await expect(recovery.locator('#recoveryStatus')).toContainText('actualizada correctamente');
+  expect(body.token).toBe(token);
+  expect(body.contrasena).toBe('Unica-Recuperacion-2026!');
+  await expect(recovery).toBeVisible();
+  await recovery.getByRole('button',{name:'Continuar al inicio de sesión'}).click();
+  await expect(page.locator('#loginDialog')).toBeVisible();
+});
+
+test('token vencido mantiene la recuperación abierta y permite solicitar otro enlace',async({page})=>{
+  await page.route('**/api/v1/estado',r=>json(r,{servicio:'Ruta H&D2 API',estado:'disponible'}));
+  await page.route('**/api/v1/recuperacion/restablecer',r=>json(r,{message:'Token vencido'},422));
+  await page.goto('/#recuperar?token='+'b'.repeat(64));
+  const recovery=page.getByRole('dialog',{name:'Crear nueva contraseña'});
+  await recovery.locator('#recovery-password').fill('Una-clave-segura-2026!');
+  await recovery.locator('#recovery-confirmation').fill('Una-clave-segura-2026!');
+  await recovery.locator('#recoverySubmit').click();
+  await expect(recovery.locator('#recoveryStatus')).toContainText('ha expirado');
+  await expect(recovery).toBeVisible();
+  await expect(page.locator('#loginDialog')).toBeHidden();
+});
+
+test('recuperación adaptable en teléfono sin recortes',async({page})=>{
+  await page.setViewportSize({width:390,height:820});
+  await page.route('**/api/v1/estado',r=>json(r,{servicio:'Ruta H&D2 API',estado:'disponible'}));
+  await page.goto('/#recuperar?token='+'c'.repeat(64));
+  const recovery=page.getByRole('dialog',{name:'Crear nueva contraseña'});
+  await expect(recovery).toBeVisible();
+  const metrics=await recovery.locator('.recovery-layout').evaluate(element=>{
+    const r=element.getBoundingClientRect();
+    return {left:r.left,right:r.right,width:innerWidth,overflow:document.documentElement.scrollWidth};
+  });
+  expect(metrics.left).toBeGreaterThanOrEqual(0);
+  expect(metrics.right).toBeLessThanOrEqual(metrics.width+1);
+  expect(metrics.overflow).toBeLessThanOrEqual(metrics.width+1);
 });
