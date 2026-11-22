@@ -22,7 +22,7 @@ jobs:
           grep -Fq 'interfaz-mix-validacion-v45.css?v=20261122-v46prod' index.html
           grep -Fq "no-switch hd-lookup-check" assets/js/buscador-productos-v39.js
           grep -Fq '.hd-lookup-check:checked + .hd-lookup-box' assets/css/interfaz-mix-validacion-v45.css
-      - name: Chromium: comprobar geometría, marca SVG, teclado y selección múltiple
+      - name: "Chromium: comprobar geometría, marca SVG, teclado y selección múltiple"
         run: |
           set -euo pipefail
           npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
