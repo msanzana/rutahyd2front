@@ -129,7 +129,7 @@ test('nuevo producto envía códigos de venta sin proveedor ni gramajes',async({
   await barcode.getByLabel('Tipo de código de barras').selectOption('11');
   await barcode.getByLabel('Código de barras',{exact:true}).fill('7801234567890');
   await barcode.getByLabel('Unidades por código').fill('12');
-  await dlg.getByRole('button',{name:'Guardar en MySQL'}).click();
+  await dlg.getByRole('button',{name:'Guardar'}).click();
   await expect(dlg).toBeHidden();
   expect(created).not.toBe(null);
   expect(created.proveedorId).toBeUndefined();
