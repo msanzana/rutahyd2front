@@ -36,6 +36,9 @@ async function intercept(page,cb=()=>false){
     if(path==='/api/v1/recursos/proveedores'&&r.method()==='GET')
       return reply(route,{data:[{id:16,nombre:'Proveedor principal',rut:'12345678-5'}],
         total:1,last_page:1});
+    if(path==='/api/v1/proveedores/mix'&&r.method()==='GET')
+      return reply(route,{data:[{id:16,nombre:'Proveedor principal',rut:'12345678-5',
+        activo:true,cantidad_productos_mix:0}],last_page:1,total:1});
     if(path==='/api/v1/proveedores-productos'&&r.method()==='GET')
       return reply(route,{data:[],last_page:1,total:0});
     return reply(route,{},404);
@@ -56,8 +59,13 @@ test('menús administrativos exactos y submenús de proveedores',async({page})=>
   const admin=await page.locator('#adminSubnav .nav-sublink').allTextContents();
   expect(admin.map(x=>x.trim())).toEqual([
     'Tipos de unidad','Tipos de envasado','Condición tributaria',
-    'Tipos de códigos de barras','Usuarios','Perfiles y permisos'
+    'Tipos de códigos de barras','Ubicaciones','Países','Regiones',
+    'Provincias','Comunas','Ciudades','Usuarios','Perfiles y permisos'
   ]);
+  await expect(page.locator('#ubicacionesSubnav')).toBeHidden();
+  await page.locator('#toggleUbicacionesSubnav').click();
+  await expect(page.locator('#ubicacionesSubnav')).toBeVisible();
+  await expect(page.locator('#ubicacionesSubnav [data-nav]')).toHaveCount(5);
   await page.locator('#toggleProviderSubnav').click();
   await expect(page.locator('#providerSubnav [data-nav="proveedores"]')).toBeVisible();
   await expect(page.locator('#providerSubnav [data-nav="proveedores_productos"]')).toBeVisible();
@@ -141,37 +149,62 @@ test('nuevo producto envía códigos de venta sin proveedor ni gramajes',async({
   });
 });
 
-test('módulo proveedores productos lista SKU/costo y relaciona dos entidades',async({page})=>{
-  let rows=[],saved=null;
+test('mix lista proveedores y permite asociar un producto con código de compra',async({page})=>{
+  let rows=[],saved=null,barcode=null;
   await intercept(page,async({route,r,path})=>{
+    if(path==='/api/v1/proveedores/mix'&&r.method()==='GET'){
+      return reply(route,{data:[{
+        id:16,nombre:'Proveedor principal',rut:'12345678-5',giro:'Mayorista',
+        activo:true,cantidad_productos_mix:rows.length
+      }],total:1,last_page:1}),true;
+    }
     if(path==='/api/v1/proveedores-productos'&&r.method()==='POST'){
       saved=r.postDataJSON();
       rows=[{...saved,id:100,producto:'Artículo local',codigo_producto:'SKU-CI-V2',
-        proveedor:'Proveedor principal',activo:1,costo_proveedor:'1099.0000',
-        ultima_recepcion_id:null,fecha_ultima_recepcion:null}];
-      return reply(route,rows[0],201),true;
+        proveedor:'Proveedor principal',activo:1,costo_proveedor:'1099.0000'}];
+      return reply(route,{id:100,...saved},201),true;
     }
     if(path==='/api/v1/proveedores-productos'&&r.method()==='GET')
       return reply(route,{data:rows,total:rows.length,last_page:1}),true;
+    if(path==='/api/v1/proveedores-productos/100/codigos-compra'&&r.method()==='GET')
+      return reply(route,{items:barcode?[{id:500,tipo_nombre:'EAN-13',
+        codigo_barras:barcode.codigo_barras,unidades_por_codigo:barcode.unidades_por_codigo,
+        tipo_codigo_barra_id:barcode.tipo_codigo_barra_id,activo:true}]:[]}),true;
+    if(path==='/api/v1/proveedores-productos/100/codigos-compra'&&r.method()==='POST'){
+      barcode=r.postDataJSON();
+      return reply(route,{id:500,...barcode},201),true;
+    }
     if(path==='/api/v1/productos'&&r.method()==='GET')
-      return reply(route,{data:[{id:50,sku:'SKU-CI-V2',nombre:'Artículo local',activo:true}],
-        total:1,last_page:1}),true;
+      return reply(route,{data:[{id:50,sku:'SKU-CI-V2',nombre:'Artículo local'}],last_page:1,total:1}),true;
     return false;
   });
   await login(page);
   await page.locator('#toggleProviderSubnav').click();
   await page.locator('#providerSubnav [data-nav="proveedores_productos"]').click();
-  await expect(page.locator('.supplier-products-module')).toBeVisible();
-  await page.getByRole('button',{name:'Asociar producto a proveedor'}).click();
-  const dlg=page.locator('dialog.supplier-product-dialog[open]');
-  await dlg.getByLabel('Proveedor *').selectOption('16');
-  await dlg.getByLabel('Producto del catálogo *').selectOption('50');
-  await dlg.getByLabel('Código de producto según proveedor').fill('P-CI-50');
-  await dlg.getByLabel('Costo neto acordado (CLP)').fill('1099');
-  await dlg.getByRole('button',{name:'Crear vínculo'}).click();
-  await expect(dlg).toBeHidden();
-  await expect(page.locator('.supplier-products-table')).toContainText('SKU-CI-V2');
-  expect(saved.producto_id).toBe(50);
-  expect(saved.proveedor_id).toBe(16);
-  expect(saved.codigo_proveedor_producto).toBe('P-CI-50');
+  const main=page.locator('.supplier-products-module');
+  await expect(main).toBeVisible();
+  await expect(main.locator('thead')).toContainText('Productos en mix');
+  await expect(main.locator('tbody')).toContainText('Proveedor principal');
+  await main.getByRole('button',{name:'Editar mix de Proveedor principal'}).click();
+  const panel=page.locator('dialog.supplier-mix-dialog[open]');
+  await expect(panel).toBeVisible();
+  await panel.getByRole('button',{name:'Añadir producto al mix'}).click();
+  const relation=page.locator('dialog.supplier-product-dialog[open]').last();
+  await relation.getByLabel('Producto del catálogo *').selectOption('50');
+  await relation.getByLabel('Código de producto según proveedor').fill('P-CI-50');
+  await relation.getByLabel('Costo neto acordado (CLP)').fill('1099');
+  await relation.getByRole('button',{name:'Guardar',exact:true}).click();
+  await expect(relation).toBeHidden();
+  await expect(panel).toContainText('Artículo local');
+  expect(saved).toMatchObject({producto_id:50,proveedor_id:16,codigo_proveedor_producto:'P-CI-50'});
+  await panel.getByRole('button',{name:'Administrar códigos'}).click();
+  const codes=page.locator('dialog.supplier-product-dialog[open]').last();
+  await codes.getByRole('button',{name:'Añadir código de barras de compra'}).click();
+  const form=codes.locator('form.supplier-barcode-form');
+  await form.getByLabel('Tipo').selectOption('11');
+  await form.getByLabel('Código de compra').fill('7801234567890');
+  await form.getByLabel('Unidades por este código').fill('12');
+  await form.getByRole('button',{name:'Añadir código'}).click();
+  await expect(codes).toContainText('7801234567890');
+  expect(barcode).toMatchObject({tipo_codigo_barra_id:11,codigo_barras:'7801234567890',unidades_por_codigo:'12'});
 });
