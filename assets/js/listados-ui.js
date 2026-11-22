@@ -132,6 +132,58 @@
   input.placeholder=placeholder;input.setAttribute('aria-label',placeholder);input.maxLength=120;return input;
  };
 
+ const PAGE_SIZE=25;
+ const paginationStates=new WeakMap();
+ // Paginación local sobre filas que YA fueron cargadas: nunca simula
+ // haber consultado páginas adicionales en MariaDB. Los módulos con
+ // paginación de API conservan sus controles Anterior/Siguiente propios.
+ function paginate(table,matchedRows=null){
+  if(!table?.tBodies?.length)return;
+  const all=Array.from(table.tBodies[0].rows);
+  const matches=Array.isArray(matchedRows)?matchedRows:all;
+  let state=paginationStates.get(table);
+  if(!state && all.length<=PAGE_SIZE){
+   const allowed=new Set(matches);
+   all.forEach(row=>{row.hidden=!allowed.has(row);});
+   return;
+  }
+  if(!state){
+   const nav=document.createElement('nav');
+   nav.className='list-pagination';
+   nav.setAttribute('aria-label','Paginación de resultados');
+   const previous=document.createElement('button');
+   previous.type='button';previous.className='button ghost';
+   previous.textContent='Anterior';
+   const info=document.createElement('span');
+   info.className='list-pagination-info';info.setAttribute('aria-live','polite');
+   const next=document.createElement('button');
+   next.type='button';next.className='button ghost';
+   next.textContent='Siguiente';
+   nav.append(previous,info,next);
+   table.after(nav);
+   state={page:1,nav,previous,next,info,matches};
+   paginationStates.set(table,state);
+   previous.addEventListener('click',()=>{
+    if(state.page>1){state.page--;paginate(table,state.matches);}
+   });
+   next.addEventListener('click',()=>{
+    const last=Math.max(1,Math.ceil(state.matches.length/PAGE_SIZE));
+    if(state.page<last){state.page++;paginate(table,state.matches);}
+   });
+  }
+  state.matches=matches;
+  const pages=Math.max(1,Math.ceil(matches.length/PAGE_SIZE));
+  state.page=Math.min(state.page,pages);
+  const visible=new Set(matches.slice((state.page-1)*PAGE_SIZE,state.page*PAGE_SIZE));
+  all.forEach(row=>{row.hidden=!visible.has(row);});
+  state.previous.disabled=state.page<=1;
+  state.next.disabled=state.page>=pages;
+  state.nav.hidden=all.length<=PAGE_SIZE;
+  const label='Página '+state.page+' de '+pages+' · '+matches.length+
+    ' de '+all.length+' registros cargados · máximo 25 por página';
+  if(state.info.textContent!==label)state.info.textContent=label;
+ }
+
  const actionKinds={editar:'editar',desactivar:'desactivar',eliminar:'desactivar',
    ver:'ver',fotos:'fotos','codigos de compra':'barras','codigos de barras':'barras',
    'enviar recuperacion':'ver'};
@@ -206,8 +258,7 @@
  function apply(root){
   const table=current(root);if(!table)return;
   const state=stateOf(root),rows=[...table.querySelectorAll('tbody tr')];
-  let visible=0;
-  rows.forEach(row=>{
+  const matched=rows.filter(row=>{
    const cells=[...row.cells];
    const haystack=normalize(cells.slice(0,-1).map(n=>n.textContent).join(' '));
    const columnMatches=Object.entries(state.filters).every(([key,value])=>{
@@ -217,17 +268,24 @@
     return normalize(col.label)==='estado'||normalize(col.label)==='activo'?
      field===normalize(value):field.includes(normalize(value));
    });
-   row.hidden=Boolean((state.text&&!haystack.includes(normalize(state.text)))||!columnMatches);
-   if(!row.hidden)visible++;
+   return (!state.text||haystack.includes(normalize(state.text)))&&columnMatches;
   });
+  const pager=paginationStates.get(table);
+  if(pager&&(pager.filterText!==state.text||
+    pager.filterJson!==JSON.stringify(state.filters)))pager.page=1;
+  paginate(table,matched);
+  const active=paginationStates.get(table);
+  if(active){active.filterText=state.text;active.filterJson=JSON.stringify(state.filters);}
   let note=root.querySelector('.list-filter-note');
   if(state.text||Object.values(state.filters).some(Boolean)){
    if(!note){
     note=document.createElement('p');note.className='list-filter-note';
-    table.closest('.catalog-table-scroll,.permissions-table-scroll,.table-scroll')?.before(note);
+    const wrap=table.closest('.catalog-table-scroll,.permissions-table-scroll,.table-scroll');
+    if(wrap)wrap.before(note);
    }
-   const summary='Filtros: '+visible+' de '+rows.length+' registros de esta página. Para más resultados utiliza la paginación.';
-   if(note.textContent!==summary)note.textContent=summary;
+   const summary='Filtros: '+matched.length+' de '+rows.length+
+    ' registros cargados. Para otros resultados del servidor, usa su paginación.';
+   if(note&&note.textContent!==summary)note.textContent=summary;
   }else if(note)note.remove();
  }
  let pending=false;
@@ -244,5 +302,5 @@
   new MutationObserver(rescan).observe(area,{childList:true,subtree:true});
   rescan();
  });
- window.RutaHDListUI=Object.freeze({action,actionsCell,wrapTable,registerSearch,advanced,filterButton,matching,createSearch,icon});
+ window.RutaHDListUI=Object.freeze({action,actionsCell,wrapTable,registerSearch,advanced,filterButton,matching,createSearch,icon,paginate,PAGE_SIZE});
 })();
