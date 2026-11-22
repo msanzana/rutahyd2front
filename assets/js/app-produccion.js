@@ -253,9 +253,9 @@
   function renderWorkspace(section){
     const content=$('#workspaceContent');
     content.replaceChildren();
-    $('#workspaceEyebrow').textContent='RUTA H&D / SISTEMA PRODUCTIVO';
+    $('#workspaceEyebrow').textContent='RUTA H&D / GESTIÓN COMERCIAL';
     $('#workspaceTitle').textContent=titleFor(section);
-    $('#workspaceDescription').textContent='Información del servidor Laravel y MariaDB. Acceso controlado por perfil.';
+    $('#workspaceDescription').textContent='Gestiona los registros y operaciones disponibles para tu perfil.';
     $('#newButton').hidden=true;$('#exportButton').hidden=true;
     if(section==='usuarios'){
       $('#workspaceDescription').textContent='Cuentas, roles, permisos y bajas lógicas de usuarios.';
@@ -373,7 +373,7 @@
     }
     if(event.target.closest('#notificationButton,[data-action="about"]')){
       const content=$('#infoDescription');
-      if(content)content.textContent='Esta instalación usa exclusivamente Laravel y MariaDB mediante HTTPS y JWT. El servidor autoriza cada operación.';
+      if(content)content.textContent='Tus datos y operaciones están protegidos según los permisos de tu perfil.';
       $('#infoDialog').showModal();return;
     }
   });
