@@ -50,6 +50,7 @@
     if(e?.status===403)return 'Tu perfil no tiene permisos para esta operación.';
     if(e?.status===404)return 'Producto inexistente o recurso sin publicar.';
     if(e?.status===409)return 'Conflicto: SKU, código de barras o registro relacionado duplicado.';
+    if(e?.status===500)return 'Error interno del servidor (HTTP 500). El producto no pudo confirmarse; revisa la estructura SQL y el registro de Laravel antes de intentar otra vez.';
     if(e?.userMessage)return e.userMessage;
     if(e?.status===422)return 'Datos incompletos. Revisa el campo destacado o el margen mínimo en Precios.';
     if(e?.name==='AbortError')return 'El servidor agotó el tiempo de respuesta.';
@@ -654,6 +655,106 @@
       if(Object.values(classification).some(x=>!Number.isSafeInteger(x)||x<1)){
         feedback.textContent='Completa todas las clasificaciones antes de guardar.';
         feedback.hidden=false;return;
+      }
+      // Validar también en frontend la longitud definida por el tipo GS1.
+      // Laravel conserva la validación definitiva. Evita enviar EAN-13 de 12 dígitos.
+      const barcodeLengths={EAN13:13,EAN8:8,DUN14:14,ITF14:14,UPCA:12,UPCE:8};
+      const codesSeen=new Set();
+      for(const item of selectedBarcodes.filter(x=>x.row.isConnected)){
+        const chosen=(cache.tipos_codigos_barras||[])
+          .find(x=>String(x.id)===String(item.type.value));
+        const typeCode=String(chosen?.codigo||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+        const code=item.code.value.trim();
+        const length=barcodeLengths[typeCode];
+        if(length && !(new RegExp('^[0-9]{'+length+'}
+      const invalidPrice=activePrices.find(item=>{
+        const monto=Number(item.price.value),margen=Number(item.margin.value);
+        return !Number.isFinite(monto)||monto<0||(
+          Number(cost.value)>0&&(!Number.isFinite(margen)||margen<Number(minimum.value))
+        );
+      });
+      if(invalidPrice){
+        invalidPrice.price.focus();
+        invalidPrice.price.scrollIntoView({behavior:'smooth',block:'center'});
+        feedback.textContent='La lista «'+invalidPrice.list.nombre+
+          '» está por debajo del margen mínimo de '+minimum.value+' % para la línea seleccionada.';
+        feedback.hidden=false;return;
+      }
+      const dto={
+        sku:sku.value.trim(),nombre:nombre.value.trim(),descripcion:descripcion.value.trim(),
+        activo:activo.checked,
+        clasificacion:classification,
+        presentacion:{
+          ...(producto?.presentacion?.id?{id:Number(producto.presentacion.id)}:{}),
+          nombre:producto?.presentacion?.nombre||'Unidad',
+          // Mantener la presentación técnica heredada, ya no visible en Precios.
+          codigoBarras:producto?.presentacion?.codigoBarras||null,
+          unidadesPorEnvase:units.value,
+          precioNeto:prices.find(item=>item.list.es_base)?.price.value||'0'
+        },
+        costoNeto:cost.value,
+        precios:prices.filter(item=>item.row.isConnected&&item.list.id!==null).map(item=>({
+          listaPrecioId:Number(item.list.id),
+          activo:item.list.es_base?true:item.active.checked,
+          ...(Number(cost.value)>0&&item.last==='margen'&&item.margin.value!==''?
+            {margenPorcentaje:item.margin.value}:{precioVenta:item.price.value})
+        })),
+        codigosVenta:selectedBarcodes.filter(x=>x.row.isConnected).map(item=>({
+          ...(item.id?{id:Number(item.id)}:{}),
+          tipoCodigoBarraId:Number(item.type.value),
+          codigoBarras:item.code.value.trim(),
+          unidadesPorCodigo:item.quantity.value,
+          activo:item.checked.checked
+        })),
+      };
+      busy=true;submit.disabled=true;feedback.hidden=true;
+      try{
+        if(producto)await api().updateProduct(producto.id,dto);
+        else await api().createProduct(dto);
+        modal.close();await loadProducts();
+        message(producto?'Producto actualizado en MariaDB.':'Producto creado en MariaDB.');
+      }catch(e){
+        feedback.textContent=errorMessage(e);feedback.hidden=false;
+        feedback.scrollIntoView({behavior:'smooth',block:'center'});
+      }finally{busy=false;submit.disabled=false;}
+    });
+    document.body.appendChild(modal);
+    modal.addEventListener('close',()=>modal.remove(),{once:true});
+    modal.showModal();
+    if(focusBarcodes){barcodeHeading.scrollIntoView({block:'start',behavior:'instant'});addCode.focus();}
+  }
+  function deactivate(product){
+    const modal=el('dialog','modal catalog-dialog');
+    const messageText=el('p','', 'Se desactivará '+product.nombre+
+      '. Se conservarán su historia, presentaciones, ventas y stock. No se borrará de la base.');
+    const ok=button('Confirmar desactivación',async()=>{
+      ok.disabled=true;
+      try {
+        await api().deactivateProduct(product.id);
+        modal.close();await loadProducts();
+        message('Producto desactivado sin eliminar su historial.');
+      }catch(e){message(errorMessage(e),true);ok.disabled=false;}
+    },'button danger');
+    add(modal,el('h2','','Desactivar producto'),messageText,
+      add(el('div','modal-footer'),button('Cancelar',()=>modal.close()),ok));
+    document.body.appendChild(modal);
+    modal.addEventListener('close',()=>modal.remove(),{once:true});modal.showModal();
+  }
+  window.RutaHDProductosRemotos=Object.freeze({mount});
+})();
+)).test(code)){
+          item.code.focus();item.code.scrollIntoView({behavior:'smooth',block:'center'});
+          feedback.textContent='Código '+(chosen?.nombre||chosen?.codigo||'de barras')+
+            ' inválido: debe tener exactamente '+length+' dígitos numéricos. '+
+            'Corrige el código o selecciona el tipo correspondiente.';
+          feedback.hidden=false;return;
+        }
+        if(codesSeen.has(code)){
+          item.code.focus();
+          feedback.textContent='No puedes registrar el mismo código de barras dos veces en un producto.';
+          feedback.hidden=false;return;
+        }
+        codesSeen.add(code);
       }
       const activePrices=prices.filter(item=>item.row.isConnected&&item.active.checked);
       const invalidPrice=activePrices.find(item=>{
