@@ -1,5 +1,5 @@
-/* Recuperación real de Ruta H&D V2: nunca permite que el login invada el flujo.
- * Los tokens se conservan solo en memoria y se eliminan del fragmento visible. */
+/* Recuperación real de Ruta H&D V2: ventana corporativa aislada del login.
+ * Los tokens de un solo uso permanecen en memoria, no en la URL visible. */
 (() => {
   'use strict';
   // InfinityFree conserva ?query durante su desafío ?i=1, pero elimina #fragment.
@@ -60,6 +60,7 @@
     brand.append(logo,node('h2',null,'Protegemos tu acceso.'),node('p',null,
       'Tu información comercial permanece en el servidor. Esta solicitud se procesa de forma cifrada mediante Laravel.'));
     const form=node('form','recovery-form');form.noValidate=true;
+    form.append(node('div','recovery-step',reset?'PASO 2 DE 2 · NUEVA CONTRASEÑA':'PASO 1 DE 2 · VERIFICACIÓN POR CORREO'));
     form.append(node('span','recovery-eyebrow','SEGURIDAD DE LA CUENTA'),
       node('h2',null,reset?'Crear nueva contraseña':'Recuperar cuenta'),
       node('p','recovery-description',reset?
@@ -68,7 +69,20 @@
     const email=reset?null:input(form,'Correo electrónico','email');
     const password=reset?input(form,'Nueva contraseña','password',12):null;
     const confirmation=reset?input(form,'Confirmar contraseña','password',12):null;
-    if(reset)form.append(node('p','recovery-hint','Mínimo 12 caracteres. Usa una contraseña única que no hayas utilizado en otros sistemas.'));
+    if(reset){
+      for(const field of [password,confirmation]){
+        field.parentElement.classList.add('recovery-password-field');
+        const showPassword=node('button','recovery-password-toggle','Mostrar');
+        showPassword.type='button';
+        showPassword.setAttribute('aria-label','Mostrar u ocultar contraseña');
+        showPassword.addEventListener('click',()=>{
+          const visible=field.type==='text';field.type=visible?'password':'text';
+          showPassword.textContent=visible?'Mostrar':'Ocultar';
+        });
+        field.insertAdjacentElement('afterend',showPassword);
+      }
+      form.append(node('p','recovery-hint','Usa al menos 12 caracteres. Tu contraseña se enviará de forma segura al servidor y no se guardará en este navegador.'));
+    }
     const note=node('p','recovery-message','');
     note.id='recoveryStatus';note.setAttribute('role','status');note.setAttribute('aria-live','polite');
     form.append(note);
