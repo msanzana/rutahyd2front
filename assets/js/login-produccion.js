@@ -5,17 +5,18 @@
   const $=id=>document.getElementById(id);
   const api=()=>window.RutaHDApiCatalogos;
   const acl=()=>window.RutaHDAccesos;
-  const dialog=$('loginDialog'), form=$('loginForm'),loginButton=$('authButton');
+  const dialog=$('loginDialog'), form=$('loginForm');
   const error=$('loginError'),pass=$('loginPassword'),mail=$('loginEmail');
-  const submit=$('loginSubmit'),state=$('loginServerStatus'),pill=$('apiStatus');
+  const submit=$('loginSubmit'),state=$('loginServerStatus');
   const retry=$('loginRetry'),recover=$('loginRecover');
   let online=false,busy=false,checking=false,recovering=false;
   const signed=()=>Boolean(acl()?.authenticated());
   const recoveringNow=()=>Boolean(window.RutaHDRecuperacion?.isActive());
   function report(type,title,description){
     online=type==='ok';
-    state.dataset.state=type;state.textContent=description;
-    pill.dataset.state=type;pill.textContent=title;
+    // No se muestra una insignia de conexión en el login ni la cabecera.
+    // El error sí se informa si no es posible autenticar.
+    if(state){state.dataset.state=type;state.hidden=type==='ok'||type==='checking';state.textContent=state.hidden?'':description;}
     submit.disabled=!online||busy;
     document.dispatchEvent(new CustomEvent('rutahd:api-estado',{detail:{disponible:online}}));
   }
@@ -49,20 +50,18 @@
     document.body.dataset.loginStart='false';
     document.body.classList.add('is-authenticated');
     if(dialog.open)dialog.close();
-    loginButton.textContent='Cerrar sesión';
-    loginButton.setAttribute('aria-haspopup','false');
+    document.dispatchEvent(new CustomEvent('rutahd:sesion-iniciada'));
     const name=acl()?.usuario()?.nombre||'';
     const header=document.querySelector('.profile-label b');
     if(header)header.textContent=name;
   }
   async function signout(){
-    loginButton.disabled=true;
     try{await api().logout();}
     catch{api().signOut();}
     finally{
       acl()?.clear();
       document.body.classList.remove('is-authenticated');
-      loginButton.disabled=false;loginButton.textContent='Iniciar sesión';
+      document.dispatchEvent(new CustomEvent('rutahd:sesion-finalizada'));
       show();
     }
   }
@@ -92,9 +91,6 @@
     }finally{busy=false;submit.disabled=!online;}
   });
   retry.addEventListener('click',()=>void check());
-  loginButton.addEventListener('click',()=>{
-    if(signed())void signout();else show();
-  });
   recover.addEventListener('click',()=>{
     recovering=true;
     if(dialog.open)dialog.close();
@@ -108,7 +104,7 @@
   document.addEventListener('rutahd:permisos-actualizados',()=>{
     if(signed())loggedIn();
     else {
-      loginButton.textContent='Iniciar sesión';
+      document.dispatchEvent(new CustomEvent('rutahd:sesion-finalizada'));
       if(!recovering&&!recoveringNow())show();
     }
   });
