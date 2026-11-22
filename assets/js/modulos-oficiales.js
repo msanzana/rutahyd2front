@@ -166,14 +166,28 @@
     const editable=Boolean(FIELDS[cfg.resource]&&(access()?.isAdmin()||access()?.has(cfg.permission)));
     const bar=create('div',undefined,'workspace-actions');
     const content=create('div',undefined,'catalog-table-scroll');
+    const searchBar=create('form',undefined,'official-search-bar');
+    const searchInput=create('input');searchInput.type='search';
+    searchInput.maxLength=120;
+    searchInput.placeholder='Buscar proveedor por nombre, RUT o correo';
+    searchInput.setAttribute('aria-label','Buscar en listado de proveedores');
+    const searchButton=create('button','Buscar','button primary');
+    searchButton.type='submit';
+    if(cfg.resource==='proveedores'){
+      searchBar.append(searchInput,searchButton);
+      searchBar.addEventListener('submit',event=>{
+        event.preventDefault();page=1;searchTerm=searchInput.value.trim();void load();
+      });
+      root.append(searchBar);
+    }
     root.append(bar,content);
-    let page=1,loading=false;
+    let page=1,loading=false,searchTerm='';
     async function load(){
       if(loading)return;
       loading=true;bar.replaceChildren();content.replaceChildren();
       notice.textContent='Consultando registros reales…';
       try{
-        const response=await api().resources(cfg.resource,page);
+        const response=await api().resources(cfg.resource,page,searchTerm);
         if(current!==currentId||!root.isConnected)return;
         if(!response||!Array.isArray(response.data))throw Error('Lista remota inválida');
         const rows=response.data;
