@@ -73,11 +73,13 @@ assert(raw.includes('app-produccion.js?v=20261123-v62'));
   assert(await page.locator('#adminSubnav [data-admin-catalog="tipos_envasado"]')
     .evaluate(n=>n.classList.contains('active')),'Omitir primer subitem oculto');
   // Un clic en subopción concreta no debe redirigir al primer elemento.
+  await page.locator('.sidebar .nav-parent > .nav-link[data-nav="productos"]').click();
   await page.locator('#productSubnav [data-nav="listas_precios"]').click();
   assert(await page.locator('#productSubnav [data-nav="listas_precios"]')
     .evaluate(n=>n.classList.contains('active')),'Subopción seleccionada');
   assert(await page.locator('.sidebar .nav-parent > .nav-link[data-nav="productos"]')
     .evaluate(n=>n.classList.contains('active')),'Padre queda resaltado');
+  await page.evaluate(()=>window.RutaHDProduccion.navigate('inicio'));
   await page.locator('.module-card[data-nav="compras"]').click();
   assert(await page.locator('#purchaseSubnav [data-nav="compras_ordenes"]')
     .evaluate(n=>n.classList.contains('active')),'Acceso desde tarjeta de inicio');
