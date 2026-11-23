@@ -233,7 +233,7 @@
   function firstMainSubitem(section){
     const container=mainSubmenus[section]&&$(mainSubmenus[section]);
     if(!container)return null;
-    for(const entry of $('.nav-sublink',container)){
+    for(const entry of $$('.nav-sublink',container)){
       if(entry.hidden||entry.closest('#ubicacionesSubnav'))continue;
       const key=entry.dataset.adminCatalog
         ?'catalogos.'+entry.dataset.adminCatalog:entry.dataset.nav;
