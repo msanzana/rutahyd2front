@@ -84,6 +84,77 @@
     return 'No se pudo completar la solicitud (HTTP '+(e?.status||'sin respuesta')+').';
   };
 
+  // Clientes V50: selector directo de ciudad, sin pedir comuna ni sector.
+  // Búsqueda paginada en Laravel; la ficha persiste exclusivamente ciudad_id.
+  async function customerCityPicker(group,oldId=null){
+    const wrap=create('div',undefined,'hd-customer-city-picker');
+    const field=create('label',undefined,'field');
+    field.append(create('span','Buscar ciudad / localidad'));
+    const search=create('input');search.type='search';search.maxLength=120;
+    search.placeholder='Escribe al menos dos letras de la ciudad…';
+    search.setAttribute('aria-label','Buscar ciudad del cliente');
+    field.append(search);
+    const choose=create('label',undefined,'field');
+    choose.append(create('span','Ciudad seleccionada'));
+    const select=create('select');
+    select.name='ciudad_id';
+    select.append(new Option('Sin ciudad seleccionada',''));
+    choose.append(select);
+    const button=action('Buscar ciudades',()=>void lookup(),'ghost');
+    const hint=create('small',
+      'Se almacena solo la ciudad elegida; no se solicitan comuna ni sector.',
+      'hd-customer-city-help');
+    const status=create('p','Escribe y busca una ciudad para seleccionarla.',
+      'hd-customer-city-status');
+    status.setAttribute('role','status');
+    wrap.append(field,button,choose,hint,status);group.append(wrap);
+    let serial=0;
+    async function lookup(){
+      const term=search.value.trim();
+      if(term.length<2){
+        status.textContent='Escribe al menos dos letras para buscar una ciudad.';
+        search.focus();return;
+      }
+      const stamp=++serial;
+      button.disabled=true;status.textContent='Buscando ciudades registradas…';
+      try{
+        const response=await api().locations('ciudades',{
+          buscar:term,page:1,perPage:100
+        });
+        if(stamp!==serial)return;
+        const previous=select.value;
+        select.replaceChildren(new Option('Sin ciudad seleccionada',''));
+        for(const city of response?.data||[]){
+          if(!city.activo)continue;
+          select.append(new Option(city.nombre+' · ID '+city.id,String(city.id)));
+        }
+        if(previous && [...select.options].some(opt=>opt.value===previous))
+          select.value=previous;
+        status.textContent=Number(response?.total||0)+' ciudades encontradas.'+
+          (Number(response?.last_page||1)>1?' Refina la búsqueda para elegir.':'');
+      }catch(error){
+        status.textContent=error?.userMessage||'No fue posible consultar ciudades.';
+        status.classList.add('is-error');
+      }finally{button.disabled=false;}
+    }
+    search.addEventListener('keydown',event=>{
+      if(event.key==='Enter'){event.preventDefault();void lookup();}
+    });
+    if(oldId){
+      try{
+        const current=await api().locationPath(oldId);
+        select.append(new Option(
+          [current?.ciudad,current?.region].filter(Boolean).join(' · ')||('Ciudad #'+oldId),
+          String(oldId)));
+        select.value=String(oldId);
+      }catch(error){
+        status.textContent='No fue posible cargar la ciudad anterior: '+
+          (error?.userMessage||'revisa el registro');
+      }
+    }
+    return {value:()=>select.value?Number(select.value):null,controls:[search,select]};
+  }
+
   async function openEditor(cfg,row,onSaved){
     const editing=Boolean(row),definition=FIELDS[cfg.resource];
     if(!definition)return;
@@ -179,9 +250,16 @@
     let location=null;
     if(['clientes','proveedores','bodegas'].includes(cfg.resource)){
       const group=create('div',undefined,'official-editor-wide supplier-location-section');
-      group.append(create('h3','Ubicación geográfica','official-editor-section'),
-        create('p','Selecciona país, región, provincia, comuna y ciudad. Se guardará únicamente ciudad_id.','official-editor-description'));
-      location=await window.RutaHDUbicaciones?.mountSelector(group,row?.ciudad_id||null);
+      if(cfg.resource==='clientes'){
+        group.append(create('h3','Ciudad del cliente','official-editor-section'),
+          create('p','Busca y selecciona directamente la ciudad o localidad registrada.',
+            'official-editor-description'));
+        location=await customerCityPicker(group,row?.ciudad_id||null);
+      }else{
+        group.append(create('h3','Ubicación geográfica','official-editor-section'),
+          create('p','Selecciona país, región, provincia, comuna y ciudad. Se guardará únicamente ciudad_id.','official-editor-description'));
+        location=await window.RutaHDUbicaciones?.mountSelector(group,row?.ciudad_id||null);
+      }
       grid.append(group);
     }
     form.append(grid);
