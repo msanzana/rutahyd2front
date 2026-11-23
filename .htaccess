@@ -1,0 +1,12 @@
+# Ruta H&D V53 · Cambios visibles sin recarga forzada.
+# Alcance restringido al HTML de entrada; no modificar API ni caché de activos.
+<IfModule mod_headers.c>
+  <FilesMatch "^index\.html$">
+    Header onsuccess unset Cache-Control
+    Header always unset Cache-Control
+    Header always set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
+    Header always set Pragma "no-cache"
+    Header always set Expires "Thu, 01 Jan 1970 00:00:00 GMT"
+    Header always unset ETag
+  </FilesMatch>
+</IfModule>
