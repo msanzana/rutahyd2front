@@ -67,6 +67,7 @@
       if(record&&!productRows.some(x=>x.id===record.producto_id))
         productRows.unshift({id:record.producto_id,label:record.codigo_producto+' · '+record.producto});
       const form=e('form',null,'supplier-dialog-form crud-supplier-form');
+      window.RutaHDListUI?.recordCode(form,record?.id??null,{className:'supplier-dialog-wide'});
       const providerSearch=field('search','',120);
       providerSearch.placeholder='Nombre o RUT del proveedor…';
       const provider=selection(providerRows,'Seleccionar proveedor',
