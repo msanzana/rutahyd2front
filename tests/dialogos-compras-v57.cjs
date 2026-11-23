@@ -101,6 +101,7 @@ async function run(){
   await page.waitForFunction(()=>window.__queries.some(q=>q.term==='proveedor'));
   await supplier.getByRole('button',{name:/Seleccionar Proveedor de muestra/}).click();
   assert.equal(await supplier.count(),0,'Se cerró selector tras elegir proveedor');
+  await page.waitForFunction(()=>[...document.querySelectorAll('dialog.hd-oc-modal--editor[open] fieldset.hd-oc-details')].some(n=>!n.disabled));
   assert.equal(await editor.locator('fieldset.hd-oc-details').evaluate(n=>n.disabled),false);
 
   await editor.getByRole('button',{name:'Cerrar ventana'}).click();
