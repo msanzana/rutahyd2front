@@ -89,7 +89,6 @@ assert(api.includes("calculatePurchaseOrder: data=>send('/ordenes-compra/calcula
   await page.waitForFunction(()=>window.__v59.preview.length>0);
   const taxes=modal.locator('.hd-oc-totals input').nth(1);
   const gross=modal.locator('.hd-oc-totals input').nth(2);
-  await page.waitForFunction(()=>document.querySelector('dialog.hd-oc-modal--editor[open] .hd-oc-totals input:nth-child(1)')===null,{timeout:2000}).catch(()=>{});
   await page.waitForFunction(()=>{
     const inputs=document.querySelectorAll('dialog.hd-oc-modal--editor[open] .hd-oc-totals input');
     return inputs.length===3&&inputs[1].value.includes('475')&&inputs[2].value.includes('2.975');
