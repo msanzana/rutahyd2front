@@ -438,3 +438,82 @@ dialog.hd-oc-modal--supplier .list-pagination{
     margin-left:0!important;
   }
 }
+
+
+/* V59 · Visor PDF de OC compacto, centrado y con área interna de lectura. */
+dialog.hd-oc-modal.hd-oc-modal--pdf[open]{
+  display:flex!important;
+  flex-direction:column!important;
+  box-sizing:border-box!important;
+  position:fixed!important;
+  inset:0!important;
+  margin:auto!important;
+  padding:0!important;
+  width:min(760px,calc(100vw - 36px))!important;
+  max-width:min(760px,calc(100vw - 36px))!important;
+  height:min(750px,calc(100dvh - 38px))!important;
+  max-height:calc(100dvh - 38px)!important;
+  min-height:0!important;
+  overflow:hidden!important;
+  border-radius:16px!important;
+}
+dialog.hd-oc-modal--pdf .hd-oc-modal-body{
+  display:flex!important;
+  flex-direction:column!important;
+  flex:1 1 auto;
+  box-sizing:border-box!important;
+  width:100%!important;
+  height:100%!important;
+  min-height:0!important;
+  max-height:100%!important;
+  overflow:hidden!important;
+  padding:14px 17px 16px!important;
+}
+dialog.hd-oc-modal--pdf .hd-oc-modal-heading{
+  flex:0 0 auto;
+  margin:0 0 8px!important;
+  padding:0 0 10px!important;
+  align-items:center;
+}
+dialog.hd-oc-modal--pdf .hd-oc-modal-heading h2{
+  font-size:1.07rem;
+  margin:1px 0;
+}
+dialog.hd-oc-modal--pdf .hd-oc-modal-heading p{
+  font-size:11px;
+  margin:2px 0;
+}
+dialog.hd-oc-modal--pdf .hd-oc-message{
+  flex:0 0 auto;
+  margin:6px 0;
+}
+dialog.hd-oc-modal--pdf .button{
+  align-self:flex-start;
+  flex:0 0 auto;
+  min-height:34px;
+  padding:7px 12px;
+  font-size:12px;
+}
+dialog.hd-oc-modal--pdf .hd-oc-pdf-frame{
+  display:block;
+  box-sizing:border-box;
+  flex:1 1 auto;
+  min-height:140px;
+  height:100%!important;
+  max-height:none!important;
+  width:100%!important;
+  margin-top:10px!important;
+  border-radius:10px;
+}
+@media(max-width:560px){
+  dialog.hd-oc-modal.hd-oc-modal--pdf[open]{
+    width:calc(100vw - 14px)!important;
+    max-width:calc(100vw - 14px)!important;
+    height:calc(100dvh - 18px)!important;
+    max-height:calc(100dvh - 18px)!important;
+    border-radius:12px!important;
+  }
+  dialog.hd-oc-modal--pdf .hd-oc-modal-body{
+    padding:11px!important;
+  }
+}

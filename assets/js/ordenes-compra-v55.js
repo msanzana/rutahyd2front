@@ -37,7 +37,7 @@
    behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
  function popup({title,subtitle='',kind='dialog'}={}){
    const dialog=el('dialog',null,'modal hd-oc-modal'+
-     (kind==='editor'?' hd-oc-modal--editor':kind==='supplier'?' hd-oc-modal--supplier':''));
+     (kind==='editor'?' hd-oc-modal--editor':kind==='supplier'?' hd-oc-modal--supplier':kind==='pdf'?' hd-oc-modal--pdf':''));
    const box=el('section',null,'hd-oc-modal-body');
    const head=el('div',null,'hd-oc-modal-heading');
    head.append(el('div',null,'hd-oc-logo'));
@@ -110,7 +110,7 @@
 
  async function mostrarPdf(id){
    const {dialog,box}=popup({title:'Ver documento Orden de Compra',
-     subtitle:'Copia PDF protegida de la orden seleccionada.'});
+     subtitle:'Copia PDF protegida de la orden seleccionada.',kind:'pdf'});
    const note=el('p','Preparando documento PDF…','hd-oc-message');box.append(note);
    try{
      const blob=await api().purchaseOrderPdf(id);
@@ -214,9 +214,9 @@
    detailFieldset.append(legend,tools,tableRegion);
    formScroll.append(detailFieldset);
    const totals=el('div',null,'hd-oc-totals');
-   const subtotal=readonly(order?.subtotal_neto?'$ '+order.subtotal_neto:'$ 0,00');
-   const taxes=readonly(order?.total_impuestos?'$ '+order.total_impuestos:'Calculado al guardar');
-   const gross=readonly(order?.total_bruto?'$ '+order.total_bruto:'Calculado al guardar');
+   const subtotal=readonly(money(order?.subtotal_neto??0));
+   const taxes=readonly(money(order?.total_impuestos??0));
+   const gross=readonly(money(order?.total_bruto??0));
    totals.append(field('Subtotal neto estimado',subtotal),
      field('Impuestos · Servidor',taxes),field('Total bruto · Servidor',gross));
    formScroll.append(totals);
@@ -245,6 +245,58 @@
        });
      }
    }
+   // El servidor determina impuestos por condición tributaria (afecto/exento).
+   // Los valores son solo de lectura y la cotización no modifica registros.
+   let previewSequence=0,previewTimer=null;
+   const updatePreview=()=>{
+     const ticket=++previewSequence;
+     if(previewTimer!==null){clearTimeout(previewTimer);previewTimer=null;}
+     let estimate=0,valid=Boolean(selectedProvider?.id&&requested.value&&lines.size);
+     const detalles=[];
+     for(const item of lines.values()){
+       const q=Number(item.cantidad),cost=Number(item.costo_unitario_neto);
+       if(!(q>0)||!(cost>0)||!Number.isFinite(q*cost))valid=false;
+       else estimate+=Math.round(q*cost*100)/100;
+       detalles.push({producto_id:item.producto_id,cantidad:item.cantidad,
+         costo_unitario_neto:item.costo_unitario_neto});
+     }
+     subtotal.value=money(estimate);
+     if(!valid){
+       taxes.value=money(0);
+       gross.value=money(estimate);
+       return;
+     }
+     taxes.value='Calculando impuestos…';
+     gross.value='Calculando total…';
+     if(typeof api()?.calculatePurchaseOrder!=='function'){
+       taxes.value='No disponible';gross.value='No disponible';return;
+     }
+     const payload={proveedor_id:Number(selectedProvider.id),
+       solicitada_en:requested.value,observaciones:observations.value.trim()||null,
+       detalles};
+     previewTimer=setTimeout(async()=>{
+       try{
+         const amounts=await api().calculatePurchaseOrder(payload);
+         if(!dialog.open||ticket!==previewSequence)return;
+         for(const key of ['subtotal_neto','total_impuestos','total_bruto']){
+           if(!Number.isFinite(Number(amounts[key]))||Number(amounts[key])<0)
+             throw Error('El servidor no devolvió '+key+' correctamente.');
+         }
+         subtotal.value=money(amounts.subtotal_neto);
+         taxes.value=money(amounts.total_impuestos);
+         gross.value=money(amounts.total_bruto);
+       }catch(e){
+         if(!dialog.open||ticket!==previewSequence)return;
+         taxes.value='Sin cálculo';gross.value='Sin cálculo';
+         notice.classList.add('is-error');
+         notice.textContent='No se pudieron obtener impuestos y total: '+msg(e);
+       }
+     },400);
+   };
+   dialog.addEventListener('close',()=>{
+     previewSequence++;if(previewTimer!==null)clearTimeout(previewTimer);
+   },{once:true});
+   requested.addEventListener('change',updatePreview);
    function drawLines(){
      tableRegion.replaceChildren();
      const tbl=el('table',null,'hd-oc-table catalog-table');
@@ -267,15 +319,8 @@
        const recalc=()=>{
          line.cantidad=qty.value;line.costo_unitario_neto=cost.value;
          const v=Number(qty.value)*Number(cost.value);
-         est.textContent=Number.isFinite(v)?money(v):'—';
-         let amount=0;
-         for(const item of lines.values()){
-           const value=Number(item.cantidad)*Number(item.costo_unitario_neto);
-           if(Number.isFinite(value))amount+=value;
-         }
-         subtotal.value=money(amount);
-         taxes.value='Calculado al guardar';
-         gross.value='Calculado al guardar';
+         est.textContent=Number.isFinite(v)&&v>0?money(v):'—';
+         updatePreview();
        };
        qty.addEventListener('input',recalc);cost.addEventListener('input',recalc);
        const qtyTd=el('td'),costTd=el('td'),totalTd=el('td'),actionTd=el('td');
@@ -289,6 +334,7 @@
      if(!lines.size)tableRegion.append(el('p',
        'Selecciona un proveedor y agrega al menos un producto.',
        'hd-oc-empty'));
+     if(!lines.size)updatePreview();
    }
    drawLines();
    if(editing&&order.estado_codigo!=='ACTIVA'){
@@ -314,6 +360,10 @@
        const response=editing?await api().updatePurchaseOrder(order.id,data)
          :await api().createPurchaseOrder(data);
        if(!dialog.open)return;
+       // Son los importes ya comprobados contra columnas DECIMAL en MariaDB.
+       if(response?.subtotal_neto!==undefined)subtotal.value=money(response.subtotal_neto);
+       if(response?.total_impuestos!==undefined)taxes.value=money(response.total_impuestos);
+       if(response?.total_bruto!==undefined)gross.value=money(response.total_bruto);
        if(response?.correo_enviado===false){
          notice.classList.add('is-error');
          notice.textContent=response.mensaje;

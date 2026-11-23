@@ -7,7 +7,7 @@ const path=require('node:path');
 const root=path.join(__dirname,'..');
 const index=fs.readFileSync(path.join(root,'index.html'),'utf8');
 for(const asset of ['select-buscable-v56.js?v=20261123-v56','select-buscable-v56.css?v=20261123-v56',
- 'ordenes-compra-v55.js?v=20261123-v58','ordenes-compra-v55.css?v=20261123-v58']){
+ 'ordenes-compra-v55.js?v=20261123-v59','ordenes-compra-v55.css?v=20261123-v59']){
  assert(index.includes(asset),'Falta versionado '+asset);
 }
 (async()=>{
