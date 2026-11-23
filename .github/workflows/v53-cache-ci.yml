@@ -1,0 +1,37 @@
+name: V53 - Verificar cache HTML y regresión frontend
+on:
+  push:
+    branches: [hotfix/v53-cache-html-20261123]
+    paths:
+      - .github/workflows/v53-cache-ci.yml
+      - .htaccess
+      - index.html
+      - tests/cache-v53.cjs
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  caché:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verificar política de caché y continuidad de V52
+        run: |
+          set -euo pipefail
+          node --check tests/cache-v53.cjs
+          node tests/cache-v53.cjs
+          node --check assets/js/app-produccion.js
+          node --check assets/js/modulos-oficiales.js
+          node --check assets/js/listados-ui.js
+      - name: Regresión Chromium de Clientes y paginación
+        run: |
+          set -euo pipefail
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium >/dev/null
+          node tests/clientes-v50.cjs
+          node tests/paginadores-codigos-v52.cjs
+          echo 'V53: HTML no-store, bfcache restaurado, assets V52 sin cambios, CRUD y buscadores aprobados.' >> "$GITHUB_STEP_SUMMARY"
