@@ -37,7 +37,7 @@
    behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
  function popup({title,subtitle='',kind='dialog'}={}){
    const dialog=el('dialog',null,'modal hd-oc-modal'+
-     (kind==='editor'?' hd-oc-modal--editor':kind==='supplier'?' hd-oc-modal--supplier':''));
+     (kind==='editor'?' hd-oc-modal--editor':kind==='supplier'?' hd-oc-modal--supplier':kind==='pdf'?' hd-oc-modal--pdf':''));
    const box=el('section',null,'hd-oc-modal-body');
    const head=el('div',null,'hd-oc-modal-heading');
    head.append(el('div',null,'hd-oc-logo'));
@@ -110,7 +110,7 @@
 
  async function mostrarPdf(id){
    const {dialog,box}=popup({title:'Ver documento Orden de Compra',
-     subtitle:'Copia PDF protegida de la orden seleccionada.'});
+     subtitle:'Copia PDF protegida de la orden seleccionada.',kind:'pdf'});
    const note=el('p','Preparando documento PDF…','hd-oc-message');box.append(note);
    try{
      const blob=await api().purchaseOrderPdf(id);
@@ -214,9 +214,9 @@
    detailFieldset.append(legend,tools,tableRegion);
    formScroll.append(detailFieldset);
    const totals=el('div',null,'hd-oc-totals');
-   const subtotal=readonly(order?.subtotal_neto?'$ '+order.subtotal_neto:'$ 0,00');
-   const taxes=readonly(order?.total_impuestos?'$ '+order.total_impuestos:'Calculado al guardar');
-   const gross=readonly(order?.total_bruto?'$ '+order.total_bruto:'Calculado al guardar');
+   const subtotal=readonly(money(order?.subtotal_neto??0));
+   const taxes=readonly(money(order?.total_impuestos??0));
+   const gross=readonly(money(order?.total_bruto??0));
    totals.append(field('Subtotal neto estimado',subtotal),
      field('Impuestos · Servidor',taxes),field('Total bruto · Servidor',gross));
    formScroll.append(totals);
