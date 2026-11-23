@@ -80,7 +80,7 @@ const src=p=>path.join(__dirname,'..',p);
   assert.equal(await form.getByText('Comuna',{exact:true}).count(),0);
   await form.getByRole('searchbox',{name:'Buscar ciudad del cliente'}).fill('Temu');
   await form.getByRole('button',{name:'Buscar ciudades'}).click();
-  await form.locator('select[name=ciudad_id] option[value="24"]').waitFor();
+  await form.locator('select[name=ciudad_id] option[value="24"]').waitFor({state:'attached'});
   await form.locator('select[name=ciudad_id]').selectOption('24');
   assert.equal(await phone.getAttribute('inputmode'),'tel');
   assert.equal(await phone.getAttribute('placeholder'),'+56 912345678');
