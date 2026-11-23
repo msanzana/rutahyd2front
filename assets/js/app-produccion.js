@@ -9,7 +9,8 @@
   const acl=()=>window.RutaHDAccesos;
   const SERVICES=Object.freeze({
     administracion:'Administración',compras:'Compras',ventas:'Ventas',
-    proveedores:'Proveedores',proveedores_productos:'Proveedores productos',clientes:'Clientes',productos:'Productos',listas_precios:'Listas de precios',
+    proveedores:'Proveedores',proveedores_productos:'Proveedores productos',clientes:'Clientes',
+    clientes_listado:'Listado de clientes',productos:'Productos',listas_precios:'Listas de precios',
     bodega:'Bodega',cuentas_corrientes:'Cuentas corrientes',
     usuarios:'Usuarios',perfiles:'Perfiles y permisos',inicio:'Inicio'
   });
@@ -51,6 +52,10 @@
       if(geoToggle)geoToggle.setAttribute('aria-expanded','false');
     }
     $('#toggleProviderSubnav').hidden=!logged();
+    const clientsToggle=$('#toggleClientSubnav');
+    if(clientsToggle)clientsToggle.hidden=!logged();
+    const clientsList=$('#clientSubnav [data-nav="clientes_listado"]');
+    if(clientsList)clientsList.hidden=!logged();
     const providerProducts=$('#providerSubnav [data-nav="proveedores_productos"]');
     if(providerProducts)providerProducts.hidden=!logged()||!acl().canSeeSubmodule('proveedores_productos');
     const providerList=$('#providerSubnav [data-nav="proveedores"]');
@@ -169,6 +174,9 @@
     $('#productSubnav').hidden=true;
     $('#adminSubnav').hidden=true;
     $('#providerSubnav').hidden=true;
+    const clients=$('#clientSubnav'),clientsToggle=$('#toggleClientSubnav');
+    if(clients)clients.hidden=true;
+    if(clientsToggle)clientsToggle.setAttribute('aria-expanded','false');
     const geo=$('#ubicacionesSubnav'),geoToggle=$('#toggleUbicacionesSubnav');
     if(geo)geo.hidden=true;
     if(geoToggle)geoToggle.setAttribute('aria-expanded','false');
@@ -180,7 +188,8 @@
     for(const [key,container,toggle] of [
       ['productos','#productSubnav','#toggleProductSubnav'],
       ['administracion','#adminSubnav','#toggleAdminSubnav'],
-      ['proveedores','#providerSubnav','#toggleProviderSubnav']
+      ['proveedores','#providerSubnav','#toggleProviderSubnav'],
+      ['clientes','#clientSubnav','#toggleClientSubnav']
     ]){
       const expanded=which===key;
       $(container).hidden=!expanded;
@@ -195,6 +204,7 @@
       return LOCATION_CATALOGS.has(section.split('.')[1])&&acl().isAdmin();
     if(section==='proveedores_productos')return acl().canSeeSubmodule('proveedores_productos');
     if(section==='proveedores')return acl().canSeeSubmodule('proveedores_listado');
+    if(section==='clientes_listado')return acl().isAdmin()||acl().has('clientes.gestionar');
     if(section==='productos'||section==='listas_precios')return acl().canSeeSubmodule('productos_listado');
     if(section.startsWith('catalogos.')){
       const key=section.split('.')[1];
@@ -225,7 +235,8 @@
         button.dataset.nav===categoryOrigin) ||
         (section.startsWith('ubicaciones.')&&button.dataset.nav==='administracion') ||
         ((section==='usuarios'||section==='perfiles')&&button.dataset.nav==='administracion') ||
-        (section==='proveedores_productos'&&button.dataset.nav==='proveedores');
+        (section==='proveedores_productos'&&button.dataset.nav==='proveedores') ||
+        (section==='clientes_listado'&&button.dataset.nav==='clientes');
       button.classList.toggle('active',active);
       if(active)button.setAttribute('aria-current','page');
       else button.removeAttribute('aria-current');
@@ -243,6 +254,7 @@
     else if(['administracion','usuarios','perfiles'].includes(section))expand('administracion');
     else if(section==='productos'||section==='listas_precios')expand('productos');
     else if(section==='proveedores'||section==='proveedores_productos')expand('proveedores');
+    else if(section==='clientes'||section==='clientes_listado')expand('clientes');
     else collapse();
     if(!isHome)renderWorkspace(section);
     const safe='#'+section;
@@ -278,8 +290,8 @@
       window.RutaHDProveedoresProductos?.mount(content);
     }else if(section==='ventas'){
       window.RutaHDVentasPrecios?.mount(content);
-    }else if(['compras','proveedores','clientes','bodega','cuentas_corrientes'].includes(section)){
-      window.RutaHDOficial?.mount(content,section);
+    }else if(['compras','proveedores','clientes','clientes_listado','bodega','cuentas_corrientes'].includes(section)){
+      window.RutaHDOficial?.mount(content,section==='clientes_listado'?'clientes':section);
     }else message(content,'Módulo sin implementar','Esta opción no tiene un contrato de API publicado.');
   }
   async function ready(){
@@ -339,14 +351,16 @@
       geoExpand.setAttribute('aria-expanded',String(!target.hidden));
       return;
     }
-    const exp=event.target.closest('#toggleProductSubnav,#toggleAdminSubnav,#toggleProviderSubnav');
+    const exp=event.target.closest('#toggleProductSubnav,#toggleAdminSubnav,#toggleProviderSubnav,#toggleClientSubnav');
     if(exp){
       event.preventDefault();
       if(!logged())return;
       const type=exp.id==='toggleProductSubnav'?'productos':
-        exp.id==='toggleAdminSubnav'?'administracion':'proveedores';
+        exp.id==='toggleAdminSubnav'?'administracion':
+        exp.id==='toggleClientSubnav'?'clientes':'proveedores';
       const id=type==='productos'?'#productSubnav':
-        type==='administracion'?'#adminSubnav':'#providerSubnav';
+        type==='administracion'?'#adminSubnav':
+        type==='clientes'?'#clientSubnav':'#providerSubnav';
       if(!$(id).hidden)collapse();
       else expand(type);
       return;
@@ -359,7 +373,9 @@
     if(link){
       event.preventDefault();
       const key=link.dataset.nav;
-      const from=link.closest('#adminNavGroup')?'administracion':link.closest('#productsNavGroup')?'productos':null;
+      const from=link.closest('#adminNavGroup')?'administracion':
+        link.closest('#productsNavGroup')?'productos':
+        link.closest('#clientsNavGroup')?'clientes':null;
       navigate(key,from);return;
     }
     if(event.target.closest('#menuToggle')){
