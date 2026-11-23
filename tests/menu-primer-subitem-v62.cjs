@@ -61,6 +61,7 @@ assert(raw.includes('app-produccion.js?v=20261123-v62'));
         .map(n=>n.dataset.adminCatalog?'catalogos.'+n.dataset.adminCatalog:n.dataset.nav),
       title:document.querySelector('#breadcrumbCurrent')?.textContent
     }));
+    if(!data.active.includes(first))console.log('V62_MENU_DEBUG',JSON.stringify({main,data,errors}));
     assert(data.active.includes(first),main+' no selecciona primer subitem: '+JSON.stringify(data));
     assert(data.expanded.includes(container),'Submenú principal no expandido');
     assert.equal(data.last.name,module,main+' no abre el módulo esperado');
