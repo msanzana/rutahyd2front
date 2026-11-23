@@ -211,6 +211,15 @@
    totals.append(field('Subtotal neto estimado',subtotal),
      field('Impuestos · Servidor',taxes),field('Total bruto · Servidor',gross));
    form.append(totals);
+   if(editing){
+     const metadata=el('details',null,'hd-oc-audit');
+     metadata.append(el('summary','Información de control · Solo lectura'));
+     const auditGrid=el('div',null,'hd-oc-audit-grid');
+     auditGrid.append(field('Creado por · ID',readonly(order?.creado_por??'—')),
+       field('Creado en',readonly(order?.creado_en??'—')),
+       field('Actualizado en',readonly(order?.actualizado_en??'—')));
+     metadata.append(auditGrid);form.append(metadata);
+   }
    const foot=el('div',null,'hd-oc-actions');
    const cancel=btn('Cancelar',()=>dialog.close());
    const save=el('button','Guardar','button primary');save.type='submit';
