@@ -159,6 +159,8 @@
      selectedProvider=p;
      supplierInput.value=p.nombre+' · '+(p.rut||'');
      detailFieldset.disabled=false;
+     requested.disabled=false;
+     observations.disabled=false;
      // El detalle de una OC debe pertenecer íntegramente al proveedor elegido.
      if(editing && Number(p.id)!==Number(order.proveedor_id)){
        lines.clear();drawLines();
@@ -170,9 +172,11 @@
    const grid=el('div',null,'hd-oc-fields');
    const requested=el('input');requested.type='date';requested.required=true;
    requested.value=String(order?.solicitada_en||today()).slice(0,10);
+   requested.disabled=!editing;
    const received=readonly(order?.recibida_en?String(order.recibida_en).slice(0,10):'Pendiente');
    const observations=el('textarea');observations.rows=2;observations.maxLength=5000;
    observations.value=order?.observaciones||'';
+   observations.disabled=!editing;
    grid.append(field('Fecha de solicitud *',requested),
      field('Fecha de recepción · Solo lectura',received),
      field('Observaciones',observations));
