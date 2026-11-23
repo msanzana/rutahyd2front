@@ -200,36 +200,58 @@
         const sel=selection(avail.map(t=>({id:t.id,label:t.nombre})),
           'Tipo de código *',item?.tipo_codigo_barra_id);
         sel.required=true;
+        // Un código de barras es TEXTO, nunca un número HTML: permite editar,
+        // pegar, borrar y conservar ceros iniciales aun después de un error.
         const code=field('text',item?.codigo_barras||'',100);code.required=true;
+        code.readOnly=false;code.disabled=false;
+        code.inputMode='text';code.autocomplete='off';code.spellcheck=false;
         const units=field('number',item?.unidades_por_codigo||'1',20);
         units.required=true;units.min='0.001';units.step='0.001';
         const status=e('p','', 'supplier-status supplier-dialog-wide');
         status.setAttribute('role','alert');
         const hint=e('p','', 'supplier-barcode-hint supplier-dialog-wide');
+        const flexibleType=avail.find(t=>String(t.codigo||'').toUpperCase()==='CODE128');
+        const switchType=button('Usar Code 128 para este código',()=>{
+          if(!flexibleType)return;
+          sel.value=String(flexibleType.id);
+          sel.dispatchEvent(new Event('change',{bubbles:true}));
+          code.focus();
+        },'button ghost supplier-barcode-switch-type supplier-dialog-wide');
+        switchType.hidden=true;
+        const refreshAlternative=()=>{
+          const type=avail.find(t=>String(t.id)===String(sel.value));
+          const required=purchaseBarcodeLengths[String(type?.codigo||'').toUpperCase()];
+          const candidate=code.value.trim();
+          switchType.hidden=!(flexibleType&&required&&candidate
+            &&!new RegExp('^[0-9]{'+required+'}$').test(candidate));
+        };
         const refreshHint=()=>{
           const type=avail.find(t=>String(t.id)===String(sel.value));
           const kind=String(type?.codigo||'').toUpperCase();
           const required=purchaseBarcodeLengths[kind];
           hint.textContent=required
-            ?kind+': ingresa exactamente '+required+' dígitos, sin espacios ni guiones.'
-            :'Ingresa el código asignado por el proveedor. Unidades: hasta 3 decimales.';
-          code.inputMode=required?'numeric':'text';
-          code.placeholder=required?'Ej.: '+('0'.repeat(required)):'Código del proveedor';
+            ?kind+': requiere exactamente '+required+' dígitos. Para códigos cortos del proveedor selecciona Code 128.'
+            :'Código de texto libre del proveedor; también admite valores cortos y ceros iniciales.';
+          // No activar teclado o máscara numérica que interfiera con la edición.
+          code.inputMode='text';
+          code.placeholder=required?'Ej.: '+('0'.repeat(required)):'Ej.: 252';
+          refreshAlternative();
         };
-        sel.addEventListener('change',refreshHint);
-        refreshHint();
         const clearMessage=()=>{
           status.textContent='';status.classList.remove('is-error');
-          for(const el of [sel,code,units])el.removeAttribute('aria-invalid');
+          for(const control of [sel,code,units])control.removeAttribute('aria-invalid');
+          refreshAlternative();
         };
-        for(const el of [sel,code,units])el.addEventListener(
-          el===sel?'change':'input',clearMessage);
+        sel.addEventListener('change',()=>{refreshHint();clearMessage();});
+        for(const control of [code,units])control.addEventListener('input',clearMessage);
+        refreshHint();
         const save=e('button',item?'Guardar código':'Añadir código','button primary');save.type='submit';
         form.append(labeled('Tipo',sel),labeled('Código de compra',code),
-          labeled('Unidades por este código',units),hint,status,save);
+          labeled('Unidades por este código',units),hint,switchType,status,save);
         const report=(message,field)=>{
           status.textContent=message;status.classList.add('is-error');
           if(field){field.setAttribute('aria-invalid','true');field.focus();}
+          refreshAlternative();
         };
         form.addEventListener('submit',async ev=>{
           ev.preventDefault();
