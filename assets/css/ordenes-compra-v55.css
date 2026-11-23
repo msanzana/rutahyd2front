@@ -173,3 +173,162 @@ dialog.hd-oc-modal.hd-oc-modal--editor[open]{
   .hd-oc-modal--editor .hd-oc-provider .button{justify-self:stretch}
   .hd-oc-modal--editor .hd-oc-totals{grid-template-columns:1fr}
 }
+
+
+/* V57 · Altura realmente contenida y acciones visibles en órdenes de compra.
+   El contenido se desplaza, NO la cabecera ni Guardar / Cancelar. */
+dialog.hd-oc-modal.hd-oc-modal--editor[open]{
+  width:min(830px,calc(100vw - 32px))!important;
+  max-width:min(830px,calc(100vw - 32px))!important;
+  height:min(620px,calc(100dvh - 36px))!important;
+  max-height:calc(100dvh - 36px)!important;
+  min-height:0!important;
+}
+dialog.hd-oc-modal--editor .hd-oc-modal-body{
+  display:flex!important;flex-direction:column!important;
+  overflow:hidden!important;padding:11px 16px 0!important;
+  height:100%!important;min-height:0!important;
+}
+dialog.hd-oc-modal--editor .hd-oc-modal-heading{
+  position:relative!important;top:auto!important;flex:0 0 auto;
+  margin:0 0 7px!important;padding:2px 0 10px!important;
+}
+dialog.hd-oc-modal--editor .hd-oc-form{
+  display:flex!important;flex-direction:column!important;
+  flex:1 1 auto;min-height:0!important;overflow:hidden!important;
+  width:100%;gap:0!important;
+}
+dialog.hd-oc-modal--editor .hd-oc-form-scroll{
+  display:grid;grid-template-columns:minmax(0,1fr);gap:9px;
+  flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;
+  box-sizing:border-box;overscroll-behavior:contain;
+  padding:1px 3px 8px 0;scrollbar-width:thin;
+  scrollbar-color:#ac8aca transparent;
+}
+dialog.hd-oc-modal--editor .hd-oc-form-scroll > *{
+  min-width:0;max-width:100%;margin:0!important;
+}
+dialog.hd-oc-modal--editor .hd-oc-form > .hd-oc-message{
+  flex:0 0 auto;margin:0!important;padding:0 3px;
+  max-height:54px;overflow-y:auto;
+}
+dialog.hd-oc-modal--editor .hd-oc-form > .hd-oc-actions{
+  position:static!important;flex:0 0 auto;
+  width:calc(100% + 32px);box-sizing:border-box;
+  margin:0 -16px!important;padding:10px 16px!important;
+  background:var(--surface,#fff);
+  border-top:1px solid #e8dff0;
+  box-shadow:0 -6px 15px rgba(42,14,79,.06);
+}
+dialog.hd-oc-modal--editor .hd-oc-form .field:has(textarea){
+  min-width:0;
+}
+
+/* V57 · Buscador de proveedores: modal propio, sin heredar el tamaño global
+   de .modal ni los anchos del listado general. */
+dialog.hd-oc-modal.hd-oc-modal--supplier[open]{
+  display:block!important;
+  box-sizing:border-box!important;
+  position:fixed!important;inset:0!important;
+  margin:auto!important;
+  width:min(780px,calc(100vw - 32px))!important;
+  max-width:min(780px,calc(100vw - 32px))!important;
+  min-width:0!important;
+  height:auto!important;min-height:0!important;
+  max-height:min(78dvh,640px)!important;
+  padding:0!important;border-radius:16px!important;
+  overflow:hidden!important;
+}
+dialog.hd-oc-modal--supplier .hd-oc-modal-body{
+  box-sizing:border-box!important;width:100%!important;
+  max-height:min(78dvh,640px)!important;
+  min-height:0!important;
+  padding:15px 17px 14px!important;
+  overflow-y:auto!important;overflow-x:hidden!important;
+  scrollbar-width:thin;
+}
+dialog.hd-oc-modal--supplier .hd-oc-modal-heading{
+  display:flex;align-items:center;gap:9px;
+  padding:0 0 10px;margin:0 0 12px;
+}
+dialog.hd-oc-modal--supplier .hd-oc-modal-heading h2{
+  font-size:1.08rem;line-height:1.25;margin:2px 0;
+}
+dialog.hd-oc-modal--supplier .hd-oc-modal-heading p{
+  margin:2px 0;font-size:11px;
+}
+dialog.hd-oc-modal--supplier .hd-oc-inline-search{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) auto;
+  width:100%!important;max-width:100%!important;
+  min-width:0!important;gap:9px!important;
+  align-items:center!important;
+  margin:0 0 8px!important;padding:0!important;
+  flex:none!important;
+}
+dialog.hd-oc-modal--supplier .hd-oc-inline-search input[type="search"]{
+  box-sizing:border-box!important;
+  width:100%!important;min-width:0!important;
+  max-width:100%!important;flex:none!important;
+  min-height:39px!important;height:39px!important;
+  padding:8px 11px!important;
+  border-radius:9px!important;
+  font-size:12px!important;
+}
+dialog.hd-oc-modal--supplier .hd-oc-inline-search button{
+  box-sizing:border-box!important;min-height:39px!important;
+  height:39px!important;min-width:88px!important;
+  width:auto!important;flex:0 0 auto!important;
+  padding:7px 14px!important;white-space:nowrap;
+  border-radius:9px!important;
+}
+dialog.hd-oc-modal--supplier .hd-oc-message{
+  margin:4px 0 7px!important;min-height:0;font-size:11px;
+}
+dialog.hd-oc-modal--supplier .hd-oc-table-scroll{
+  width:100%;max-width:100%;
+  max-height:min(330px,42dvh);
+  overflow:auto;overscroll-behavior:contain;
+  border:1px solid #ece3f3;border-radius:10px;
+}
+dialog.hd-oc-modal--supplier table.hd-oc-table{
+  width:100%;min-width:635px!important;
+  max-width:none;table-layout:fixed;
+  white-space:normal;
+}
+dialog.hd-oc-modal--supplier table.hd-oc-table :is(th,td){
+  padding:9px 10px!important;
+  box-sizing:border-box;
+  font-size:11px;vertical-align:middle;
+  line-height:1.4;overflow-wrap:anywhere;
+}
+dialog.hd-oc-modal--supplier table.hd-oc-table th:nth-child(1){width:29%}
+dialog.hd-oc-modal--supplier table.hd-oc-table th:nth-child(2){width:20%}
+dialog.hd-oc-modal--supplier table.hd-oc-table th:nth-child(3){width:36%}
+dialog.hd-oc-modal--supplier table.hd-oc-table th:nth-child(4){width:15%;text-align:center}
+dialog.hd-oc-modal--supplier table.hd-oc-table td:last-child{text-align:center}
+dialog.hd-oc-modal--supplier .list-pagination{
+  max-width:100%;overflow-x:auto;min-height:0;
+}
+@media(max-width:560px){
+  dialog.hd-oc-modal.hd-oc-modal--supplier[open]{
+    width:calc(100vw - 14px)!important;
+    max-width:calc(100vw - 14px)!important;
+    max-height:calc(100dvh - 22px)!important;
+  }
+  dialog.hd-oc-modal--supplier .hd-oc-modal-body{
+    padding:12px!important;max-height:calc(100dvh - 22px)!important;
+  }
+  dialog.hd-oc-modal--supplier .hd-oc-inline-search{
+    grid-template-columns:minmax(0,1fr) auto!important;
+  }
+  dialog.hd-oc-modal--supplier .hd-oc-inline-search button{
+    min-width:76px!important;padding-inline:10px!important;
+  }
+  dialog.hd-oc-modal.hd-oc-modal--editor[open]{
+    width:calc(100vw - 14px)!important;
+    max-width:calc(100vw - 14px)!important;
+    height:calc(100dvh - 18px)!important;
+    max-height:calc(100dvh - 18px)!important;
+  }
+}
