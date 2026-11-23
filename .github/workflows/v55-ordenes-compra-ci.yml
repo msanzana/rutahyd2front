@@ -30,4 +30,4 @@ jobs:
           set -euo pipefail
           node tests/clientes-v50.cjs
           node tests/paginadores-codigos-v52.cjs
-          node tests/cache-v53.cjs
+          node tests/cache-continuidad-v55.cjs
