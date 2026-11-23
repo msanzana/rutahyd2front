@@ -17,6 +17,21 @@
   quitar:'<path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6M10 10v7m4-7v7"/>',
   accion:'<path d="M5 12h14m-6-6 6 6-6 6"/>'};
  const icon=(key)=>'<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">'+(SVG[key]||SVG.ver)+'</svg>';
+ // Identificador interno compartido por todos los CRUD. Nunca se envía como
+ // código de negocio: el ID lo genera la tabla y el servidor lo conserva.
+ const recordCode=(parent,recordId=null,{label='Código',className=''}={})=>{
+  const wrap=document.createElement('label');
+  wrap.className='field hd-record-id-field'+(className?' '+className:'');
+  const caption=document.createElement('span');caption.textContent=label;
+  const control=document.createElement('input');
+  control.type='text';control.value=recordId===null||recordId===undefined?'Automático':String(recordId);
+  control.readOnly=true;control.autocomplete='off';control.className='hd-record-id-input';
+  control.setAttribute('aria-readonly','true');
+  control.setAttribute('title','Identificador automático de la tabla, no editable');
+  control.setAttribute('aria-label',label+' · identificador automático');
+  wrap.append(caption,control);parent.append(wrap);
+  return control;
+ };
  const action=(text,click,{kind='editar',danger=false}={})=>{
   const b=document.createElement('button');b.type='button';
   b.className='list-icon-action'+(danger?' is-danger':'');
@@ -488,5 +503,5 @@
   new MutationObserver(rescan).observe(area,{childList:true,subtree:true});
   rescan();
  });
- window.RutaHDListUI=Object.freeze({action,actionsCell,wrapTable,registerSearch,advanced,filterButton,matching,createSearch,icon,paginate,renderPager,statusSwitch,PAGE_SIZE});
+ window.RutaHDListUI=Object.freeze({recordCode,action,actionsCell,wrapTable,registerSearch,advanced,filterButton,matching,createSearch,icon,paginate,renderPager,statusSwitch,PAGE_SIZE});
 })();
