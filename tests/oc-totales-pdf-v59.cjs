@@ -110,6 +110,10 @@ assert(api.includes("calculatePurchaseOrder: data=>send('/ordenes-compra/calcula
   await page.getByRole('button',{name:/Editar orden OC-2026-0000007/}).click();
   const editor=page.locator('dialog.hd-oc-modal--editor[open]');
   await editor.waitFor({state:'visible'});
+  await page.waitForFunction(()=>{
+    const n=document.querySelectorAll('dialog.hd-oc-modal--editor[open] .hd-oc-totals input');
+    return n.length===3&&n[1].value.includes('475')&&n[2].value.includes('2.975');
+  },null,{timeout:8000});
   const edited=await editor.locator('.hd-oc-totals input').evaluateAll(nodes=>nodes.map(n=>n.value));
   assert(edited[1].includes('475'),edited[1]);
   assert(edited[2].includes('2.975'),edited[2]);
