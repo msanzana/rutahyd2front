@@ -6,7 +6,7 @@ const fs=require('node:fs'),path=require('node:path');
 const root=path.join(__dirname,'..');
 const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 for(const v of ['ordenes-compra-v55.css?v=20261123-v59',
- 'ordenes-compra-v55.js?v=20261123-v61'])
+ 'ordenes-compra-v55.js?v=20261123-v62'])
  assert(html.includes(v),'Falta caché V58: '+v);
 (async()=>{
  const browser=await chromium.launch({headless:true});
