@@ -1,0 +1,33 @@
+name: V55 - Ordenes de compra UI y proveedor acotado
+on:
+  push:
+    branches: [feature/v55-ordenes-compra-20261123]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  ui:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Dependencias Playwright
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium >/dev/null
+      - name: Validación frontend V55
+        run: |
+          set -euo pipefail
+          for file in assets/js/ordenes-compra-v55.js assets/js/catalogos-api.js \
+            assets/js/buscador-productos-v39.js assets/js/app-produccion.js \
+            assets/js/listados-ui.js;do node --check "$file";done
+          node tests/ordenes-compra-v55.cjs
+      - name: Contratos V52 / V54 no regresaron
+        run: |
+          set -euo pipefail
+          node tests/clientes-v50.cjs
+          node tests/paginadores-codigos-v52.cjs
+          node tests/cache-v53.cjs
