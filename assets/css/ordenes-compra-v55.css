@@ -1,0 +1,64 @@
+/* Ruta H&D V55 · Ordenes de compra: violeta corporativo, compacto y responsive. */
+.hd-oc-module{max-width:100%;min-width:0}
+.hd-oc-module .panel-heading{margin-bottom:12px}
+.hd-oc-toolbar{display:flex;gap:12px;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;margin-bottom:10px}
+.hd-oc-inline-search{display:flex;gap:8px;align-items:center;flex:1 1 450px;flex-wrap:wrap}
+.hd-oc-inline-search input,.hd-oc-inline-search select{min-width:145px;flex:1 1 175px;max-width:290px;border:1px solid #cfc2dd;border-radius:10px;padding:9px 12px;background:var(--surface,#fff);color:var(--text,#2e1850)}
+.hd-oc-message{color:var(--text-muted,#6c5a7a);font-size:.86rem;min-height:1.3em;margin:8px 0}
+.hd-oc-message.is-error{color:#9b2848;font-weight:600}
+.hd-oc-table-scroll{max-width:100%;overflow-x:auto;overflow-y:visible;border-radius:12px}
+.hd-oc-table{min-width:890px;white-space:nowrap}
+.hd-oc-table td{vertical-align:middle}
+.hd-oc-table td:first-child{font-variant-numeric:tabular-nums}
+.hd-oc-row-actions{display:flex;align-items:center;justify-content:flex-end;gap:5px;min-width:130px}
+.hd-oc-row-actions .list-icon-action[disabled]{opacity:.35;cursor:not-allowed}
+.hd-oc-state{display:inline-flex;align-items:center;border-radius:999px;padding:4px 10px;font-size:.78rem;font-weight:700;background:#efe8fa;color:#4c1f77}
+.hd-oc-state[data-state="NULA"]{background:#f8ecee;color:#9d2c43}
+.hd-oc-state[data-state="RECEPCIONADA"]{background:#e4f4ec;color:#21634d}
+.hd-oc-modal{border:0;border-radius:16px;background:var(--surface,#fff);color:var(--text,#2a173e);padding:0;max-width:min(1100px,calc(100vw - 30px));width:100%;max-height:92dvh;box-shadow:0 20px 80px #16092455}
+.hd-oc-modal::backdrop{background:#12051fc2}
+.hd-oc-modal-body{padding:22px;max-height:92dvh;overflow-y:auto}
+.hd-oc-modal-heading{display:flex;align-items:start;gap:14px;margin-bottom:14px;border-bottom:1px solid #dfd5e7;padding-bottom:12px}
+.hd-oc-logo{width:7px;align-self:stretch;border-radius:8px;background:linear-gradient(#532189,#a370d4)}
+.hd-oc-modal-heading h2{font-size:1.22rem;margin:3px 0;color:var(--text,#30144e)}
+.hd-oc-modal-heading p{font-size:.85rem;color:#766584;margin:4px 0}
+.hd-oc-modal-heading .list-icon-action{margin-left:auto}
+.hd-oc-identity{display:grid;grid-template-columns:1fr 1.1fr 1fr;gap:12px;margin-bottom:12px}
+.hd-oc-fields{display:grid;grid-template-columns:1fr 1fr minmax(280px,2fr);gap:12px;margin-bottom:12px}
+.hd-oc-form .field,.hd-oc-provider .field,.hd-oc-totals .field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.hd-oc-form .field span{font-size:.83rem;font-weight:650;color:var(--text,#322047)}
+.hd-oc-form input,.hd-oc-form textarea{box-sizing:border-box;min-width:0;width:100%;border:1px solid #cdbbda;border-radius:10px;padding:10px 11px;background:var(--surface,#fff);color:var(--text,#302043);font:inherit}
+.hd-oc-form input:focus-visible,.hd-oc-form textarea:focus-visible{outline:2px solid #8050b3;outline-offset:2px}
+.hd-oc-form input:read-only{background:#f4f0f7;color:#665374;cursor:default}
+.hd-oc-provider{display:grid;grid-template-columns:minmax(220px,1fr) auto;gap:10px;align-items:end;margin-bottom:12px}
+.hd-oc-details{border:1px solid #ddcfe9;border-radius:13px;padding:14px;margin-bottom:12px;min-width:0}
+.hd-oc-details legend{font-size:.94rem;font-weight:700;color:#4e207b;padding:0 8px}
+.hd-oc-details-tools{display:flex;gap:10px;margin-bottom:9px}
+.hd-oc-details:disabled{opacity:.55}
+.hd-oc-details .hd-oc-table{min-width:760px}
+.hd-oc-details .hd-oc-table input{width:130px;padding:7px}
+.hd-oc-line-money{font-variant-numeric:tabular-nums}
+.hd-oc-empty{color:#7c6c87;margin:12px 0;font-size:.88rem}
+.hd-oc-totals{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:12px}
+.hd-oc-actions{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:10px;margin-top:12px}
+.hd-oc-question{font-size:1rem;margin:12px 0;line-height:1.5}
+.hd-oc-pdf-frame{width:100%;height:min(68dvh,850px);border:1px solid #e1d7e9;border-radius:9px;margin-top:12px;background:#fff}
+.hd-lookup-locked-supplier{font-size:.83rem;border-left:3px solid #7041a7;padding:8px 12px;background:#f5effb;color:#482575;border-radius:0 8px 8px 0}
+@media (max-width:800px){
+ .hd-oc-modal-body{padding:14px}
+ .hd-oc-identity,.hd-oc-fields{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .hd-oc-fields>.field:last-child{grid-column:1/-1}
+ .hd-oc-totals{grid-template-columns:1fr}
+ .hd-oc-provider{grid-template-columns:1fr}
+ .hd-oc-provider .button{justify-self:start}
+ .hd-oc-toolbar>.button{margin-left:auto}
+}
+@media (max-width:480px){
+ .hd-oc-identity,.hd-oc-fields{grid-template-columns:1fr}
+ .hd-oc-fields>.field:last-child{grid-column:auto}
+ .hd-oc-inline-search input,.hd-oc-inline-search select{max-width:none;flex:1 1 100%}
+ .hd-oc-modal{max-width:calc(100vw - 14px);max-height:96dvh}
+ .hd-oc-modal-body{max-height:96dvh;padding:12px}
+ .hd-oc-modal-heading h2{font-size:1.05rem}
+ .hd-oc-actions .button{flex:1 1 auto}
+}
