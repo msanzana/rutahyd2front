@@ -51,7 +51,7 @@
        };
        if(window.RutaHDListUI?.renderPager){
          window.RutaHDListUI.renderPager(nav,{
-           page,pages:last,total,label:'giros',onPage:change
+           page,pages:last,total,label:'giros',onPage:change,autoTop:false
          });
        }else{
          nav.replaceChildren();
