@@ -496,7 +496,7 @@
          const pdf=action('Ver PDF de orden '+order.numero,
            ()=>void mostrarPdf(order.id),'pdf');
          const resend=action('Reenviar correo de orden '+order.numero,
-            ()=>void confirmarReenvio(order,status),'enviar');
+            ()=>void confirmarReenvio(order,status),'correo');
           resend.disabled=order.estado_codigo!=='ACTIVA';
          const annul=action('Anular orden '+order.numero,
            ()=>void confirmarAnulacion(order,load,status),'desactivar',true);
