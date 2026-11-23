@@ -81,27 +81,104 @@ html[data-theme="oscuro"] .hd-customers-price-pill{background:#234c43;color:#c7f
 html[data-theme="oscuro"] .hd-customers-name{color:#f4e5fc}
 html[data-theme="oscuro"] .hd-customers-description{color:#cfb6df}
 
-/* Buscador remoto de ciudad en Clientes: sin select de comuna o sector. */
-.hd-customer-city-picker{
-  display:grid;grid-template-columns:minmax(220px,1fr) auto;
-  align-items:end;gap:12px;margin:12px 0 0
+
+/* V51 · Tres campos de identidad alineados y sin alteración de otros CRUD. */
+.official-editor.crud-official-dialog .official-editor-grid > .hd-customer-identity-row{
+  grid-column:1/-1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:18px 16px;align-items:start;min-width:0;
 }
-.hd-customer-city-picker>.field{min-width:0}
-.hd-customer-city-picker>.button{min-height:43px;border-radius:11px}
-.hd-customer-city-picker>.field:nth-of-type(2),
-.hd-customer-city-help,.hd-customer-city-status{grid-column:1/-1}
-.hd-customer-city-picker input,.hd-customer-city-picker select{
-  min-height:43px;width:100%;border:1px solid #d9c7ec;
-  border-radius:11px;padding:9px 12px;background:#fff;color:#3a2458
+.official-editor.crud-official-dialog .hd-customer-identity-field{
+  display:flex;flex-direction:column;align-items:stretch;gap:8px;
+  min-width:0;margin:0;justify-content:flex-start;
 }
-.hd-customer-city-help{font-size:12px;color:#79638d}
-.hd-customer-city-status{margin:0;font-size:12px;color:#6a4983}
-.hd-customer-city-status.is-error{color:#b83860}
-@media(max-width:600px){
-  .hd-customer-city-picker{grid-template-columns:1fr;gap:9px}
-  .hd-customer-city-picker>.button{width:100%}
+.official-editor.crud-official-dialog .hd-customer-identity-field > span{
+  display:block;min-height:19px;margin:0;
+  font-size:12px;font-weight:780;line-height:19px
 }
-html[data-theme="oscuro"] .hd-customer-city-picker input,
-html[data-theme="oscuro"] .hd-customer-city-picker select{
-  background:#322543;border-color:#82649a;color:#f6e7fc
+.official-editor.crud-official-dialog .hd-customer-identity-field > input{
+  display:block;width:100%!important;min-width:0;max-width:100%;
+  height:48px!important;min-height:48px!important;
+  box-sizing:border-box!important;margin:0!important;
+  padding:11px 13px!important;border-radius:12px!important;
+  line-height:24px!important;align-self:stretch
+}
+.official-editor.crud-official-dialog .supplier-location-section{
+  border-radius:14px;overflow:visible;
+}
+.official-editor.crud-official-dialog .supplier-location-section .location-chain{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:14px;padding:14px 0 5px
+}
+.official-editor.crud-official-dialog .supplier-location-section .location-field{
+  min-width:0;display:flex;flex-direction:column;gap:8px
+}
+.official-editor.crud-official-dialog .supplier-location-section .location-field select{
+  width:100%;min-width:0;min-height:46px;border-radius:12px
+}
+.official-editor.crud-official-dialog .supplier-location-section .location-chain-help{
+  grid-column:1/-1;font-size:12px;color:#695382;line-height:1.5
+}
+/* Se persiste exclusivamente ciudad_id. País/región/provincia/comuna son controles de navegación. */
+.official-editor.crud-official-dialog .hd-customer-prices{
+  margin:0 30px 22px;padding:17px 19px;
+  border:1px solid #d9c8ed;border-radius:15px;
+  background:linear-gradient(135deg,#fbf8ff,#f6f0ff)
+}
+.official-editor.crud-official-dialog .hd-customer-prices-title{
+  margin:0;font-size:16px;font-weight:800;color:#53247d
+}
+.official-editor.crud-official-dialog .hd-customer-prices-intro{
+  margin:6px 0 15px;font-size:12px;line-height:1.5;color:#715a85
+}
+.official-editor.crud-official-dialog .official-customer-price-field{
+  display:flex;flex-direction:column;gap:7px;max-width:620px
+}
+.official-editor.crud-official-dialog .official-customer-price-field > span{
+  font-size:12px;font-weight:750;color:#50346e
+}
+.official-editor.crud-official-dialog .official-customer-price-field select{
+  width:100%;min-height:46px;padding:10px 13px;border-radius:12px;
+  background:#fff;color:#3e255b;border:1px solid #d9c5ee
+}
+.official-editor.crud-official-dialog .hd-customer-price-status{
+  display:inline-flex;align-items:center;margin:12px 0 0;
+  padding:8px 12px;border-radius:10px;
+  font-size:12px;font-weight:650;line-height:1.5;
+  color:#397053;background:#edf8f0;border:1px solid #cae8d2
+}
+.official-editor.crud-official-dialog .hd-customer-price-status.is-special{
+  color:#653d90;background:#f0e5fc;border-color:#dcc5fa
+}
+.official-editor.crud-official-dialog .hd-customer-price-status.is-error{
+  color:#aa365c;background:#fff2f6;border-color:#f0c0d1
+}
+@media(max-width:760px){
+  .official-editor.crud-official-dialog .official-editor-grid > .hd-customer-identity-row{
+    grid-template-columns:repeat(2,minmax(0,1fr))
+  }
+  .official-editor.crud-official-dialog .supplier-location-section .location-chain{
+    grid-template-columns:repeat(2,minmax(0,1fr))
+  }
+  .official-editor.crud-official-dialog .hd-customer-prices{
+    margin:0 18px 16px;padding:16px
+  }
+}
+@media(max-width:520px){
+  .official-editor.crud-official-dialog .official-editor-grid > .hd-customer-identity-row,
+  .official-editor.crud-official-dialog .supplier-location-section .location-chain{
+    grid-template-columns:minmax(0,1fr)
+  }
+}
+html[data-theme="oscuro"] .official-editor.crud-official-dialog .hd-customer-prices{
+  background:#30213e;border-color:#765290
+}
+html[data-theme="oscuro"] .official-editor.crud-official-dialog .hd-customer-prices-title,
+html[data-theme="oscuro"] .official-editor.crud-official-dialog .official-customer-price-field > span{
+  color:#f1ddfc
+}
+html[data-theme="oscuro"] .official-editor.crud-official-dialog .hd-customer-prices-intro{
+  color:#d3bce3
+}
+html[data-theme="oscuro"] .official-editor.crud-official-dialog .official-customer-price-field select{
+  background:#392648;border-color:#8c65ad;color:#f5eafa
 }
