@@ -125,6 +125,33 @@
    }catch(e){note.textContent=msg(e);note.classList.add('is-error');}
  }
 
+ async function confirmarReenvio(order,notice){
+   if(order.estado_codigo!=='ACTIVA')return;
+   const {dialog,box}=popup({title:'Reenviar aviso al proveedor',
+     subtitle:'Se reenviará la orden y su PDF al correo de la ficha del proveedor.'});
+   const note=el('p','Orden '+order.numero+'. Verifica primero la carpeta de correo no deseado; el mensaje podría llegar duplicado.','hd-oc-question');
+   note.setAttribute('role','status');
+   const row=el('div',null,'hd-oc-actions');
+   const cancel=btn('Cancelar',()=>dialog.close());
+   const send=btn('Reenviar correo con PDF',async()=>{
+     send.disabled=true;cancel.disabled=true;
+     note.textContent='Solicitando reenvío al servidor de correo…';
+     try{
+       await api().resendPurchaseOrder(order.id);
+       if(!dialog.open)return;
+       dialog.close();
+       notice.classList.remove('is-error');
+       notice.textContent='Reenvío aceptado por SMTP para '+order.numero+
+         '. No confirma entrega en la bandeja del destinatario.';
+     }catch(e){
+       if(!dialog.open)return;
+       note.classList.add('is-error');note.textContent='No se pudo reenviar: '+msg(e);
+       send.disabled=false;cancel.disabled=false;
+     }
+   },'primary');
+   row.append(cancel,send);box.append(note,row);
+ }
+
  async function confirmarAnulacion(order,reload,notice){
    if(order.estado_codigo!=='ACTIVA')return;
    const {dialog,box}=popup({title:'¿Anular orden de compra?',
@@ -371,7 +398,7 @@
            resend.disabled=true;
            try{
              await api().resendPurchaseOrder(response.id);
-             dialog.close();await onSaved('Orden guardada y correo reenviado.');
+             dialog.close();await onSaved('Reenvío aceptado por SMTP. Entrega al destinatario sin confirmar.');
            }catch(e){
              notice.textContent=msg(e);resend.disabled=false;
            }
@@ -380,7 +407,9 @@
          save.remove();cancel.disabled=false;
        }else{
          dialog.close();
-         await onSaved(response?.mensaje||'Orden guardada correctamente.');
+         await onSaved(response?.correo_enviado===true?
+          'Orden guardada; aviso aceptado por SMTP. La entrega al destinatario no está confirmada.':
+          (response?.mensaje||'Orden guardada correctamente.'));
        }
      }catch(e){
        notice.classList.add('is-error');notice.textContent=msg(e);
@@ -466,10 +495,13 @@
          edit.disabled=order.estado_codigo!=='ACTIVA';
          const pdf=action('Ver PDF de orden '+order.numero,
            ()=>void mostrarPdf(order.id),'pdf');
+         const resend=action('Reenviar correo de orden '+order.numero,
+            ()=>void confirmarReenvio(order,status),'enviar');
+          resend.disabled=order.estado_codigo!=='ACTIVA';
          const annul=action('Anular orden '+order.numero,
            ()=>void confirmarAnulacion(order,load,status),'desactivar',true);
          annul.disabled=order.estado_codigo!=='ACTIVA';
-         cell.append(edit,pdf,annul);row.append(cell);tbody.append(row);
+         cell.append(edit,pdf,resend,annul);row.append(cell);tbody.append(row);
        }
        table.append(tbody);tableRegion.append(table);
        drawPager(response);
