@@ -35,8 +35,8 @@
  };
  const scroll=(root)=>root.scrollIntoView({block:'start',
    behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
- function popup({title,subtitle=''}={}){
-   const dialog=el('dialog',null,'modal hd-oc-modal');
+ function popup({title,subtitle='',kind='dialog'}={}){
+   const dialog=el('dialog',null,'modal hd-oc-modal'+(kind==='editor'?' hd-oc-modal--editor':''));
    const box=el('section',null,'hd-oc-modal-body');
    const head=el('div',null,'hd-oc-modal-heading');
    head.append(el('div',null,'hd-oc-logo'));
@@ -44,7 +44,9 @@
    heading.append(el('span','RUTA H&D · COMPRAS','overline'),el('h2',title));
    if(subtitle)heading.append(el('p',subtitle));
    head.append(heading);
-   const close=action('Cerrar ventana',()=>dialog.close(),'quitar');
+   const close=el('button','×','hd-oc-close');
+   close.type='button';close.setAttribute('aria-label','Cerrar ventana');
+   close.addEventListener('click',()=>dialog.close());
    head.append(close);box.append(head);dialog.append(box);
    document.body.append(dialog);
    dialog.addEventListener('close',()=>dialog.remove(),{once:true});
@@ -142,7 +144,7 @@
  async function editarOrden(order,onSaved){
    const editing=Boolean(order?.id);
    const {dialog,box}=popup({title:editing?'Editar orden de compra':'Nueva orden de compra',
-     subtitle:'Estado automático. No se registrarán recepciones ni movimientos de inventario.'});
+     kind:'editor',subtitle:'Estado automático. No se registrarán recepciones ni movimientos de inventario.'});
    const notice=el('p',null,'hd-oc-message');
    notice.setAttribute('role','status');
    const form=el('form',null,'hd-oc-form');

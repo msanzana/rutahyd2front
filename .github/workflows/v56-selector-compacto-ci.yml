@@ -1,0 +1,33 @@
+name: V56 - Orden compacta y opciones con busqueda global
+on:
+  push:
+    branches: [feature/v56-oc-compacta-selects-20261123]
+  workflow_dispatch:
+permissions: {contents: read}
+jobs:
+  ui:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Chromium Playwright
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium >/dev/null
+      - name: Validar scripts nuevos
+        run: |
+          set -euo pipefail
+          node --check assets/js/select-buscable-v56.js
+          node --check assets/js/ordenes-compra-v55.js
+          node --check tests/selectores-interfaz-v56.cjs
+          node tests/selectores-interfaz-v56.cjs
+      - name: Regresión Compras y Clientes
+        run: |
+          set -euo pipefail
+          node tests/ordenes-compra-v55.cjs
+          node tests/cache-continuidad-v55.cjs
+          node tests/clientes-v50.cjs
+          node tests/paginadores-codigos-v52.cjs
