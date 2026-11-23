@@ -219,22 +219,50 @@
    const tools=el('div',null,'hd-oc-details-tools');
    const add=btn('Buscar productos del proveedor',async()=>{
      if(!selectedProvider?.id)return;
+     const supplierId=Number(selectedProvider.id);
      try{
        const selected=await window.RutaHDBuscadorProductos?.open({
          mode:'multiple',title:'Productos de '+selectedProvider.nombre,
-         proveedorId:selectedProvider.id,context:'orden_compra',
+         proveedorId:supplierId,context:'orden_compra',
          excludeIds:[...lines.keys()],
        });
-       if(!selected?.length)return;
-       for(const p of selected){
-         if(!lines.has(Number(p.id))){
-           lines.set(Number(p.id),{producto_id:Number(p.id),
-             sku:p.sku||'',nombre:p.nombre||'',cantidad:'1.000',
-             costo_unitario_neto:''});
-         }
+       if(!dialog.open||Number(selectedProvider?.id)!==supplierId||!selected?.length)return;
+       const nuevos=selected.filter(p=>!lines.has(Number(p.id)));
+       if(!nuevos.length)return;
+       // El costo se consulta al servidor, no se toma de los precios de venta.
+       add.disabled=true;
+       notice.classList.remove('is-error');
+       notice.textContent='Consultando costo neto de los productos…';
+       const result=await api().purchaseProductCosts({
+         proveedor_id:supplierId,productos:nuevos.map(p=>Number(p.id))
+       });
+       if(!dialog.open||Number(selectedProvider?.id)!==supplierId)return;
+       const costos=new Map((result?.costos||[]).map(p=>[
+         Number(p.producto_id),p.costo_unitario_neto
+       ]));
+       if(nuevos.some(p=>!costos.has(Number(p.id))))
+         throw Error('No se recibió el costo de todos los productos.');
+       let pendientes=0;
+       for(const p of nuevos){
+         const costo=costos.get(Number(p.id));
+         const valido=costo!==null&&costo!==undefined&&
+           /^\d+(?:\.\d{1,4})?$/.test(String(costo))&&Number(costo)>0;
+         if(!valido)pendientes++;
+         lines.set(Number(p.id),{producto_id:Number(p.id),
+           sku:p.sku||'',nombre:p.nombre||'',cantidad:'1.000',
+           costo_unitario_neto:valido?String(costo):''});
        }
        drawLines();
-     }catch(e){notice.textContent=msg(e);notice.classList.add('is-error');}
+       notice.textContent=pendientes
+         ?pendientes+' producto(s) sin costo neto válido. Ingresa su costo antes de guardar.'
+         :'Costo unitario neto cargado desde la ficha de cada producto.';
+       notice.classList.toggle('is-error',pendientes>0);
+     }catch(e){
+       if(dialog.open){
+         notice.textContent='No se pudo consultar el costo del producto: '+msg(e);
+         notice.classList.add('is-error');
+       }
+     }finally{if(dialog.open)add.disabled=false;}
    },'primary');
    tools.append(add);
    const tableRegion=el('div',null,'hd-oc-table-scroll');
