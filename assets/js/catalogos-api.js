@@ -163,6 +163,31 @@
     finally{finish?.();}
   }
 
+  async function pdfOrden(idValue) {
+    if(!endpoint||!bearer)throw Error('Inicia sesión para ver el documento.');
+    const token=bearer;
+    const done=window.RutaHDCarga?.start({path:'/ordenes-compra/'+idValue+'/pdf',method:'GET'});
+    const abort=new AbortController(),timer=setTimeout(()=>abort.abort(),30000);
+    try{
+      const response=await fetch(endpoint+'/ordenes-compra/'+id(idValue)+'/pdf',{
+        headers:{Authorization:'Bearer '+token,Accept:'application/pdf'},
+        credentials:'same-origin',cache:'no-store',signal:abort.signal
+      });
+      if(!response.ok){
+        if(response.status===401&&bearer===token){
+          bearer=null;window.RutaHDAccesos?.clear();
+        }
+        const err=new Error('No se pudo abrir el PDF (HTTP '+response.status+')');
+        err.status=response.status;throw err;
+      }
+      if(!(response.headers.get('Content-Type')||'').includes('application/pdf'))
+        throw Error('El servidor no entregó un PDF válido.');
+      const blob=await response.blob();
+      if(blob.size<100||blob.size>10485760)throw Error('Tamaño del PDF incorrecto.');
+      return blob;
+    }finally{clearTimeout(timer);done?.();}
+  }
+
   async function sendBinaryCore(path,method='GET',files=null) {
     if(!endpoint||!bearer)throw new Error('Debes iniciar sesión.');
     const token=bearer;
@@ -441,6 +466,23 @@
       }
       return send('/productos?'+query.toString());
     },
+    orderStates: ()=>send('/ordenes-compra/estados'),
+    orderSuppliers: (page=1,buscar='')=>send('/ordenes-compra/proveedores?'+
+      new URLSearchParams({page:String(page),buscar:String(buscar).slice(0,120)})),
+    purchaseOrders: ({page=1,buscar='',estadoId=null,proveedorId=null}={})=>{
+      const q=new URLSearchParams({page:String(page),por_pagina:'25',
+        buscar:String(buscar).slice(0,120)});
+      if(estadoId)q.set('estado_id',id(estadoId));
+      if(proveedorId)q.set('proveedor_id',id(proveedorId));
+      return send('/ordenes-compra?'+q.toString());
+    },
+    getPurchaseOrder: orderId=>send('/ordenes-compra/'+id(orderId)),
+    createPurchaseOrder: data=>send('/ordenes-compra','POST',data),
+    updatePurchaseOrder: (orderId,data)=>
+      send('/ordenes-compra/'+id(orderId),'PUT',data),
+    cancelPurchaseOrder: orderId=>send('/ordenes-compra/'+id(orderId)+'/anular','POST'),
+    resendPurchaseOrder: orderId=>send('/ordenes-compra/'+id(orderId)+'/reenviar','POST'),
+    purchaseOrderPdf: orderId=>pdfOrden(orderId),
     productPhotos: productId => send('/productos/'+id(productId)+'/fotos'),
     productPhotoBlob: (productId,photoId) =>
       sendBinary('/productos/'+id(productId)+'/fotos/'+id(photoId)),
