@@ -6,7 +6,7 @@ const el=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefine
 const btn=(text,handler,cls='button ghost')=>{const b=el('button',text,cls);b.type='button';b.addEventListener('click',handler);return b;};
 let root,users=[],roles=[],filter='',busy=false;
 const status=(m)=>{const p=root?.querySelector('#usersStatus');if(p)p.textContent=m;};
-const err=e=>({401:'Sesión expirada',403:'Acceso denegado',409:'Registro duplicado',422:'Datos inválidos',503:'SMTP o API no disponible'})[e?.status]||'Error de conexión con el servidor';
+const err=e=>e?.userMessage||({401:'Sesión expirada',403:'Acceso denegado',409:'Registro duplicado',422:'Datos inválidos',503:'SMTP o API no disponible'})[e?.status]||'Error de conexión con el servidor';
 async function guard(fn){if(busy)return;busy=true;try{await fn();}catch(e){status(err(e));}finally{busy=false;}}
 async function load(){
  const res=await api().usersAll();
@@ -73,8 +73,8 @@ async function form(user){
  const heading=el('div',undefined,'crud-heading');
  const copy=el('div',undefined,'crud-heading-copy');
  copy.append(el('span','RUTA H&D · ADMINISTRACIÓN','crud-kicker'),
-   el('h2',user?'Editar usuario':'Invitar usuario'),
-   el('p',user?'Actualiza los datos y permisos de la cuenta.':'La persona recibirá un enlace seguro para definir su contraseña.','crud-intro'));
+   el('h2',user?'Editar usuario':'Crear usuario'),
+   el('p',user?'Actualiza los datos y permisos de la cuenta.':'Establece una contraseña inicial o envía una invitación segura por correo.','crud-intro'));
  const close=btn('×',()=>dlg.close(),'crud-close');close.setAttribute('aria-label','Cerrar ventana');
  heading.append(copy,close);f.append(heading);
  const grid=el('div',undefined,'crud-fields crud-form-grid');f.append(grid);
@@ -83,6 +83,20 @@ async function form(user){
  const wrap=el('label',undefined,'field crud-field'),role=el('select');
  roles.forEach(r=>{const opt=el('option',r.nombre);opt.value=r.id;role.append(opt);});
  role.value=String(user?.rol_id||roles[0].id);wrap.append(el('span','Perfil operativo'),role);grid.append(wrap);
+ let password=null,confirmation=null;
+ if(!user){
+  password=field(grid,'Contraseña inicial (opcional)','password');
+  confirmation=field(grid,'Confirmar contraseña','password');
+  for(const input of [password,confirmation]){
+   input.required=false;input.minLength=12;input.maxLength=128;
+   input.autocomplete='new-password';input.spellcheck=false;
+  }
+  password.placeholder='Mínimo 12 caracteres';
+  confirmation.placeholder='Repite la contraseña';
+  const help=el('p','Si completas las contraseñas, el usuario podrá iniciar sesión directamente. Si las dejas vacías, recibirá un enlace por correo para elegir una. Nunca se envía la contraseña por correo.',
+   'crud-help users-password-help');
+  grid.append(help);
+ }
  const geoHost=el('div',undefined,'users-location-holder');
  const geo=await window.RutaHDUbicaciones?.mountSelector(geoHost,user?.ciudad_id??null);
  grid.append(geoHost);
@@ -91,23 +105,46 @@ async function form(user){
   const w=el('label',undefined,'field crud-field');active=el('select');
   [['1','Activo'],['0','Inactivo']].forEach(([value,text])=>{const o=el('option',text);o.value=value;active.append(o);});
   active.value=user.activo?'1':'0';w.append(el('span','Estado'),active);grid.append(w);
- }else grid.append(el('p','El sistema enviará un correo para configurar la contraseña.','crud-help'));
+ }
  const message=el('p','', 'form-error crud-message');message.setAttribute('role','alert');message.hidden=true;f.append(message);
  const footer=el('div',undefined,'modal-footer crud-footer');
  const save=el('button',user?'Guardar cambios':'Enviar invitación','button primary');save.type='submit';
+ if(password&&confirmation){
+  const sync=()=>{save.textContent=password.value||confirmation.value?'Crear usuario':'Enviar invitación';};
+  password.addEventListener('input',sync);confirmation.addEventListener('input',sync);
+ }
  footer.append(btn('Cancelar',()=>dlg.close()),save);f.append(footer);
  f.addEventListener('submit',async e=>{
   e.preventDefault();if(busy)return;
   if(name.value.trim().length<3||!email.validity.valid){
    message.textContent='Verifica nombre y correo electrónico.';message.hidden=false;return;
   }
+  const manual=Boolean(password&&(password.value||confirmation.value));
+  if(manual&&(password.value.length<12||password.value.length>128||
+      password.value!==confirmation.value)){
+   message.textContent=password.value.length<12||password.value.length>128
+    ?'La contraseña inicial debe tener entre 12 y 128 caracteres.'
+    :'Las contraseñas no coinciden. Revisa la confirmación.';
+   message.hidden=false;
+   (password.value.length<12||password.value.length>128?password:confirmation).focus();
+   return;
+  }
   busy=true;save.disabled=true;message.hidden=true;
   try{
    const dto={nombre:name.value.trim(),correo_electronico:email.value.trim(),rol_id:Number(role.value)};
    if(geo)dto.ciudad_id=geo.value();
    if(user)await api().updateUser(user.id,{...dto,activo:active.value==='1'});
-   else await api().createUser(dto);
-   dlg.close();await load();status(user?'Usuario actualizado.':'Invitación enviada por correo.');
+   else{
+    if(manual){
+     dto.contrasena=password.value;
+     dto.contrasena_confirmation=confirmation.value;
+    }
+    await api().createUser(dto);
+   }
+   dlg.close();await load();
+   status(user?'Usuario actualizado.':manual
+     ?'Usuario creado con contraseña inicial. Ya puede iniciar sesión.'
+     :'Invitación enviada por correo.');
   }catch(e){message.textContent=err(e);message.hidden=false;}
   finally{busy=false;save.disabled=false;}
  });
