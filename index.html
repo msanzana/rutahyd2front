@@ -26,6 +26,7 @@
   <link rel="stylesheet" href="assets/css/mix-proveedores-v40.css?v=20261122-v40">
   <link rel="stylesheet" href="assets/css/carga-global-v42.css?v=20261122-v42">
   <link rel="stylesheet" href="assets/css/interfaz-mix-validacion-v45.css?v=20261122-v49prod">
+  <link rel="stylesheet" href="assets/css/clientes-v50.css?v=20261122-v50">
 </head>
 <body>
   <svg class="svg-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -109,7 +110,15 @@
             <button type="button" data-nav="proveedores_productos" class="nav-sublink" role="menuitem"><span>Proveedores productos</span></button>
           </div>
         </div>
-        <button type="button" data-nav="clientes" class="nav-link"><svg class="icon"><use href="#i-users"/></svg><span>Clientes</span></button>
+        <div class="nav-group" id="clientsNavGroup">
+          <div class="nav-parent">
+            <button type="button" data-nav="clientes" class="nav-link"><svg class="icon"><use href="#i-users"/></svg><span>Clientes</span></button>
+            <button type="button" class="nav-expand" id="toggleClientSubnav" aria-label="Expandir submódulos de Clientes" aria-controls="clientSubnav" aria-expanded="false"><svg class="icon small"><use href="#i-chevron"/></svg></button>
+          </div>
+          <div id="clientSubnav" class="product-subnav" role="menu" aria-label="Submódulos de Clientes" hidden>
+            <button type="button" data-nav="clientes_listado" class="nav-sublink" role="menuitem"><span>Listado de clientes</span></button>
+          </div>
+        </div>
         <div class="nav-group" id="productsNavGroup">
           <div class="nav-parent">
             <button type="button" data-nav="productos" class="nav-link"><svg class="icon"><use href="#i-box"/></svg><span>Productos</span></button>
@@ -214,7 +223,7 @@
   <script src="assets/js/validacion-ui.js?v=20261122-v45prod" defer></script>
   <script src="assets/js/menu-usuario.js?v=20261122-copy39" defer></script>
   <script src="assets/js/carga-global-v42.js?v=20261122-v42" defer></script>
-  <script src="assets/js/catalogos-api.js?v=20261122-v42" defer></script>
+  <script src="assets/js/catalogos-api.js?v=20261122-v50" defer></script>
   <script src="assets/js/admin-remoto.js?v=20261122-copy39" defer></script>
   <script src="assets/js/perfiles.js?v=20261122-copy39" defer></script>
   <script src="assets/js/galeria-productos.js?v=20261122-copy39" defer></script>
@@ -244,9 +253,9 @@
   <script src="assets/js/giros-sii-v39.js?v=20261122-v39" defer></script>
   <script src="assets/js/buscador-productos-v39.js?v=20261122-v46prod" defer></script>
   <script src="assets/js/ubicaciones.js?v=20261122-geo38" defer></script>
-  <script src="assets/js/modulos-oficiales.js?v=20261122-copy39" defer></script>
+  <script src="assets/js/modulos-oficiales.js?v=20261122-v50" defer></script>
   <script src="assets/js/proveedores-productos.js?v=20261122-v49prod" defer></script>
   <script src="assets/js/login-produccion.js?v=20261122-copy39" defer></script>
-  <script src="assets/js/app-produccion.js?v=20261122-copy39" defer></script>
+  <script src="assets/js/app-produccion.js?v=20261122-v50" defer></script>
 </body>
 </html>

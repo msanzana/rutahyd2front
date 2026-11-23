@@ -6,10 +6,15 @@
   'use strict';
   const FIELDS={
     clientes:[
-      ['codigo','Código','text',50,false],['nombre','Nombre o razón social','text',190,true],
-      ['rut','RUT','text',25,false],['correo_electronico','Correo electrónico','email',190,false],
-      ['telefono','Teléfono','text',50,false],['direccion','Dirección','text',255,false],
-      ['sector','Sector','text',120,false],
+      ['codigo','Código interno','text',50,false],
+      ['nombre','Nombre completo / razón social','text',190,true],
+      ['rut','RUT','text',25,true],
+      ['tipo_juridico_id','Tipo jurídico','select',0,true],
+      ['actividad_economica_codigo','Código de giro SII','text',6,false],
+      ['giro','Giro / actividad económica','text',255,false],
+      ['direccion','Dirección','text',255,false],
+      ['correo_electronico','Correo electrónico','email',190,false],
+      ['telefono','Teléfono (+56 NNNNNNNNN)','tel',13,false],
       ['observaciones','Observaciones','textarea',10000,false]],
     proveedores:[
       ['nombre','Nombre comercial','text',190,true],
@@ -50,7 +55,10 @@
     compras:{resource:'ordenes_compra',title:'Órdenes de compra',fields:[['id','ID'],['numero','Número'],['estado','Estado'],['total_bruto','Total bruto']]},
     ventas:{resource:'ventas',title:'Ventas',fields:[['id','ID'],['numero','Número'],['estado','Estado'],['total_bruto','Total bruto']]},
     proveedores:{resource:'proveedores',title:'Proveedores',permission:'compras.gestionar',fields:PROVIDER_COLUMNS},
-    clientes:{resource:'clientes',title:'Clientes',permission:'clientes.gestionar',fields:[['id','ID'],['codigo','Código'],['nombre','Nombre'],['rut','RUT'],['lista_precio_nombre','Lista de precios'],['activo','Estado']]},
+    clientes:{resource:'clientes',title:'Listado de clientes',permission:'clientes.gestionar',
+      fields:[['rut','RUT'],['nombre','Nombre completo'],['direccion','Dirección'],
+        ['ciudad','Ciudad'],['correo_electronico','Correo electrónico'],
+        ['tipo_juridico_nombre','Tipo jurídico'],['lista_precio_nombre','Lista de precios activa']]},
     bodega:{resource:'bodegas',title:'Bodegas',permission:'inventario.gestionar',fields:[['id','ID'],['codigo','Código'],['nombre','Nombre'],['tipo','Tipo'],['activo','Estado']]},
     cuentas_corrientes:{resource:null,title:'Cuentas corrientes',fields:[]}
   });
@@ -68,12 +76,84 @@
   const api=()=>window.RutaHDApiCatalogos;
   const access=()=>window.RutaHDAccesos;
   const statusText=(e)=>{
+    if(e?.userMessage)return e.userMessage;
     if(e?.status===409)return 'Ya existe el código o la entidad tiene una relación que impide modificarla.';
     if(e?.status===422)return 'Revisa los datos obligatorios y sus formatos.';
     if(e?.status===403)return 'Tu perfil no tiene permisos para realizar esta operación.';
     if(e?.status===401)return 'La sesión fue revocada. Debes iniciar sesión nuevamente.';
     return 'No se pudo completar la solicitud (HTTP '+(e?.status||'sin respuesta')+').';
   };
+
+  // Clientes V50: selector directo de ciudad, sin pedir comuna ni sector.
+  // Búsqueda paginada en Laravel; la ficha persiste exclusivamente ciudad_id.
+  async function customerCityPicker(group,oldId=null){
+    const wrap=create('div',undefined,'hd-customer-city-picker');
+    const field=create('label',undefined,'field');
+    field.append(create('span','Buscar ciudad / localidad'));
+    const search=create('input');search.type='search';search.maxLength=120;
+    search.placeholder='Escribe al menos dos letras de la ciudad…';
+    search.setAttribute('aria-label','Buscar ciudad del cliente');
+    field.append(search);
+    const choose=create('label',undefined,'field');
+    choose.append(create('span','Ciudad seleccionada'));
+    const select=create('select');
+    select.name='ciudad_id';
+    select.append(new Option('Sin ciudad seleccionada',''));
+    choose.append(select);
+    const button=action('Buscar ciudades',()=>void lookup(),'ghost');
+    const hint=create('small',
+      'La ciudad o localidad seleccionada quedará asociada a este cliente.',
+      'hd-customer-city-help');
+    const status=create('p','Escribe y busca una ciudad para seleccionarla.',
+      'hd-customer-city-status');
+    status.setAttribute('role','status');
+    wrap.append(field,button,choose,hint,status);group.append(wrap);
+    let serial=0;
+    async function lookup(){
+      const term=search.value.trim();
+      if(term.length<2){
+        status.textContent='Escribe al menos dos letras para buscar una ciudad.';
+        search.focus();return;
+      }
+      const stamp=++serial;
+      button.disabled=true;status.textContent='Buscando ciudades registradas…';
+      try{
+        const response=await api().locations('ciudades',{
+          buscar:term,page:1,perPage:100
+        });
+        if(stamp!==serial)return;
+        const previous=select.value;
+        select.replaceChildren(new Option('Sin ciudad seleccionada',''));
+        for(const city of response?.data||[]){
+          if(!city.activo)continue;
+          select.append(new Option(city.nombre+' · ID '+city.id,String(city.id)));
+        }
+        if(previous && [...select.options].some(opt=>opt.value===previous))
+          select.value=previous;
+        status.textContent=Number(response?.total||0)+' ciudades encontradas.'+
+          (Number(response?.last_page||1)>1?' Refina la búsqueda para elegir.':'');
+      }catch(error){
+        status.textContent=error?.userMessage||'No fue posible consultar ciudades.';
+        status.classList.add('is-error');
+      }finally{button.disabled=false;}
+    }
+    search.addEventListener('keydown',event=>{
+      if(event.key==='Enter'){event.preventDefault();void lookup();}
+    });
+    if(oldId){
+      try{
+        const current=await api().locationPath(oldId);
+        select.append(new Option(
+          [current?.ciudad,current?.region].filter(Boolean).join(' · ')||('Ciudad #'+oldId),
+          String(oldId)));
+        select.value=String(oldId);
+      }catch(error){
+        status.textContent='No fue posible cargar la ciudad anterior: '+
+          (error?.userMessage||'revisa el registro');
+      }
+    }
+    return {value:()=>select.value?Number(select.value):null,controls:[search,select]};
+  }
 
   async function openEditor(cfg,row,onSaved){
     const editing=Boolean(row),definition=FIELDS[cfg.resource];
@@ -92,6 +172,8 @@
     const close=action('×',()=>dialog.close(),'crud-close');close.setAttribute('aria-label','Cerrar ventana');
     heading.append(close);form.append(heading);
     const grid=create('div',undefined,'official-editor-grid'),inputs={};
+    const legalTypes=cfg.resource==='clientes'
+      ?(await api().customerLegalTypes()).items||[]:[];
     for(const [key,label,type,max,required] of definition){
       if(cfg.resource==='proveedores' && PROVIDER_SECTIONS[key]){
         grid.append(create('h3',PROVIDER_SECTIONS[key],
@@ -102,7 +184,12 @@
       const input=create(type==='textarea'?'textarea':type==='select'?'select':'input');
       if(type!=='textarea'&&type!=='select')input.type=type;
       if(type==='select'){
-        for(const [value,name] of SELECT_OPTIONS[key]||[]){
+        const values=key==='tipo_juridico_id'
+          ?[['','Seleccionar tipo jurídico…'],...legalTypes
+            .filter(t=>t.activo||Number(t.id)===Number(row?.tipo_juridico_id))
+            .map(t=>[String(t.id),t.nombre])]
+          :SELECT_OPTIONS[key]||[];
+        for(const [value,name] of values){
           const option=create('option',name);option.value=value;input.append(option);
         }
       }
@@ -112,13 +199,25 @@
       input.required=required;
       if(required)input.minLength=key==='nombre'?2:1;
       if(type==='email')input.autocomplete='email';
+      if(cfg.resource==='clientes'&&key==='telefono'){
+        input.inputMode='tel';input.autocomplete='tel';
+        input.placeholder='+56 912345678';input.pattern='\\+56 [0-9]{9}';
+        input.setAttribute('aria-description','Prefijo +56, un espacio y nueve dígitos');
+        const checkPhone=()=>{
+          const ok=!input.value.trim()||/^\+56 [0-9]{9}$/.test(input.value.trim());
+          input.setCustomValidity(ok?'':'Usa el formato +56 NNNNNNNNN (9 dígitos).');
+          return ok;
+        };
+        input.addEventListener('input',checkPhone);
+        input.addEventListener('blur',checkPhone);
+      }
       if(editing&&row[key]!==null&&row[key]!==undefined)input.value=String(row[key]);
       field.append(caption,input);
       if(type==='textarea')field.classList.add('official-editor-wide');
       grid.append(field);inputs[key]=input;
       if(key==='rut')window.RutaHDRut?.bind(input);
     }
-    if(cfg.resource==='proveedores'){
+    if(cfg.resource==='proveedores'||cfg.resource==='clientes'){
       // El código oficial de 6 dígitos determina la glosa del giro.
       const code=inputs.actividad_economica_codigo;
       const giro=inputs.giro;
@@ -129,7 +228,7 @@
       const select=action('Buscar giro SII',async()=>{
         try{
           const elegido=await window.RutaHDGirosSii?.open({
-            title:'Buscar giro del proveedor',
+            title:cfg.resource==='clientes'?'Buscar giro del cliente':'Buscar giro del proveedor',
             buscar:code.value||giro.value||''
           });
           if(elegido){
@@ -151,9 +250,16 @@
     let location=null;
     if(['clientes','proveedores','bodegas'].includes(cfg.resource)){
       const group=create('div',undefined,'official-editor-wide supplier-location-section');
-      group.append(create('h3','Ubicación geográfica','official-editor-section'),
-        create('p','Selecciona país, región, provincia, comuna y ciudad. Se guardará únicamente ciudad_id.','official-editor-description'));
-      location=await window.RutaHDUbicaciones?.mountSelector(group,row?.ciudad_id||null);
+      if(cfg.resource==='clientes'){
+        group.append(create('h3','Ciudad del cliente','official-editor-section'),
+          create('p','Busca y selecciona directamente la ciudad o localidad registrada.',
+            'official-editor-description'));
+        location=await customerCityPicker(group,row?.ciudad_id||null);
+      }else{
+        group.append(create('h3','Ubicación geográfica','official-editor-section'),
+          create('p','Selecciona país, región, provincia, comuna y ciudad. Se guardará únicamente ciudad_id.','official-editor-description'));
+        location=await window.RutaHDUbicaciones?.mountSelector(group,row?.ciudad_id||null);
+      }
       grid.append(group);
     }
     form.append(grid);
@@ -205,6 +311,17 @@
     form.addEventListener('submit',async event=>{
       event.preventDefault();
       if(window.RutaHDRut&&!window.RutaHDRut.validateIn(form))return;
+      if(cfg.resource==='clientes'){
+        const phone=inputs.telefono;
+        if(phone?.value.trim()&&!/^\+56 [0-9]{9}$/.test(phone.value.trim())){
+          window.RutaHDValidacion?.mostrar(phone,'Usa el formato +56 NNNNNNNNN (9 dígitos).');
+          phone.focus();return;
+        }
+        if(!inputs.tipo_juridico_id?.value){
+          window.RutaHDValidacion?.mostrar(inputs.tipo_juridico_id,'Selecciona Empresa o Persona natural.');
+          inputs.tipo_juridico_id?.focus();return;
+        }
+      }
       if(!form.reportValidity())return;
       const datos={};
       for(const [key,,, ,required] of definition){
@@ -258,10 +375,220 @@
     dialog.addEventListener('close',()=>dialog.remove(),{once:true});dialog.showModal();
   }
 
+  // V50 · Clientes: búsqueda y paginación reales en Laravel sobre toda la tabla.
+  // No filtrar solo los 25 resultados cargados, ni inventar una lista de precios.
+  function mountCustomers(parent,cfg){
+    const root=create('section',undefined,'surface-panel official-module hd-customers');
+    const header=create('div',undefined,'panel-heading');
+    const title=create('div');
+    title.append(create('h2','Listado de clientes'),
+      create('p','Personas naturales y empresas · Ubicación, contacto y lista de precios activa.',
+        'hd-customers-description'));
+    header.append(title,create('span','Datos reales · Laravel','official-source'));
+    const notice=create('p','', 'catalog-footnote');
+    notice.setAttribute('role','status');notice.setAttribute('aria-live','polite');
+    const actions=create('div',undefined,'workspace-actions hd-customers-actions');
+    const searchBar=create('form',undefined,'official-search-bar hd-customers-search');
+    // El filtro avanzado es remoto, no el filtro local genérico del listado.
+    searchBar.dataset.productAdvanced='true';
+    const quick=create('input');quick.type='search';quick.maxLength=120;
+    quick.placeholder='Buscar por RUT, nombre, dirección, giro, ciudad, correo o lista…';
+    quick.setAttribute('aria-label','Buscar clientes en todos los registros');
+    const searchButton=create('button','Buscar','button primary');
+    searchButton.type='submit';
+    searchBar.append(quick,searchButton);
+    const top=create('nav',undefined,'list-pagination hd-customers-pager');
+    const bottom=create('nav',undefined,'list-pagination hd-customers-pager');
+    top.setAttribute('aria-label','Paginación superior de clientes');
+    bottom.setAttribute('aria-label','Paginación inferior de clientes');
+    const tableRegion=create('div',undefined,'catalog-table-scroll hd-customers-scroll');
+    root.append(header,notice,searchBar,actions,top,tableRegion,bottom);
+    parent.replaceChildren(root);
+    const editable=Boolean(access()?.isAdmin()||access()?.has('clientes.gestionar'));
+    let page=1,term='',filters={},sort='id',direction='desc',request=0;
+    const reset=()=>{page=1;void load();};
+    searchBar.addEventListener('submit',event=>{
+      event.preventDefault();term=quick.value.trim();reset();
+    });
+    const listButton=(name,onClick,kind='editar',danger=false)=>
+      window.RutaHDListUI?.action(name,onClick,{kind,danger})||
+      action(name,onClick,danger?'danger':'ghost');
+    const searchAdvanced=async()=>{
+      const trigger=advanced;trigger.disabled=true;
+      try{
+        const types=await api().customerLegalTypes();
+        const prices=[];
+        // Se recorren las páginas para que una lista de precios no desaparezca
+        // del filtro por encontrarse fuera de los primeros 100 registros.
+        for(let p=1;p<=50;p++){
+          const result=await api().priceLists('',true,p,100);
+          prices.push(...(result?.data||[]));
+          if(p>=Number(result?.last_page||1))break;
+        }
+        if(!root.isConnected)return;
+        const fields=[
+          ['rut','RUT'],['nombre','Nombre completo'],
+          ['direccion','Dirección'],['ciudad','Ciudad'],
+          ['correo_electronico','Correo electrónico'],['giro','Giro']
+        ].map(([key,label])=>({key,label,value:filters[key]||''}));
+        fields.push({key:'tipo_juridico_id',label:'Tipo jurídico',
+          value:filters.tipo_juridico_id||'',
+          options:(types?.items||[]).map(x=>[String(x.id),x.nombre])});
+        fields.push({key:'lista_precio_id',label:'Lista de precios activa',
+          value:filters.lista_precio_id||'',
+          options:prices.filter(x=>x.activo).map(x=>[String(x.id),x.nombre])});
+        fields.push({key:'activo',label:'Estado',value:filters.activo||'',
+          options:[['1','Activos'],['0','Inactivos']]});
+        window.RutaHDListUI?.advanced(fields,next=>{
+          filters=Object.fromEntries(Object.entries(next).filter(([,val])=>val!==''));
+          reset();
+        },{title:'Búsqueda avanzada · Clientes',
+          hint:'Filtros combinados en el servidor, aplicados a todas las páginas.'});
+      }catch(error){
+        notice.textContent=error?.userMessage||'No fue posible cargar los filtros de clientes.';
+        notice.classList.add('is-error');
+      }finally{trigger.disabled=false;}
+    };
+    const advanced=action('Búsqueda avanzada',()=>void searchAdvanced(),'ghost');
+    advanced.classList.add('advanced-filter-trigger');
+    searchBar.append(advanced);
+    const clear=action('Limpiar filtros',()=>{
+      quick.value='';term='';filters={};sort='id';direction='desc';reset();
+    },'ghost');
+    clear.setAttribute('aria-label','Limpiar búsqueda y filtros de clientes');
+    searchBar.append(clear);
+    const refresh=action('Actualizar',()=>void load(),'ghost');
+    actions.append(refresh);
+    if(editable){
+      const add=action('Nuevo cliente',()=>void openEditor(cfg,null,load));
+      add.classList.add('hd-list-create-action');actions.append(add);
+    }
+    function drawPager(response){
+      const pages=Math.max(1,Number(response.last_page||1));
+      const onPage=n=>{
+        if(n===page||n<1||n>pages)return;
+        page=n;void load();
+        root.scrollIntoView({block:'start',behavior:'smooth'});
+      };
+      for(const nav of [top,bottom]){
+        window.RutaHDListUI?.renderPager(nav,{
+          page,pages,total:Number(response.total||0),label:'clientes',onPage
+        });
+        nav.hidden=pages<=1;
+      }
+    }
+    async function load(){
+      const ticket=++request;
+      notice.textContent='Consultando clientes…';
+      notice.classList.remove('is-error');
+      tableRegion.replaceChildren();
+      try{
+        const response=await api().customers({
+          page,buscar:term,filters,orden:sort,direccion_orden:direction
+        });
+        if(ticket!==request||!root.isConnected)return;
+        if(!response||!Array.isArray(response.data))throw Error('Listado remoto inválido');
+        const rows=response.data;
+        const table=create('table',undefined,'catalog-table official-table hd-customers-table');
+        table.setAttribute('aria-label','Listado de clientes');
+        const thead=create('thead'),tr=create('tr');
+        for(const [key,label] of cfg.fields){
+          const th=create('th');
+          const heading=create('button',undefined,'hd-customers-sort');
+          heading.type='button';
+          heading.textContent=label+(sort===key?' '+(direction==='asc'?'↑':'↓'):'');
+          heading.setAttribute('aria-label','Ordenar clientes por '+label);
+          if(sort===key)th.setAttribute('aria-sort',direction==='asc'?'ascending':'descending');
+          heading.addEventListener('click',()=>{
+            direction=sort===key&&direction==='asc'?'desc':'asc';
+            sort=key;page=1;void load();
+          });
+          th.append(heading);tr.append(th);
+        }
+        tr.append(create('th','Acciones'));
+        thead.append(tr);table.append(thead);
+        const tbody=create('tbody');
+        for(const record of rows){
+          const item=create('tr');
+          if(!record.activo)item.classList.add('hd-customer-inactive');
+          for(const [key] of cfg.fields){
+            const td=create('td');
+            const value=record[key];
+            if(key==='lista_precio_nombre'){
+              td.append(create('span',value||'Sin lista activa',
+                value?'hd-customers-price-pill':'hd-customers-price-pill is-missing'));
+            }else if(key==='tipo_juridico_nombre'){
+              td.append(create('span',value||'Sin clasificar',
+                value?'hd-customers-type-pill':'hd-customers-type-pill is-missing'));
+            }else if(key==='nombre'){
+              td.append(create('span',value||'—','hd-customers-name'));
+              if(!record.activo)td.append(create('small','Inactivo','hd-customers-inactive-tag'));
+            }else td.textContent=value===null||value===undefined||value===''?'—':String(value);
+            item.append(td);
+          }
+          const cell=create('td',undefined,'official-row-actions hd-customers-row-actions');
+          if(editable){
+            cell.append(listButton('Editar '+record.nombre,()=>void openEditor(cfg,record,load),'editar'));
+            if(record.activo){
+              cell.append(listButton('Desactivar '+record.nombre,
+                ()=>confirmDeactivate(cfg,record,load),'desactivar',true));
+            }else{
+              cell.append(listButton('Activar '+record.nombre,async()=>{
+                const dialog=create('dialog',undefined,'modal official-confirm crud-official-dialog');
+                const panel=create('div',undefined,'official-confirm-panel');
+                panel.append(create('span','RUTA H&D · CONFIRMACIÓN','official-editor-eyebrow'),
+                  create('h2','Activar cliente'),
+                  create('p','¿Deseas activar «'+record.nombre+'»? Se conservarán sus datos.'));
+                const controls=create('div',undefined,'official-editor-actions');
+                const cancel=action('Cancelar',()=>dialog.close(),'ghost');
+                const okButton=action('Sí, activar',async()=>{
+                  okButton.disabled=true;cancel.disabled=true;
+                  try{await api().updateResource('clientes',record.id,{activo:true});
+                    dialog.close();void load();}
+                  catch(err){notice.textContent=statusText(err);notice.classList.add('is-error');
+                    okButton.disabled=false;cancel.disabled=false;}
+                });
+                controls.append(cancel,okButton);panel.append(controls);dialog.append(panel);
+                document.body.append(dialog);
+                dialog.addEventListener('close',()=>dialog.remove(),{once:true});
+                dialog.showModal();
+                return;
+              },'seleccionar'));
+            }
+          }else cell.append(create('span','Solo lectura','hd-customers-readonly'));
+          item.append(cell);tbody.append(item);
+        }
+        table.append(tbody);
+        window.RutaHDListUI?.wrapTable(table);
+        tableRegion.append(table);
+        if(!rows.length){
+          tableRegion.append(create('p','No se encontraron clientes con estos filtros.',
+            'hd-customers-empty'));
+        }
+        drawPager(response);
+        notice.textContent=Number(response.total||0)+' clientes encontrados.';
+      }catch(error){
+        if(ticket!==request||!root.isConnected)return;
+        notice.textContent=statusText(error);
+        notice.classList.add('is-error');
+        for(const nav of [top,bottom])nav.hidden=true;
+      }
+    }
+    void load();
+  }
+
   function mount(parent,key){
     if(!parent)return;
     const cfg=CONFIG[key];parent.replaceChildren();
     if(!cfg){parent.append(create('p','Módulo inexistente.','catalog-footnote'));return;}
+    if(cfg.resource==='clientes'){
+      if(!access()?.authenticated()){
+        parent.append(create('p','Se requiere una sesión autorizada.','catalog-footnote'));
+        return;
+      }
+      mountCustomers(parent,cfg);
+      return;
+    }
     const root=create('section',undefined,'surface-panel official-module');
     const header=create('div',undefined,'panel-heading');
     header.append(create('h2',cfg.title),

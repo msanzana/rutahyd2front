@@ -1,0 +1,107 @@
+/* Ruta H&D V50 · Clientes. Diseño corporativo aislado, sin afectar proveedores. */
+.hd-customers{padding:22px 24px;border-radius:19px}
+.hd-customers .panel-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.hd-customers .panel-heading h2{font-weight:800;letter-spacing:-.025em}
+.hd-customers-description{margin:7px 0 0;font-size:13px;color:#77668b;line-height:1.55}
+.hd-customers-search{
+  display:flex;flex-wrap:wrap;align-items:center;gap:10px;
+  padding:17px 0 18px;border-bottom:1px solid #e9def3
+}
+.hd-customers-search input[type=search]{
+  flex:1 1 270px;min-width:0;min-height:43px;
+  border-radius:12px;border:1px solid #dac9ed;
+  padding:11px 13px;background:#fff;color:#3a2055
+}
+.hd-customers-search input[type=search]:focus-visible{outline:3px solid #a474ee;outline-offset:1px}
+.hd-customers-search .button{min-height:42px;border-radius:11px}
+.hd-customers-actions{
+  display:flex;align-items:center;justify-content:flex-end;gap:10px;
+  padding:15px 0 8px;flex-wrap:wrap
+}
+.hd-customers-actions .hd-list-create-action{margin-left:auto}
+.hd-customers-scroll{width:100%;overflow-x:auto;border-radius:14px;border:1px solid #e8def3}
+.hd-customers-table{width:100%;min-width:840px;border-collapse:collapse;font-size:12.5px}
+.hd-customers-table thead th{background:#f6effc;color:#5d2b83;white-space:nowrap;font-weight:800}
+.hd-customers-table td{padding:11px 12px;vertical-align:middle;max-width:250px;overflow-wrap:anywhere}
+.hd-customers-table .hd-customers-sort{
+  cursor:pointer;display:inline-flex;align-items:center;gap:4px;
+  border:0;background:transparent;color:inherit;font:inherit;font-weight:800;
+  padding:5px;border-radius:7px;text-align:left
+}
+.hd-customers-table .hd-customers-sort:hover,
+.hd-customers-table .hd-customers-sort:focus-visible{
+  background:#e9dafa;outline:2px solid #b592e1
+}
+.hd-customers-name{font-weight:750;color:#3f245c}
+.hd-customers-type-pill,.hd-customers-price-pill{
+  display:inline-flex;max-width:100%;align-items:center;
+  padding:6px 9px;border-radius:999px;font-weight:700;font-size:11px;
+  line-height:1.35;white-space:normal;overflow-wrap:anywhere
+}
+.hd-customers-type-pill{background:#f0e6ff;color:#60339c;border:1px solid #e0cafa}
+.hd-customers-price-pill{background:#ecf7f2;color:#2a735c;border:1px solid #c4e9da}
+.hd-customers-type-pill.is-missing,.hd-customers-price-pill.is-missing{
+  background:#fff5ed;color:#945d35;border-color:#f4deca
+}
+.hd-customers-inactive-tag{display:block;color:#ae4966;font-size:10px;margin-top:3px}
+.hd-customer-inactive td{background:#faf8fc}
+.hd-customers-row-actions{white-space:nowrap;min-width:115px}
+.hd-customers-row-actions .list-icon-action{margin-right:3px}
+.hd-customers-readonly{font-size:11px;color:#887591}
+.hd-customers-empty{padding:20px;text-align:center;color:#77668b}
+.hd-customers-pager{margin:12px 0;display:flex;justify-content:center}
+.hd-customers-pager[hidden]{display:none!important}
+.official-editor.crud-official-dialog .field input[type=tel]{
+  width:100%;border-radius:12px;letter-spacing:.02em
+}
+.official-editor.crud-official-dialog .field input[type=tel]:invalid{
+  border-color:#d45a7e;box-shadow:0 0 0 2px rgba(212,90,126,.09)
+}
+.official-editor.crud-official-dialog .field input[type=tel]:focus-visible{
+  outline:3px solid #ab81e0;outline-offset:1px
+}
+@media(max-width:750px){
+  .hd-customers{padding:16px 13px;border-radius:15px}
+  .hd-customers .panel-heading{flex-direction:column}
+  .hd-customers-search{gap:8px}
+  .hd-customers-search input[type=search]{flex-basis:100%}
+  .hd-customers-search .button{flex:1 1 auto}
+  .hd-customers-table{min-width:760px}
+  .hd-customers-actions{justify-content:flex-end}
+}
+@media(prefers-reduced-motion:reduce){
+  .hd-customers *{scroll-behavior:auto!important;transition-duration:.01ms!important}
+}
+html[data-theme="oscuro"] .hd-customers-table thead th{
+  color:#e6caf8;background:#372147
+}
+html[data-theme="oscuro"] .hd-customers-table .hd-customers-sort{color:#e6caf8}
+html[data-theme="oscuro"] .hd-customers-type-pill{background:#443159;color:#f4ddff}
+html[data-theme="oscuro"] .hd-customers-price-pill{background:#234c43;color:#c7fae4}
+html[data-theme="oscuro"] .hd-customers-name{color:#f4e5fc}
+html[data-theme="oscuro"] .hd-customers-description{color:#cfb6df}
+
+/* Buscador remoto de ciudad en Clientes: sin select de comuna o sector. */
+.hd-customer-city-picker{
+  display:grid;grid-template-columns:minmax(220px,1fr) auto;
+  align-items:end;gap:12px;margin:12px 0 0
+}
+.hd-customer-city-picker>.field{min-width:0}
+.hd-customer-city-picker>.button{min-height:43px;border-radius:11px}
+.hd-customer-city-picker>.field:nth-of-type(2),
+.hd-customer-city-help,.hd-customer-city-status{grid-column:1/-1}
+.hd-customer-city-picker input,.hd-customer-city-picker select{
+  min-height:43px;width:100%;border:1px solid #d9c7ec;
+  border-radius:11px;padding:9px 12px;background:#fff;color:#3a2458
+}
+.hd-customer-city-help{font-size:12px;color:#79638d}
+.hd-customer-city-status{margin:0;font-size:12px;color:#6a4983}
+.hd-customer-city-status.is-error{color:#b83860}
+@media(max-width:600px){
+  .hd-customer-city-picker{grid-template-columns:1fr;gap:9px}
+  .hd-customer-city-picker>.button{width:100%}
+}
+html[data-theme="oscuro"] .hd-customer-city-picker input,
+html[data-theme="oscuro"] .hd-customer-city-picker select{
+  background:#322543;border-color:#82649a;color:#f6e7fc
+}
