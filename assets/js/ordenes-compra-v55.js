@@ -366,7 +366,11 @@
      status.textContent=note;await load();
    }),'primary');
    newButton.classList.add('hd-list-create-action');
-   toolbar.append(searchForm,newButton);
+   newButton.id='hd-oc-new-order';
+   newButton.setAttribute('aria-label','Nueva orden de compra');
+   // Acción primaria anclada al encabezado, no a los filtros buscables.
+   title.append(newButton);
+   toolbar.append(searchForm);
    const navTop=el('nav',null,'list-pagination'),
      navBottom=el('nav',null,'list-pagination');
    const tableRegion=el('div',null,'hd-oc-table-scroll');
