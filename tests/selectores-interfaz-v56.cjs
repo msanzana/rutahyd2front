@@ -94,7 +94,7 @@ for(const asset of ['select-buscable-v56.js?v=20261123-v56','select-buscable-v56
   assert.equal(await editor.count(),1);
   let rect=await editor.boundingBox();
   assert(rect.width<=881&&rect.height<=701,'Editor no compacto '+JSON.stringify(rect));
-  const scroller=editor.locator('.hd-oc-modal-body');
+  const scroller=editor.locator('.hd-oc-form-scroll');
   await scroller.evaluate(s=>{
     const d=document.createElement('div');d.style.height='1250px';
     d.className='test-spacer';s.append(d);
