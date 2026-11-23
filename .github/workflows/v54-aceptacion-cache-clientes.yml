@@ -1,0 +1,33 @@
+name: V54 - Revisión caché e inicio, clientes V52
+on:
+  push:
+    branches: [audit/v54-cache-clientes-20261123]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  aceptacion:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Instalar Playwright Chromium
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Contratos y arranque
+        run: |
+          node --check assets/js/app-produccion.js
+          node --check tests/aceptacion-v54-inicio.cjs
+          node --check tests/aceptacion-v54-publico.cjs
+          node tests/cache-v53.cjs
+          node tests/aceptacion-v54-inicio.cjs
+      - name: Clientes y buscadores sin mutaciones productivas
+        run: |
+          node tests/clientes-v50.cjs
+          node tests/paginadores-codigos-v52.cjs
+      - name: Cache real pública sin tokens (sin escrituras)
+        run: node tests/aceptacion-v54-publico.cjs
