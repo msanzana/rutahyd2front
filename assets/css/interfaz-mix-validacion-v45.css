@@ -276,3 +276,25 @@ html[data-theme=oscuro] .supplier-barcode-form .supplier-barcode-hint{
 html[data-theme=oscuro] .supplier-barcode-form .supplier-status.is-error{
   background:#4d2b40;color:#ffcfdf;border-color:#915470
 }
+
+/* V49 · Código de compra editable: ayuda para simbologías de longitud fija. */
+.supplier-barcode-form .supplier-barcode-switch-type{
+  display:inline-flex;align-items:center;justify-content:center;
+  justify-self:start;width:auto;max-width:100%;
+  min-height:40px;padding:9px 15px;margin:0;
+  grid-column:1/-1;border-radius:11px;
+  border:1px solid #cdb8e9;background:#fff;color:#653293;
+  font-size:12px;font-weight:750;line-height:1.4;white-space:normal;
+  box-shadow:0 3px 10px rgba(75,35,120,.06)
+}
+.supplier-barcode-form .supplier-barcode-switch-type[hidden]{display:none!important}
+.supplier-barcode-form .supplier-barcode-switch-type:hover{
+  border-color:#7533be;background:#f8f0ff;color:#552284
+}
+.supplier-barcode-form input[type="text"]:not(:disabled){
+  cursor:text;user-select:text;-webkit-user-select:text;
+  caret-color:#6733a8
+}
+html[data-theme=oscuro] .supplier-barcode-form .supplier-barcode-switch-type{
+  background:#3b2a4d;border-color:#80609e;color:#f0d9ff
+}
