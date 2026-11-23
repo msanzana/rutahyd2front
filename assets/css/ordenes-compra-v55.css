@@ -67,3 +67,109 @@
 .hd-oc-audit summary{cursor:pointer;color:#5d387e;font-size:.85rem;font-weight:650}
 .hd-oc-audit-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:12px}
 @media(max-width:800px){.hd-oc-audit-grid{grid-template-columns:1fr}}
+
+/* V56 · Editor OC de tamaño contenido, scroll independiente del documento. */
+dialog.hd-oc-modal.hd-oc-modal--editor[open]{
+  display:flex!important;flex-direction:column!important;
+  box-sizing:border-box!important;
+  position:fixed!important;inset:0!important;margin:auto!important;
+  width:min(880px,calc(100vw - 28px))!important;
+  max-width:min(880px,calc(100vw - 28px))!important;
+  height:min(700px,calc(100dvh - 34px))!important;
+  max-height:calc(100dvh - 34px)!important;
+  min-height:0!important;
+  padding:0!important;overflow:hidden!important;
+  border-radius:16px!important;
+}
+.hd-oc-modal--editor .hd-oc-modal-body{
+  box-sizing:border-box;width:100%;height:100%;min-height:0;
+  max-height:100%;padding:13px 16px 10px!important;
+  overflow-y:auto!important;overflow-x:hidden!important;
+  overscroll-behavior:contain;scrollbar-width:thin;
+  scrollbar-color:#b99bd0 transparent;
+}
+.hd-oc-modal--editor .hd-oc-modal-heading{
+  position:sticky;top:-13px;z-index:4;background:var(--surface,#fff);
+  padding:5px 0 11px;margin-bottom:9px;
+  gap:10px;align-items:center;
+}
+.hd-oc-modal--editor .hd-oc-modal-heading h2{
+  font-size:1.05rem;line-height:1.25;margin:1px 0;
+}
+.hd-oc-modal--editor .hd-oc-modal-heading p{
+  font-size:11px;line-height:1.25;margin:2px 0;
+}
+.hd-oc-modal .hd-oc-close{
+  display:grid;place-items:center;flex:0 0 30px;min-height:30px;
+  margin-left:auto;width:30px;padding:0;border:1px solid #e2d3ee;
+  border-radius:9px;background:#f7f2fc;color:#674086;
+  font-size:23px;line-height:1;cursor:pointer
+}
+.hd-oc-modal .hd-oc-close:hover{background:#eee4f8;color:#4e1d78}
+.hd-oc-modal--editor .hd-oc-form{
+  display:grid;grid-template-columns:minmax(0,1fr);gap:8px;min-width:0;
+}
+.hd-oc-modal--editor .hd-oc-form > *{min-width:0;max-width:100%;margin:0}
+.hd-oc-modal--editor :is(.hd-oc-identity,.hd-oc-fields,.hd-oc-totals){
+  gap:9px;
+}
+.hd-oc-modal--editor .hd-oc-identity{grid-template-columns:1fr 1.1fr .9fr}
+.hd-oc-modal--editor .hd-oc-fields{grid-template-columns:1fr 1fr 1.5fr}
+.hd-oc-modal--editor .hd-oc-provider{grid-template-columns:minmax(0,1fr) auto;gap:9px}
+.hd-oc-modal--editor .field{gap:3px}
+.hd-oc-modal--editor .field span{font-size:11px;line-height:1.3}
+.hd-oc-modal--editor :is(input:not([type=checkbox]),textarea){
+  min-height:35px!important;padding:7px 9px!important;
+  font-size:12px!important;border-radius:8px!important
+}
+.hd-oc-modal--editor textarea{height:40px!important;min-height:40px!important;resize:vertical}
+.hd-oc-modal--editor .button{min-height:35px!important;padding:7px 11px!important;font-size:12px}
+.hd-oc-modal--editor .hd-oc-details{
+  margin:0;padding:9px 11px;border-radius:10px
+}
+.hd-oc-modal--editor .hd-oc-details legend{font-size:12px}
+.hd-oc-modal--editor .hd-oc-details-tools{margin-bottom:6px}
+.hd-oc-modal--editor .hd-oc-details .hd-oc-table-scroll{
+  max-height:min(230px,30dvh);overflow:auto;overscroll-behavior:contain
+}
+.hd-oc-modal--editor .hd-oc-details .catalog-table{
+  min-width:700px
+}
+.hd-oc-modal--editor .hd-oc-details .catalog-table :is(th,td){
+  padding:6px 8px;font-size:11px
+}
+.hd-oc-modal--editor .hd-oc-empty{margin:7px 0}
+.hd-oc-modal--editor .hd-oc-message{font-size:11px;margin:0;min-height:0}
+.hd-oc-modal--editor .hd-oc-totals{
+  padding:7px 9px;background:#faf7fd;border:1px solid #e9def1;
+  border-radius:9px;
+}
+.hd-oc-modal--editor .hd-oc-actions{
+  position:sticky;bottom:-10px;z-index:4;
+  display:flex;justify-content:flex-end;
+  margin:0 -16px -10px!important;padding:9px 16px!important;
+  border-top:1px solid #e6dcf0;
+  background:var(--surface,#fff);
+  box-shadow:0 -7px 20px #24103a0d
+}
+.hd-oc-modal--editor .hd-oc-audit{padding:6px 9px}
+@media(max-width:720px){
+  dialog.hd-oc-modal.hd-oc-modal--editor[open]{
+    width:calc(100vw - 14px)!important;
+    max-width:calc(100vw - 14px)!important;
+    height:calc(100dvh - 18px)!important;
+    max-height:calc(100dvh - 18px)!important;
+    border-radius:12px!important
+  }
+  .hd-oc-modal--editor .hd-oc-identity{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .hd-oc-modal--editor .hd-oc-fields{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .hd-oc-modal--editor .hd-oc-fields > .field:last-child{grid-column:1/-1}
+}
+@media(max-width:440px){
+  .hd-oc-modal--editor .hd-oc-identity{grid-template-columns:1fr 1fr}
+  .hd-oc-modal--editor .hd-oc-identity > .field:last-child{grid-column:1/-1}
+  .hd-oc-modal--editor .hd-oc-fields{grid-template-columns:1fr 1fr}
+  .hd-oc-modal--editor .hd-oc-provider{grid-template-columns:minmax(0,1fr)}
+  .hd-oc-modal--editor .hd-oc-provider .button{justify-self:stretch}
+  .hd-oc-modal--editor .hd-oc-totals{grid-template-columns:1fr}
+}
