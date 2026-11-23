@@ -102,7 +102,7 @@
     choose.append(select);
     const button=action('Buscar ciudades',()=>void lookup(),'ghost');
     const hint=create('small',
-      'Se almacena solo la ciudad elegida; no se solicitan comuna ni sector.',
+      'La ciudad o localidad seleccionada quedará asociada a este cliente.',
       'hd-customer-city-help');
     const status=create('p','Escribe y busca una ciudad para seleccionarla.',
       'hd-customer-city-status');
