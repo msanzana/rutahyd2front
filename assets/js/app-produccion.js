@@ -46,7 +46,7 @@
     $('#toggleAdminSubnav').hidden=!logged();
     const geoToggle=$('#toggleUbicacionesSubnav');
     if(geoToggle)geoToggle.hidden=!logged()||!acl().isAdmin();
-    $('#ubicacionesSubnav [data-nav]').forEach(btn=>btn.hidden=!logged()||!acl().isAdmin());
+    $$('#ubicacionesSubnav [data-nav]').forEach(btn=>btn.hidden=!logged()||!acl().isAdmin());
     if(!logged()||!acl().isAdmin()){
       const inner=$('#ubicacionesSubnav');if(inner)inner.hidden=true;
       if(geoToggle)geoToggle.setAttribute('aria-expanded','false');
