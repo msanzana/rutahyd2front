@@ -101,6 +101,7 @@
    title.append(button('×',()=>dlg.close(),'crud-close'));
    shell.append(title);
    const grid=make('div',null,'location-editor-grid');
+   window.RutaHDListUI?.recordCode(grid,record?.id??null);
    const name=make('input');name.required=true;name.maxLength=160;name.value=record?.nombre||'';
    grid.append(labeled('Nombre *',name));
    let code=null;
