@@ -25,6 +25,11 @@ const src=p=>path.join(__dirname,'..',p);
         {id:2,nombre:'Persona natural',codigo:'PERSONA_NATURAL',activo:true}]}),
       priceLists:async()=>({data:[{id:5,nombre:'LISTA BASE',es_base:true,activo:true}],last_page:1}),
       customerPriceList:async()=>({lista:{id:5,nombre:'LISTA BASE'}}),
+      locations:async(tipo,options)=>({data:[
+        {id:24,nombre:'Temuco',activo:true},
+        {id:25,nombre:'Temuco Rural',activo:true}
+      ],total:2,last_page:1}),
+      locationPath:async id=>({ciudad:'Temuco',region:'La Araucanía'}),
       customers:async args=>{
         window.__queries.push(args);
         return {data:[{id:7,rut:'12345678-5',nombre:'Comercial prueba',
@@ -71,6 +76,12 @@ const src=p=>path.join(__dirname,'..',p);
   assert.equal(await form.locator('[name=sector],[name=comuna]').count(),0);
   assert.equal(await form.locator('select[name=tipo_juridico_id] option').count(),3);
   const phone=form.locator('input[name=telefono]');
+  assert.equal(await form.locator('select[name=comuna]').count(),0);
+  assert.equal(await form.getByText('Comuna',{exact:true}).count(),0);
+  await form.getByRole('searchbox',{name:'Buscar ciudad del cliente'}).fill('Temu');
+  await form.getByRole('button',{name:'Buscar ciudades'}).click();
+  await form.locator('select[name=ciudad_id] option[value="24"]').waitFor();
+  await form.locator('select[name=ciudad_id]').selectOption('24');
   assert.equal(await phone.getAttribute('inputmode'),'tel');
   assert.equal(await phone.getAttribute('placeholder'),'+56 912345678');
   await form.locator('input[name=nombre]').fill('Comprador de prueba');
@@ -87,6 +98,7 @@ const src=p=>path.join(__dirname,'..',p);
   assert.equal(created.resource,'clientes');
   assert.equal(created.data.telefono,'+56 912345678');
   assert.equal(created.data.tipo_juridico_id,'1');
+  assert.equal(created.data.ciudad_id,24);
   assert.equal(created.data.rut,'12345678-5');
   assert.equal(Object.hasOwn(created.data,'sector'),false);
   assert.equal(Object.hasOwn(created.data,'comuna'),false);
