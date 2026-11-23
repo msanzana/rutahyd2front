@@ -332,3 +332,109 @@ dialog.hd-oc-modal--supplier .list-pagination{
     max-height:calc(100dvh - 18px)!important;
   }
 }
+
+
+/* V58: acción de alta siempre visible; los selects buscables no pueden
+   consumir el ancho reservado al botón primario de la lista. */
+.hd-oc-module > .panel-heading{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  flex-wrap:wrap!important;
+  gap:10px 15px!important;
+  min-width:0;
+  overflow:visible;
+}
+.hd-oc-module > .panel-heading > div{
+  flex:1 1 300px;
+  min-width:0;
+}
+.hd-oc-module #hd-oc-new-order{
+  display:inline-flex!important;
+  flex:0 0 auto!important;
+  position:static!important;
+  align-items:center;
+  justify-content:center;
+  min-height:40px;
+  max-width:100%;
+  margin-left:auto!important;
+  padding:9px 15px;
+  white-space:normal;
+  text-align:center;
+  z-index:1;
+}
+.hd-oc-module > .hd-oc-toolbar{
+  display:block;
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  box-sizing:border-box;
+}
+.hd-oc-module > .hd-oc-toolbar > .hd-oc-inline-search{
+  display:grid!important;
+  grid-template-columns:minmax(155px,1fr) minmax(155px,220px) auto;
+  align-items:center!important;
+  gap:8px!important;
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  margin:0;
+  box-sizing:border-box;
+  flex:none!important;
+}
+.hd-oc-module > .hd-oc-toolbar > .hd-oc-inline-search > input[type=search]{
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  box-sizing:border-box;
+  flex:none;
+}
+.hd-oc-module > .hd-oc-toolbar > .hd-oc-inline-search > .hd-choice{
+  min-width:0;
+  width:100%;
+  max-width:100%;
+  box-sizing:border-box;
+  flex:none;
+}
+.hd-oc-module > .hd-oc-toolbar > .hd-oc-inline-search > select{
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  box-sizing:border-box;
+}
+.hd-oc-module > .hd-oc-toolbar > .hd-oc-inline-search > button{
+  width:auto;
+  min-width:80px;
+  max-width:100%;
+  white-space:nowrap;
+  flex:none;
+  justify-self:end;
+}
+@media(max-width:700px){
+  .hd-oc-module > .hd-oc-toolbar > .hd-oc-inline-search{
+    grid-template-columns:minmax(0,1fr) auto!important;
+  }
+  .hd-oc-module > .hd-oc-toolbar > .hd-oc-inline-search > :is(.hd-choice,select){
+    grid-column:1/-1;
+    grid-row:2;
+  }
+  .hd-oc-module > .hd-oc-toolbar > .hd-oc-inline-search > button{
+    grid-column:2;
+    grid-row:1;
+  }
+  .hd-oc-module > .hd-oc-toolbar > .hd-oc-inline-search > input[type=search]{
+    grid-column:1;
+    grid-row:1;
+  }
+}
+@media(max-width:440px){
+  .hd-oc-module > .panel-heading{
+    gap:8px!important;
+  }
+  .hd-oc-module #hd-oc-new-order{
+    min-height:38px;
+    padding:8px 12px;
+    width:100%;
+    margin-left:0!important;
+  }
+}
