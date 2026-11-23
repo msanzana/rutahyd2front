@@ -1,0 +1,36 @@
+name: V61 - Reenvio correo orden de compra
+on:
+  push:
+    branches: [fix/v61-reenvio-oc-visible-20261123]
+  workflow_dispatch:
+permissions: {contents: read}
+jobs:
+  ui:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Instalar Chromium
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium >/dev/null
+      - name: Comprobar confirmación y ausencia de duplicados
+        run: |
+          set -euo pipefail
+          node --check assets/js/ordenes-compra-v55.js
+          node --check tests/reenvio-oc-v61.cjs
+          node tests/reenvio-oc-v61.cjs
+      - name: Mantener regresiones OC V55-V59 y Clientes
+        run: |
+          set -euo pipefail
+          node tests/oc-totales-pdf-v59.cjs
+          node tests/boton-nueva-oc-v58.cjs
+          node tests/dialogos-compras-v57.cjs
+          node tests/selectores-interfaz-v56.cjs
+          node tests/ordenes-compra-v55.cjs
+          node tests/cache-continuidad-v55.cjs
+          node tests/clientes-v50.cjs
+          node tests/paginadores-codigos-v52.cjs

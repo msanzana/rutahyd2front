@@ -10,7 +10,7 @@ assert.match(html,/rutahd-release" content="v53-cache-20261123"/);
 for(const tag of [
   'modulos-oficiales.js?v=20261123-v52',
   'clientes-v50.css?v=20261123-v52',
-  'ordenes-compra-v55.js?v=20261123-v59',
+  'ordenes-compra-v55.js?v=20261123-v61',
   'ordenes-compra-v55.css?v=20261123-v59',
   'app-produccion.js?v=20261123-v55',
   'buscador-productos-v39.js?v=20261123-v55',
