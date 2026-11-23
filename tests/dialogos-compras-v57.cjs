@@ -6,8 +6,8 @@ const fs=require('node:fs');
 const path=require('node:path');
 const root=path.join(__dirname,'..');
 const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
-for(const tag of ['ordenes-compra-v55.js?v=20261123-v57',
-  'ordenes-compra-v55.css?v=20261123-v57',
+for(const tag of ['ordenes-compra-v55.js?v=20261123-v58',
+  'ordenes-compra-v55.css?v=20261123-v58',
   'select-buscable-v56.js?v=20261123-v56'])
   assert(html.includes(tag),'Falta versión '+tag);
 
