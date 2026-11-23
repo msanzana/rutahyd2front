@@ -288,3 +288,32 @@
     margin-left:10px;width:calc(100% - 10px);max-width:calc(100% - 10px)
   }
 }
+
+/* V48 · Contraseña inicial en creación de usuarios (solo diálogo). */
+.users-editor-dialog .users-password-help{
+  grid-column:1/-1;margin:0;padding:12px 15px;
+  border:1px solid #e7d9f3;border-radius:12px;background:#faf7ff;
+  color:#68577e;font-size:12px;line-height:1.6
+}
+.users-editor-dialog input[type="password"]{
+  width:100%;min-width:0;padding:12px 14px;
+  border:1px solid #dac7ef;border-radius:12px;
+  background:#fff;color:#3e2257;
+  font:inherit;letter-spacing:.06em
+}
+.users-editor-dialog input[type="password"]:focus-visible{
+  outline:2px solid #8754cf;outline-offset:2px
+}
+.users-editor-dialog .crud-message:not([hidden]){
+  border-radius:12px;border:1px solid #f0c3cf;
+  background:#fff6f8;color:#a83c60
+}
+html[data-theme="oscuro"] .users-editor-dialog .users-password-help{
+  color:#dec5ec;background:#39294a;border-color:#75558c
+}
+html[data-theme="oscuro"] .users-editor-dialog input[type="password"]{
+  background:#352545;border-color:#805f96;color:#fff
+}
+@media(max-width:600px){
+  .users-editor-dialog .users-password-help{padding:11px 12px}
+}
