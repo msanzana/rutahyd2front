@@ -344,7 +344,7 @@
   if(!nav)return;
   drawPager(nav,options);
   // Productos agrega el paginador inferior al DOM después de esta llamada.
-  queueMicrotask(()=>syncTopPager(nav,options));
+  if(options.autoTop!==false)queueMicrotask(()=>syncTopPager(nav,options));
  }
  function paginate(table,matchedRows=null){
   if(!table?.tBodies?.length)return;
