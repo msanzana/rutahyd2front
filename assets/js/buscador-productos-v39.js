@@ -163,7 +163,7 @@
        };
        if(window.RutaHDListUI?.renderPager){
          window.RutaHDListUI.renderPager(nav,{
-           page,pages,total,label:'productos',onPage:change
+           page,pages,total,label:'productos',onPage:change,autoTop:false
          });
        }else{
          nav.replaceChildren();
