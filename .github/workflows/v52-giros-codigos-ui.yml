@@ -1,0 +1,59 @@
+name: V52 - Giros y códigos automáticos en CRUD
+on:
+  push:
+    branches: [hotfix/v52-giros-empresa-codigos-20261123]
+    paths:
+      - .github/workflows/v52-giros-codigos-ui.yml
+      - tests/clientes-v50.cjs
+      - assets/js/modulos-oficiales.js
+      - assets/js/giros-sii-v39.js
+      - assets/js/buscador-productos-v39.js
+      - assets/js/listados-ui.js
+      - assets/js/usuarios.js
+      - assets/js/admin-remoto.js
+      - assets/js/listas-precios.js
+      - assets/js/ubicaciones.js
+      - assets/js/productos-remotos.js
+      - assets/js/proveedores-productos.js
+      - tests/paginadores-codigos-v52.cjs
+      - assets/js/app-produccion.js
+      - assets/js/catalogos-api.js
+      - assets/css/clientes-v50.css
+      - index.html
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  clientes-final:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 19
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Sintaxis y contrato visual
+        run: |
+          set -euo pipefail
+          node --check assets/js/app-produccion.js
+          node --check assets/js/modulos-oficiales.js
+          node --check assets/js/catalogos-api.js
+          node --check tests/clientes-v50.cjs
+          node --check tests/paginadores-codigos-v52.cjs
+          for f in assets/js/{giros-sii-v39,buscador-productos-v39,listados-ui,usuarios,admin-remoto,listas-precios,ubicaciones,productos-remotos,proveedores-productos}.js;do node --check "$f";done
+          grep -Fq 'data-nav="clientes_listado"' index.html
+          ! grep -Fq 'customerCityPicker' assets/js/modulos-oficiales.js
+          grep -Fq 'hd-customer-identity-row' assets/js/modulos-oficiales.js
+          grep -Fq 'LISTA BASE asignada por defecto' assets/js/modulos-oficiales.js
+          grep -Fq 'mountSelector(group,row?.ciudad_id' assets/js/modulos-oficiales.js
+          grep -Fq 'clientes-v50.css?v=20261123-v52' index.html
+          grep -Fq 'modulos-oficiales.js?v=20261123-v52' index.html
+          grep -Fq "&#" assets/js/modulos-oficiales.js || true
+      - name: Prueba Chromium sin acceder a producción
+        run: |
+          set -euo pipefail
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium >/dev/null
+          node tests/clientes-v50.cjs
+          node tests/paginadores-codigos-v52.cjs
+          echo 'V52: giro solo EMPRESA, código readonly, paginadores SII/productos, CRUD y móvil.' >> "$GITHUB_STEP_SUMMARY"

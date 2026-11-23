@@ -238,6 +238,7 @@
     if(!canManage(selected)){status('Tu perfil no puede modificar este catálogo.',true);return;}
     const key=selected;
     const parentKey=CONFIG[key][1],body=el('div','crud-form-grid');
+    window.RutaHDListUI?.recordCode(body,rec?.id??null);
     const wrap=(label,control)=>{const field=el('label','field crud-field');field.append(el('span','',label),control);return field;};
     const name=el('input');name.required=true;name.maxLength=100;name.value=rec?.nombre??'';
     body.append(wrap('Nombre o valor *',name));

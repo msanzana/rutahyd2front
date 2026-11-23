@@ -44,12 +44,21 @@
        if(settled)return;settled=true;resolve(value);dialog.close();
      }
      function pager(nav,last,total){
-       nav.replaceChildren();
-       const prev=btn('‹ Anterior',()=>{page--;void load();list.scrollTop=0;dialog.scrollTop=0;});
-       prev.disabled=page<=1;
-       const next=btn('Siguiente ›',()=>{page++;void load();list.scrollTop=0;dialog.scrollTop=0;});
-       next.disabled=page>=last;
-       nav.append(prev,el('span','Página '+page+' de '+last+' · '+total+' giros'),next);
+       const change=next=>{
+         if(next===page||next<1||next>last)return;
+         page=next;void load();list.scrollTop=0;dialog.scrollTop=0;
+         shell.scrollIntoView({block:'start',behavior:'smooth'});
+       };
+       if(window.RutaHDListUI?.renderPager){
+         window.RutaHDListUI.renderPager(nav,{
+           page,pages:last,total,label:'giros',onPage:change,autoTop:false
+         });
+       }else{
+         nav.replaceChildren();
+         const previous=btn('Anterior',()=>change(page-1));previous.disabled=page<=1;
+         const next=btn('Siguiente',()=>change(page+1));next.disabled=page>=last;
+         nav.append(previous,el('span','Página '+page+' de '+last+' · '+total+' giros'),next);
+       }
        nav.hidden=last<=1;
      }
      async function load(){

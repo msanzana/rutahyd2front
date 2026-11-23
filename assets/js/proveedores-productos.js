@@ -67,6 +67,7 @@
       if(record&&!productRows.some(x=>x.id===record.producto_id))
         productRows.unshift({id:record.producto_id,label:record.codigo_producto+' · '+record.producto});
       const form=e('form',null,'supplier-dialog-form crud-supplier-form');
+      window.RutaHDListUI?.recordCode(form,record?.id??null,{className:'supplier-dialog-wide'});
       const providerSearch=field('search','',120);
       providerSearch.placeholder='Nombre o RUT del proveedor…';
       const provider=selection(providerRows,'Seleccionar proveedor',
@@ -196,6 +197,8 @@
       const reload=async()=>{entries=(await api().purchaseBarcodes(record.id)).items||[];draw();};
       const editCode=(item=null)=>{
         const form=e('form',null,'supplier-barcode-form');
+        window.RutaHDListUI?.recordCode(form,item?.id??null,{
+          className:'supplier-dialog-wide'});
         form.noValidate=true; // Validación corporativa antes del envío; sin globo nativo.
         const sel=selection(avail.map(t=>({id:t.id,label:t.nombre})),
           'Tipo de código *',item?.tipo_codigo_barra_id);

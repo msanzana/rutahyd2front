@@ -31,7 +31,7 @@
       ['plazo_pago_dias','Plazo de pago (días)','number',5,false]
     ],
     bodegas:[
-      ['codigo','Código','text',30,true],['nombre','Nombre','text',130,true],
+      ['codigo','Clave comercial de bodega','text',30,true],['nombre','Nombre','text',130,true],
       ['tipo','Tipo','text',40,false]]
   };
   const PROVIDER_COLUMNS=Object.freeze([
@@ -101,6 +101,10 @@
     const close=action('×',()=>dialog.close(),'crud-close');close.setAttribute('aria-label','Cerrar ventana');
     heading.append(close);form.append(heading);
     const grid=create('div',undefined,'official-editor-grid'),inputs={};
+    if(cfg.resource!=='clientes'){
+      window.RutaHDListUI?.recordCode(grid,row?.id??null,
+        {className:'official-editor-wide'});
+    }
     const clientIdentity=cfg.resource==='clientes'
       ?create('div',undefined,'hd-customer-identity-row official-editor-wide'):null;
     if(clientIdentity)grid.append(clientIdentity);
@@ -144,6 +148,16 @@
         input.addEventListener('blur',checkPhone);
       }
       if(editing&&row[key]!==null&&row[key]!==undefined)input.value=String(row[key]);
+      // Clientes: Código representa exclusivamente la PK, no el campo comercial
+      // histórico clientes.codigo. Nunca permitir escribir ni enviar el ID.
+      if(cfg.resource==='clientes'&&key==='codigo'){
+        input.value=editing?String(row.id):'Automático';
+        input.readOnly=true;input.removeAttribute('required');
+        input.setAttribute('aria-readonly','true');
+        input.setAttribute('title','ID automático de clientes, no editable');
+        input.classList.add('hd-record-id-input');
+        caption.textContent='Código';
+      }
       field.append(caption,input);
       if(type==='textarea')field.classList.add('official-editor-wide');
       if(clientIdentity&&['codigo','nombre','rut'].includes(key)){
@@ -182,6 +196,24 @@
       wrap.append(original,select,
         create('p',code.value?'Código SII seleccionado: '+code.value:
           'Selecciona el giro desde el catálogo oficial.','hd-giro-selected'));
+      if(cfg.resource==='clientes'){
+        const typeControl=inputs.tipo_juridico_id;
+        const companyId=String(legalTypes.find(type=>
+          String(type.codigo).toUpperCase()==='EMPRESA')?.id??'');
+        const giroLabel=giro.closest('label');
+        const updateCompany=()=>{
+          const company=Boolean(companyId)&&typeControl.value===companyId;
+          wrap.hidden=!company;
+          giroLabel.hidden=!company;
+          if(!company){
+            code.value='';giro.value='';
+            wrap.querySelector('.hd-giro-selected').textContent=
+              'Selecciona el giro desde el catálogo oficial.';
+          }
+        };
+        typeControl.addEventListener('change',updateCompany);
+        updateCompany();
+      }
     }
     let location=null;
     if(['clientes','proveedores','bodegas'].includes(cfg.resource)){
@@ -284,6 +316,7 @@
       if(!form.reportValidity())return;
       const datos={};
       for(const [key,,, ,required] of definition){
+        if(cfg.resource==='clientes'&&key==='codigo')continue;
         const v=inputs[key].value.trim();
         datos[key]=v===''&&!required?null:v;
       }

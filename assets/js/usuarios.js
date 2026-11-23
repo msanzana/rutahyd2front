@@ -78,6 +78,7 @@ async function form(user){
  const close=btn('×',()=>dlg.close(),'crud-close');close.setAttribute('aria-label','Cerrar ventana');
  heading.append(copy,close);f.append(heading);
  const grid=el('div',undefined,'crud-fields crud-form-grid');f.append(grid);
+ window.RutaHDListUI?.recordCode(grid,user?.id??null);
  const name=field(grid,'Nombre completo','text',user?.nombre||'');name.maxLength=160;
  const email=field(grid,'Correo electrónico','email',user?.correo_electronico||'');email.maxLength=190;
  const wrap=el('label',undefined,'field crud-field'),role=el('select');

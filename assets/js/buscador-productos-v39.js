@@ -156,15 +156,23 @@
        resolve(value);
      }
      function showPager(nav,pages,total){
-       nav.replaceChildren();
-       const makePage=(txt,next,disabled)=>{
-         const b=button(txt,()=>{
-           page=next;void load();list.scrollTop=0;dialog.scrollTop=0;
-         });b.disabled=disabled;nav.append(b);
+       const change=next=>{
+         if(next===page||next<1||next>pages)return;
+         page=next;void load();list.scrollTop=0;dialog.scrollTop=0;
+         shell.scrollIntoView({block:'start',behavior:'smooth'});
        };
-       makePage('‹ Anterior',page-1,page<=1);
-       nav.append(make('span','Página '+page+' de '+pages+' · '+total+' productos'));
-       makePage('Siguiente ›',page+1,page>=pages);
+       if(window.RutaHDListUI?.renderPager){
+         window.RutaHDListUI.renderPager(nav,{
+           page,pages,total,label:'productos',onPage:change,autoTop:false
+         });
+       }else{
+         nav.replaceChildren();
+         const prev=button('Anterior',()=>change(page-1));
+         prev.disabled=page<=1;
+         const next=button('Siguiente',()=>change(page+1));
+         next.disabled=page>=pages;
+         nav.append(prev,make('span','Página '+page+' de '+pages+' · '+total+' productos'),next);
+       }
        nav.hidden=pages<=1;
      }
      function filtered(){
