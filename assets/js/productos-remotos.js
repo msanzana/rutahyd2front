@@ -538,7 +538,8 @@
     const close=button('×',()=>modal.close(),'crud-close');close.setAttribute('aria-label','Cerrar ventana');
     heading.append(close);form.appendChild(heading);
     form.appendChild(el('h3','product-editor-section','Información del producto'));
-    const sku=inputField('SKU / Código','text',form,producto?.sku,{required:true,maxLength:80});
+    window.RutaHDListUI?.recordCode(form,producto?.id??null,{className:'product-editor-wide'});
+    const sku=inputField('SKU del producto','text',form,producto?.sku,{required:true,maxLength:80});
     const nombre=inputField('Nombre del producto','text',form,producto?.nombre,{required:true,maxLength:190});
     const descripcion=inputField('Descripción','textarea',form,producto?.descripcion,{maxLength:10000});
     descripcion.parentElement.classList.add('product-editor-wide');
