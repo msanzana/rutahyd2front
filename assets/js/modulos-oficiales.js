@@ -456,10 +456,25 @@
                 ()=>confirmDeactivate(cfg,record,load),'desactivar',true));
             }else{
               cell.append(listButton('Activar '+record.nombre,async()=>{
-                const ok=window.confirm('¿Activar '+record.nombre+'?');
-                if(!ok)return;
-                try{await api().updateResource('clientes',record.id,{activo:true});void load();}
-                catch(err){notice.textContent=statusText(err);notice.classList.add('is-error');}
+                const dialog=create('dialog',undefined,'modal official-confirm crud-official-dialog');
+                const panel=create('div',undefined,'official-confirm-panel');
+                panel.append(create('span','RUTA H&D · CONFIRMACIÓN','official-editor-eyebrow'),
+                  create('h2','Activar cliente'),
+                  create('p','¿Deseas activar «'+record.nombre+'»? Se conservarán sus datos.'));
+                const controls=create('div',undefined,'official-editor-actions');
+                const cancel=action('Cancelar',()=>dialog.close(),'ghost');
+                const okButton=action('Sí, activar',async()=>{
+                  okButton.disabled=true;cancel.disabled=true;
+                  try{await api().updateResource('clientes',record.id,{activo:true});
+                    dialog.close();void load();}
+                  catch(err){notice.textContent=statusText(err);notice.classList.add('is-error');
+                    okButton.disabled=false;cancel.disabled=false;}
+                });
+                controls.append(cancel,okButton);panel.append(controls);dialog.append(panel);
+                document.body.append(dialog);
+                dialog.addEventListener('close',()=>dialog.remove(),{once:true});
+                dialog.showModal();
+                return;
               },'seleccionar'));
             }
           }else cell.append(create('span','Solo lectura','hd-customers-readonly'));
