@@ -35,6 +35,7 @@
   <link rel="stylesheet" href="assets/css/carga-global-v42.css?v=20261122-v42">
   <link rel="stylesheet" href="assets/css/interfaz-mix-validacion-v45.css?v=20261122-v49prod">
   <link rel="stylesheet" href="assets/css/clientes-v50.css?v=20261123-v52">
+  <link rel="stylesheet" href="assets/css/ordenes-compra-v55.css?v=20261123-v55">
 </head>
 <body>
   <svg class="svg-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -106,7 +107,20 @@
             <button type="button" data-nav="perfiles" class="nav-sublink" id="navPerfiles" role="menuitem" hidden><span>Perfiles y permisos</span></button>
           </div>
         </div>
-        <button type="button" data-nav="compras" class="nav-link"><svg class="icon"><use href="#i-orders"/></svg><span>Compras</span></button>
+        <div class="nav-group" id="purchasesNavGroup">
+          <div class="nav-parent">
+            <button type="button" data-nav="compras" class="nav-link"><svg class="icon"><use href="#i-orders"/></svg><span>Compras</span></button>
+            <button type="button" class="nav-expand" id="togglePurchaseSubnav"
+              aria-label="Expandir submódulos de Compras" aria-controls="purchaseSubnav"
+              aria-expanded="false" hidden><svg class="icon small"><use href="#i-chevron"/></svg></button>
+          </div>
+          <div id="purchaseSubnav" class="product-subnav" role="menu"
+            aria-label="Submódulos de Compras" hidden>
+            <button type="button" data-nav="compras_ordenes" class="nav-sublink" role="menuitem">
+              <span>Órdenes de Compra</span>
+            </button>
+          </div>
+        </div>
         <button type="button" data-nav="ventas" class="nav-link"><svg class="icon"><use href="#i-chart"/></svg><span>Ventas</span></button>
         <div class="nav-group" id="providersNavGroup">
           <div class="nav-parent">
@@ -227,11 +241,11 @@
   </dialog>
   <div id="toastRegion" class="toast-region" role="status" aria-live="polite" aria-atomic="false"></div>
   <script src="assets/js/accesos.js?v=20261122-ui20" defer></script>
-  <script src="assets/js/listados-ui.js?v=20261123-v52" defer></script>
+  <script src="assets/js/listados-ui.js?v=20261123-v55" defer></script>
   <script src="assets/js/validacion-ui.js?v=20261122-v45prod" defer></script>
   <script src="assets/js/menu-usuario.js?v=20261122-copy39" defer></script>
   <script src="assets/js/carga-global-v42.js?v=20261122-v42" defer></script>
-  <script src="assets/js/catalogos-api.js?v=20261122-v50" defer></script>
+  <script src="assets/js/catalogos-api.js?v=20261123-v55" defer></script>
   <script src="assets/js/admin-remoto.js?v=20261123-v52" defer></script>
   <script src="assets/js/perfiles.js?v=20261122-copy39" defer></script>
   <script src="assets/js/galeria-productos.js?v=20261122-copy39" defer></script>
@@ -259,11 +273,12 @@
   <script src="assets/js/ventas-precios.js?v=20261122-copy39" defer></script>
   <script src="assets/js/rut-chileno-v39.js?v=20261122-v39" defer></script>
   <script src="assets/js/giros-sii-v39.js?v=20261123-v52" defer></script>
-  <script src="assets/js/buscador-productos-v39.js?v=20261123-v52" defer></script>
+  <script src="assets/js/buscador-productos-v39.js?v=20261123-v55" defer></script>
   <script src="assets/js/ubicaciones.js?v=20261123-v52" defer></script>
   <script src="assets/js/modulos-oficiales.js?v=20261123-v52" defer></script>
   <script src="assets/js/proveedores-productos.js?v=20261123-v52" defer></script>
   <script src="assets/js/login-produccion.js?v=20261122-copy39" defer></script>
-  <script src="assets/js/app-produccion.js?v=20261122-v50" defer></script>
+  <script src="assets/js/ordenes-compra-v55.js?v=20261123-v55" defer></script>
+  <script src="assets/js/app-produccion.js?v=20261123-v55" defer></script>
 </body>
 </html>
