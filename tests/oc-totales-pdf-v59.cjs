@@ -7,7 +7,7 @@ const {chromium}=require('playwright');
 const root=path.join(__dirname,'..');
 const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 for(const tag of [
- 'ordenes-compra-v55.js?v=20261123-v59',
+ 'ordenes-compra-v55.js?v=20261123-v61',
  'ordenes-compra-v55.css?v=20261123-v59',
  'catalogos-api.js?v=20261123-v59'
 ])assert(html.includes(tag),'Falta versión de caché '+tag);
