@@ -6,7 +6,15 @@
   <meta name="referrer" content="no-referrer">
   <meta name="theme-color" content="#2e1065">
   <meta name="description" content="Ruta H&D2 — plataforma de gestión comercial y operativa.">
+  <meta name="rutahd-release" content="v53-cache-20261123">
   <title>Ruta H&D2 · Gestión Comercial</title>
+  <script>
+    // Una pestaña restaurada desde bfcache no recibe una solicitud HTTP.
+    // Actualizar solo al volver mediante historial, no mientras se edita.
+    window.addEventListener('pageshow', function (event) {
+      if (event.persisted) window.location.reload();
+    });
+  </script>
   <link rel="stylesheet" href="assets/css/app.css">
   <link rel="stylesheet" href="assets/css/correcciones-ui.css?v=20261121-1">
   <link rel="stylesheet" href="assets/css/menu-oficial.css?v=20261121-2">
