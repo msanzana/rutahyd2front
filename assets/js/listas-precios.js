@@ -95,7 +95,8 @@
      input.type='text';input.required=true;input.maxLength=max;input.value=value||'';
      wrap.append(caption,input);fields.append(wrap);return input;
    };
-   const codigo=field('Código',item?.codigo||'',40);
+   window.RutaHDListUI?.recordCode(fields,item?.id??null);
+   const codigo=field('Clave comercial de lista',item?.codigo||'',40);
    const nombre=field('Nombre',item?.nombre||'',120);
    const observation=field('Observación',item?.observacion||'',255);
    observation.required=false;
