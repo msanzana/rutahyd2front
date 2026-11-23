@@ -216,6 +216,7 @@
     select.parentNode.insertBefore(box,select);
     box.append(select);
     select.classList.add('hd-choice-native');
+    select.setAttribute('aria-hidden','true');
     const input=element('input','hd-choice-search');
     input.type='search';input.autocomplete='off';input.spellcheck=false;
     input.setAttribute('role','combobox');
