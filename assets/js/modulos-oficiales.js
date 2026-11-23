@@ -84,77 +84,6 @@
     return 'No se pudo completar la solicitud (HTTP '+(e?.status||'sin respuesta')+').';
   };
 
-  // Clientes V50: selector directo de ciudad, sin pedir comuna ni sector.
-  // Búsqueda paginada en Laravel; la ficha persiste exclusivamente ciudad_id.
-  async function customerCityPicker(group,oldId=null){
-    const wrap=create('div',undefined,'hd-customer-city-picker');
-    const field=create('label',undefined,'field');
-    field.append(create('span','Buscar ciudad / localidad'));
-    const search=create('input');search.type='search';search.maxLength=120;
-    search.placeholder='Escribe al menos dos letras de la ciudad…';
-    search.setAttribute('aria-label','Buscar ciudad del cliente');
-    field.append(search);
-    const choose=create('label',undefined,'field');
-    choose.append(create('span','Ciudad seleccionada'));
-    const select=create('select');
-    select.name='ciudad_id';
-    select.append(new Option('Sin ciudad seleccionada',''));
-    choose.append(select);
-    const button=action('Buscar ciudades',()=>void lookup(),'ghost');
-    const hint=create('small',
-      'La ciudad o localidad seleccionada quedará asociada a este cliente.',
-      'hd-customer-city-help');
-    const status=create('p','Escribe y busca una ciudad para seleccionarla.',
-      'hd-customer-city-status');
-    status.setAttribute('role','status');
-    wrap.append(field,button,choose,hint,status);group.append(wrap);
-    let serial=0;
-    async function lookup(){
-      const term=search.value.trim();
-      if(term.length<2){
-        status.textContent='Escribe al menos dos letras para buscar una ciudad.';
-        search.focus();return;
-      }
-      const stamp=++serial;
-      button.disabled=true;status.textContent='Buscando ciudades registradas…';
-      try{
-        const response=await api().locations('ciudades',{
-          buscar:term,page:1,perPage:100
-        });
-        if(stamp!==serial)return;
-        const previous=select.value;
-        select.replaceChildren(new Option('Sin ciudad seleccionada',''));
-        for(const city of response?.data||[]){
-          if(!city.activo)continue;
-          select.append(new Option(city.nombre+' · ID '+city.id,String(city.id)));
-        }
-        if(previous && [...select.options].some(opt=>opt.value===previous))
-          select.value=previous;
-        status.textContent=Number(response?.total||0)+' ciudades encontradas.'+
-          (Number(response?.last_page||1)>1?' Refina la búsqueda para elegir.':'');
-      }catch(error){
-        status.textContent=error?.userMessage||'No fue posible consultar ciudades.';
-        status.classList.add('is-error');
-      }finally{button.disabled=false;}
-    }
-    search.addEventListener('keydown',event=>{
-      if(event.key==='Enter'){event.preventDefault();void lookup();}
-    });
-    if(oldId){
-      try{
-        const current=await api().locationPath(oldId);
-        select.append(new Option(
-          [current?.ciudad,current?.region].filter(Boolean).join(' · ')||('Ciudad #'+oldId),
-          String(oldId)));
-        select.value=String(oldId);
-      }catch(error){
-        status.textContent='No fue posible cargar la ciudad anterior: '+
-          (error?.userMessage||'revisa el registro');
-      }
-    }
-    return {value:()=>select.value?Number(select.value):null,controls:[search,select]};
-  }
-
   async function openEditor(cfg,row,onSaved){
     const editing=Boolean(row),definition=FIELDS[cfg.resource];
     if(!definition)return;
@@ -172,6 +101,9 @@
     const close=action('×',()=>dialog.close(),'crud-close');close.setAttribute('aria-label','Cerrar ventana');
     heading.append(close);form.append(heading);
     const grid=create('div',undefined,'official-editor-grid'),inputs={};
+    const clientIdentity=cfg.resource==='clientes'
+      ?create('div',undefined,'hd-customer-identity-row official-editor-wide'):null;
+    if(clientIdentity)grid.append(clientIdentity);
     const legalTypes=cfg.resource==='clientes'
       ?(await api().customerLegalTypes()).items||[]:[];
     for(const [key,label,type,max,required] of definition){
@@ -214,7 +146,11 @@
       if(editing&&row[key]!==null&&row[key]!==undefined)input.value=String(row[key]);
       field.append(caption,input);
       if(type==='textarea')field.classList.add('official-editor-wide');
-      grid.append(field);inputs[key]=input;
+      if(clientIdentity&&['codigo','nombre','rut'].includes(key)){
+        field.classList.add('hd-customer-identity-field');
+        clientIdentity.append(field);
+      }else grid.append(field);
+      inputs[key]=input;
       if(key==='rut')window.RutaHDRut?.bind(input);
     }
     if(cfg.resource==='proveedores'||cfg.resource==='clientes'){
@@ -250,49 +186,68 @@
     let location=null;
     if(['clientes','proveedores','bodegas'].includes(cfg.resource)){
       const group=create('div',undefined,'official-editor-wide supplier-location-section');
-      if(cfg.resource==='clientes'){
-        group.append(create('h3','Ciudad del cliente','official-editor-section'),
-          create('p','Busca y selecciona directamente la ciudad o localidad registrada.',
-            'official-editor-description'));
-        location=await customerCityPicker(group,row?.ciudad_id||null);
-      }else{
-        group.append(create('h3','Ubicación geográfica','official-editor-section'),
-          create('p','Selecciona país, región, provincia, comuna y ciudad. Se guardará únicamente ciudad_id.','official-editor-description'));
-        location=await window.RutaHDUbicaciones?.mountSelector(group,row?.ciudad_id||null);
-      }
+      group.append(create('h3','Ubicación geográfica','official-editor-section'),
+        create('p','Selecciona país, región, provincia, comuna y ciudad. Solo se guarda la ciudad asignada.','official-editor-description'));
+      location=await window.RutaHDUbicaciones?.mountSelector(group,row?.ciudad_id||null);
       grid.append(group);
     }
     form.append(grid);
     let clientPriceList=null;
     if(cfg.resource==='clientes'){
-      const label=create('label',undefined,'field official-customer-price-field');
-      label.append(create('span','Lista de precios para ventas'));
-      if(editing){
-        try{
-          const [available,current]=await Promise.all([
-            api().priceLists(),api().customerPriceList(row.id)
-          ]);
-          clientPriceList=create('select');
-          clientPriceList.setAttribute('aria-label','Lista de precios asignada al cliente');
-          for(const list of available.data||[]){
-            if(!list.activo&&Number(list.id)!==Number(current?.lista?.id))continue;
-            const option=create('option',list.nombre+(list.es_base?' (general)':''));option.value=String(list.id);
-            clientPriceList.append(option);
-          }
-          clientPriceList.value=String(current?.lista?.id||'');
-          if(!clientPriceList.value&&clientPriceList.options.length)
-            clientPriceList.selectedIndex=0;
-          clientPriceList.required=true;label.append(clientPriceList);
-        }catch(error){
-          if(error?.status===404){
-            // Compatibilidad con API antigua, sin inventar IDs de listas.
-            label.append(create('p','La selección de listas de precios no está disponible. Puedes seguir editando los datos del cliente.','catalog-footnote'));
-          }else throw error;
+      const section=create('section',undefined,'hd-customer-prices');
+      section.append(create('h3','Lista de precios del cliente','hd-customer-prices-title'),
+        create('p','Cada cliente tiene una lista activa. La LISTA BASE viene seleccionada y puedes cambiarla antes de guardar.','hd-customer-prices-intro'));
+      const field=create('label',undefined,'field official-customer-price-field');
+      field.append(create('span','Lista de precios activa *'));
+      const state=create('p','Consultando listas de precios…','hd-customer-price-status');
+      state.setAttribute('role','status');
+      section.append(field,state);form.append(section);
+      try{
+        const [first,current]=await Promise.all([
+          api().priceLists('',true,1,100),
+          editing?api().customerPriceList(row.id):Promise.resolve(null)
+        ]);
+        const lists=[...(first?.data||[])];
+        const totalPages=Math.min(50,Math.max(1,Number(first?.last_page||1)));
+        for(let nextPage=2;nextPage<=totalPages;nextPage++){
+          const remaining=await api().priceLists('',true,nextPage,100);
+          lists.push(...(remaining?.data||[]));
         }
-      }else{
-        label.append(create('p','Al crear este cliente se le asignará automáticamente la LISTA BASE. Puedes asignarle una lista especial después.','catalog-footnote'));
+        const unique=[...new Map(lists.filter(list=>list.activo)
+          .map(list=>[Number(list.id),list])).values()];
+        const base=unique.find(list=>Boolean(list.es_base));
+        if(!base)throw new Error('No se encontró una LISTA BASE activa.');
+        clientPriceList=create('select');
+        clientPriceList.name='lista_precio_id';
+        clientPriceList.required=true;
+        clientPriceList.setAttribute('aria-label','Lista de precios activa del cliente');
+        for(const list of unique){
+          const option=new Option(list.nombre+(list.es_base?' · LISTA BASE':''),String(list.id));
+          clientPriceList.append(option);
+        }
+        const assigned=editing?Number(current?.lista?.id||0):Number(base.id);
+        if(!unique.some(list=>Number(list.id)===assigned)){
+          // No asignar otra lista silenciosamente a un cliente existente.
+          if(editing)throw new Error('No se encontró la lista vigente de este cliente.');
+        }
+        clientPriceList.value=String(assigned||base.id);
+        const refreshPriceState=()=>{
+          const choice=unique.find(list=>String(list.id)===clientPriceList.value);
+          const isBase=Boolean(choice?.es_base);
+          state.textContent=isBase
+            ?'LISTA BASE asignada por defecto · Se guardará en clientes_listas_precios.'
+            :'Lista especial seleccionada: '+(choice?.nombre||'')+
+              ' · Reemplazará la lista activa del cliente en clientes_listas_precios.';
+          state.classList.toggle('is-special',!isBase);
+        };
+        clientPriceList.addEventListener('change',refreshPriceState);
+        field.append(clientPriceList);
+        refreshPriceState();
+      }catch(error){
+        state.classList.add('is-error');
+        state.textContent='No se pudieron consultar las listas de precios activas. '+
+          (error?.userMessage||error?.message||'Revisa el servicio antes de guardar.');
       }
-      form.append(label);
     }
     if(editing){
       const field=create('label',undefined,'official-active-field');
@@ -321,6 +276,10 @@
           window.RutaHDValidacion?.mostrar(inputs.tipo_juridico_id,'Selecciona Empresa o Persona natural.');
           inputs.tipo_juridico_id?.focus();return;
         }
+      }
+      if(cfg.resource==='clientes'&&(!clientPriceList||!clientPriceList.value)){
+        note.textContent='Selecciona una lista de precios activa antes de guardar.';
+        note.classList.add('is-error');return;
       }
       if(!form.reportValidity())return;
       const datos={};
