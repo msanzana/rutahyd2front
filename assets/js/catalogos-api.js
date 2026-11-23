@@ -325,6 +325,30 @@
       if(buscar.trim()&&['clientes','proveedores'].includes(recurso))query.set('buscar',buscar.trim());
       return send('/recursos/'+encodeURIComponent(recurso)+'?'+query.toString());
     },
+    customerLegalTypes: () => send('/clientes/tipos-juridicos'),
+    customers: ({page=1,buscar='',filters={},orden='id',direccion_orden='desc',perPage=25}={})=>{
+      if(!Number.isSafeInteger(page)||page<1||page>10000||
+         !Number.isSafeInteger(perPage)||perPage<1||perPage>100)throw Error('Paginación de clientes inválida');
+      const allowed=new Set(['rut','nombre','direccion','ciudad','correo_electronico',
+        'giro','tipo_juridico_id','lista_precio_id','activo']);
+      const sorts=new Set(['id','rut','nombre','direccion','ciudad','correo_electronico',
+        'tipo_juridico_nombre','lista_precio_nombre']);
+      if(!sorts.has(orden)||!['asc','desc'].includes(direccion_orden))throw Error('Orden inválido');
+      if(String(buscar).length>120)throw Error('Búsqueda demasiado larga');
+      const query=new URLSearchParams({page:String(page),por_pagina:String(perPage),
+        buscar:String(buscar).trim(),orden,direccion_orden});
+      for(const [key,value] of Object.entries(filters||{})){
+        if(!allowed.has(key))throw Error('Filtro no permitido: '+key);
+        if(value===null||value===undefined||String(value)==='')continue;
+        const v=String(value).trim();
+        if(v.length>190)throw Error('Filtro demasiado largo');
+        if(['tipo_juridico_id','lista_precio_id'].includes(key)&&!/^[1-9][0-9]*$/.test(v))
+          throw Error('Identificador inválido');
+        if(key==='activo'&&!['0','1'].includes(v))throw Error('Estado inválido');
+        query.set('filtros['+key+']',v);
+      }
+      return send('/recursos/clientes?'+query.toString());
+    },
     createResource: (recurso,datos) => {
       if (!MANAGEABLE.has(recurso)) throw new Error('La escritura no está permitida para esta entidad.');
       return send('/recursos/'+recurso,'POST',datos);
