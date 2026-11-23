@@ -12,7 +12,7 @@ for(const tag of [
   'clientes-v50.css?v=20261123-v52',
   'ordenes-compra-v55.js?v=20261123-v62',
   'ordenes-compra-v55.css?v=20261123-v59',
-  'app-produccion.js?v=20261123-v55',
+  'app-produccion.js?v=20261123-v62',
   'buscador-productos-v39.js?v=20261123-v55',
   'catalogos-api.js?v=20261123-v62',
   'listados-ui.js?v=20261123-v55'
