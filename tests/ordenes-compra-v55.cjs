@@ -8,7 +8,7 @@ const base=path.join(__dirname,'..');
 const html=fs.readFileSync(path.join(base,'index.html'),'utf8');
 assert.match(html,/id="purchaseSubnav"/);
 assert.match(html,/data-nav="compras_ordenes"/);
-assert.match(html,/ordenes-compra-v55[.]js[?]v=20261123-v(?:55|56|57|58|59)/);
+assert.match(html,/ordenes-compra-v55[.]js[?]v=20261123-v(?:55|56|57|58|59|61)/);
 assert.match(html,/ordenes-compra-v55[.]css[?]v=20261123-v(?:55|56|57|58|59)/);
 
 (async()=>{
