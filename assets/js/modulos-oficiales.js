@@ -6,10 +6,15 @@
   'use strict';
   const FIELDS={
     clientes:[
-      ['codigo','Código','text',50,false],['nombre','Nombre o razón social','text',190,true],
-      ['rut','RUT','text',25,false],['correo_electronico','Correo electrónico','email',190,false],
-      ['telefono','Teléfono','text',50,false],['direccion','Dirección','text',255,false],
-      ['sector','Sector','text',120,false],
+      ['codigo','Código interno','text',50,false],
+      ['nombre','Nombre completo / razón social','text',190,true],
+      ['rut','RUT','text',25,true],
+      ['tipo_juridico_id','Tipo jurídico','select',0,true],
+      ['actividad_economica_codigo','Código de giro SII','text',6,false],
+      ['giro','Giro / actividad económica','text',255,false],
+      ['direccion','Dirección','text',255,false],
+      ['correo_electronico','Correo electrónico','email',190,false],
+      ['telefono','Teléfono (+56 NNNNNNNNN)','tel',13,false],
       ['observaciones','Observaciones','textarea',10000,false]],
     proveedores:[
       ['nombre','Nombre comercial','text',190,true],
@@ -50,7 +55,10 @@
     compras:{resource:'ordenes_compra',title:'Órdenes de compra',fields:[['id','ID'],['numero','Número'],['estado','Estado'],['total_bruto','Total bruto']]},
     ventas:{resource:'ventas',title:'Ventas',fields:[['id','ID'],['numero','Número'],['estado','Estado'],['total_bruto','Total bruto']]},
     proveedores:{resource:'proveedores',title:'Proveedores',permission:'compras.gestionar',fields:PROVIDER_COLUMNS},
-    clientes:{resource:'clientes',title:'Clientes',permission:'clientes.gestionar',fields:[['id','ID'],['codigo','Código'],['nombre','Nombre'],['rut','RUT'],['lista_precio_nombre','Lista de precios'],['activo','Estado']]},
+    clientes:{resource:'clientes',title:'Listado de clientes',permission:'clientes.gestionar',
+      fields:[['rut','RUT'],['nombre','Nombre completo'],['direccion','Dirección'],
+        ['ciudad','Ciudad'],['correo_electronico','Correo electrónico'],
+        ['tipo_juridico_nombre','Tipo jurídico'],['lista_precio_nombre','Lista de precios activa']]},
     bodega:{resource:'bodegas',title:'Bodegas',permission:'inventario.gestionar',fields:[['id','ID'],['codigo','Código'],['nombre','Nombre'],['tipo','Tipo'],['activo','Estado']]},
     cuentas_corrientes:{resource:null,title:'Cuentas corrientes',fields:[]}
   });
@@ -68,6 +76,7 @@
   const api=()=>window.RutaHDApiCatalogos;
   const access=()=>window.RutaHDAccesos;
   const statusText=(e)=>{
+    if(e?.userMessage)return e.userMessage;
     if(e?.status===409)return 'Ya existe el código o la entidad tiene una relación que impide modificarla.';
     if(e?.status===422)return 'Revisa los datos obligatorios y sus formatos.';
     if(e?.status===403)return 'Tu perfil no tiene permisos para realizar esta operación.';
@@ -92,6 +101,8 @@
     const close=action('×',()=>dialog.close(),'crud-close');close.setAttribute('aria-label','Cerrar ventana');
     heading.append(close);form.append(heading);
     const grid=create('div',undefined,'official-editor-grid'),inputs={};
+    const legalTypes=cfg.resource==='clientes'
+      ?(await api().customerLegalTypes()).items||[]:[];
     for(const [key,label,type,max,required] of definition){
       if(cfg.resource==='proveedores' && PROVIDER_SECTIONS[key]){
         grid.append(create('h3',PROVIDER_SECTIONS[key],
@@ -102,7 +113,12 @@
       const input=create(type==='textarea'?'textarea':type==='select'?'select':'input');
       if(type!=='textarea'&&type!=='select')input.type=type;
       if(type==='select'){
-        for(const [value,name] of SELECT_OPTIONS[key]||[]){
+        const values=key==='tipo_juridico_id'
+          ?[['','Seleccionar tipo jurídico…'],...legalTypes
+            .filter(t=>t.activo||Number(t.id)===Number(row?.tipo_juridico_id))
+            .map(t=>[String(t.id),t.nombre])]
+          :SELECT_OPTIONS[key]||[];
+        for(const [value,name] of values){
           const option=create('option',name);option.value=value;input.append(option);
         }
       }
@@ -112,13 +128,25 @@
       input.required=required;
       if(required)input.minLength=key==='nombre'?2:1;
       if(type==='email')input.autocomplete='email';
+      if(cfg.resource==='clientes'&&key==='telefono'){
+        input.inputMode='tel';input.autocomplete='tel';
+        input.placeholder='+56 912345678';input.pattern='\\+56 [0-9]{9}';
+        input.setAttribute('aria-description','Prefijo +56, un espacio y nueve dígitos');
+        const checkPhone=()=>{
+          const ok=!input.value.trim()||/^\+56 [0-9]{9}$/.test(input.value.trim());
+          input.setCustomValidity(ok?'':'Usa el formato +56 NNNNNNNNN (9 dígitos).');
+          return ok;
+        };
+        input.addEventListener('input',checkPhone);
+        input.addEventListener('blur',checkPhone);
+      }
       if(editing&&row[key]!==null&&row[key]!==undefined)input.value=String(row[key]);
       field.append(caption,input);
       if(type==='textarea')field.classList.add('official-editor-wide');
       grid.append(field);inputs[key]=input;
       if(key==='rut')window.RutaHDRut?.bind(input);
     }
-    if(cfg.resource==='proveedores'){
+    if(cfg.resource==='proveedores'||cfg.resource==='clientes'){
       // El código oficial de 6 dígitos determina la glosa del giro.
       const code=inputs.actividad_economica_codigo;
       const giro=inputs.giro;
@@ -129,7 +157,7 @@
       const select=action('Buscar giro SII',async()=>{
         try{
           const elegido=await window.RutaHDGirosSii?.open({
-            title:'Buscar giro del proveedor',
+            title:cfg.resource==='clientes'?'Buscar giro del cliente':'Buscar giro del proveedor',
             buscar:code.value||giro.value||''
           });
           if(elegido){
@@ -205,6 +233,17 @@
     form.addEventListener('submit',async event=>{
       event.preventDefault();
       if(window.RutaHDRut&&!window.RutaHDRut.validateIn(form))return;
+      if(cfg.resource==='clientes'){
+        const phone=inputs.telefono;
+        if(phone?.value.trim()&&!/^\+56 [0-9]{9}$/.test(phone.value.trim())){
+          window.RutaHDValidacion?.mostrar(phone,'Usa el formato +56 NNNNNNNNN (9 dígitos).');
+          phone.focus();return;
+        }
+        if(!inputs.tipo_juridico_id?.value){
+          window.RutaHDValidacion?.mostrar(inputs.tipo_juridico_id,'Selecciona Empresa o Persona natural.');
+          inputs.tipo_juridico_id?.focus();return;
+        }
+      }
       if(!form.reportValidity())return;
       const datos={};
       for(const [key,,, ,required] of definition){
