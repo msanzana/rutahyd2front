@@ -14,6 +14,7 @@
   filtros:'<path d="M4 7h16M7 12h10M10 17h4"/>',
   seleccionar:'<path d="m5 12 4 4 10-10"/><circle cx="12" cy="12" r="10"/>',
   correo:'<rect x="2" y="4" width="20" height="16" rx="3"/><path d="m3 6 9 7 9-7"/>',
+  pdf:'<path d="M6 2h9l5 5v15H6z"/><path d="M15 2v6h5M9 14h8M9 18h6"/>',
   quitar:'<path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6M10 10v7m4-7v7"/>',
   accion:'<path d="M5 12h14m-6-6 6 6-6 6"/>'};
  const icon=(key)=>'<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">'+(SVG[key]||SVG.ver)+'</svg>';
