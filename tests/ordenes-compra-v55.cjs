@@ -78,6 +78,7 @@ assert.match(html,/ordenes-compra-v55[.]css[?]v=20261123-v55/);
   await dialog.getByRole('button',{name:'Buscar proveedor'}).click();
   const provider=page.locator('dialog.hd-oc-modal[open]').last();
   await provider.getByRole('button',{name:'Seleccionar Proveedor de pruebas'}).click();
+  await page.waitForFunction(()=>[...document.querySelectorAll('dialog.hd-oc-modal[open] fieldset.hd-oc-details')].some(el=>!el.disabled));
   assert.equal(await details.evaluate(el=>el.disabled),false,'Detalle se habilita con proveedor');
   await dialog.getByRole('button',{name:'Buscar productos del proveedor'}).click();
   const finder=await page.evaluate(()=>window.__calls.productFinder[0]);
