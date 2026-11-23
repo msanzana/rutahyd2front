@@ -8,7 +8,7 @@ const base=path.join(__dirname,'..');
 const html=fs.readFileSync(path.join(base,'index.html'),'utf8');
 assert.match(html,/id="purchaseSubnav"/);
 assert.match(html,/data-nav="compras_ordenes"/);
-assert.match(html,/ordenes-compra-v55[.]js[?]v=20261123-v(?:55|56|57|58|59|61)/);
+assert.match(html,/ordenes-compra-v55[.]js[?]v=20261123-v(?:55|56|57|58|59|61|62)/);
 assert.match(html,/ordenes-compra-v55[.]css[?]v=20261123-v(?:55|56|57|58|59)/);
 
 (async()=>{
@@ -38,6 +38,7 @@ assert.match(html,/ordenes-compra-v55[.]css[?]v=20261123-v(?:55|56|57|58|59)/);
           subtotal_neto:'100.00',total_impuestos:'19.00',total_bruto:'119.00'
         }],total:26,last_page:2};
       },
+      purchaseProductCosts:async()=>({costos:[{producto_id:21,costo_unitario_neto:'987.6500'}]}),
       orderSuppliers:async()=>({data:[{id:9,nombre:'Proveedor de pruebas',
         rut:'12345678-5',correo_electronico:'test@example.invalid'}],total:1,last_page:1}),
       getPurchaseOrder:async()=>({id:7,numero:'OC-2026-0000007',proveedor_id:9,

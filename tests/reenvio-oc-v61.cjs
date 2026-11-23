@@ -6,7 +6,7 @@ const fs=require('node:fs');
 const {chromium}=require('playwright');
 const root=path.join(__dirname,'..');
 const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
-assert(html.includes('ordenes-compra-v55.js?v=20261123-v61'));
+assert(html.includes('ordenes-compra-v55.js?v=20261123-v62'));
 (async()=>{
  const browser=await chromium.launch({headless:true});
  try{

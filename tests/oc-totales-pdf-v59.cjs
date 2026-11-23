@@ -7,9 +7,9 @@ const {chromium}=require('playwright');
 const root=path.join(__dirname,'..');
 const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 for(const tag of [
- 'ordenes-compra-v55.js?v=20261123-v61',
+ 'ordenes-compra-v55.js?v=20261123-v62',
  'ordenes-compra-v55.css?v=20261123-v59',
- 'catalogos-api.js?v=20261123-v59'
+ 'catalogos-api.js?v=20261123-v62'
 ])assert(html.includes(tag),'Falta versión de caché '+tag);
 const api=fs.readFileSync(path.join(root,'assets/js/catalogos-api.js'),'utf8');
 assert(api.includes("calculatePurchaseOrder: data=>send('/ordenes-compra/calcular','POST',data)"));
@@ -40,6 +40,7 @@ assert(api.includes("calculatePurchaseOrder: data=>send('/ordenes-compra/calcula
         estado_id:1,estado_codigo:'ACTIVA',estado_nombre:'Activa',
         subtotal_neto:'2500.00',total_impuestos:'475.00',total_bruto:'2975.00'
       }],total:1,last_page:1}),
+      purchaseProductCosts:async()=>({costos:[{producto_id:21,costo_unitario_neto:'1250.0000'}]}),
       orderSuppliers:async()=>({data:[supplier],total:1,last_page:1}),
       getPurchaseOrder:async()=>({
         id:7,numero:'OC-2026-0000007',proveedor_id:9,

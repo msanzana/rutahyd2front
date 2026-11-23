@@ -134,7 +134,9 @@
       b.append(node('small',entry.sub?entry.parent:'Menú principal','hd-menu-result-parent'));
       b.addEventListener('click',event=>{
         event.preventDefault();event.stopPropagation();
-        clearMenuSearch();navigate(entry.key,entry.from);
+        clearMenuSearch();
+         if(entry.sub)navigate(entry.key,entry.from);
+         else navigateMain(entry.key,entry.from);
       });
       results.append(b);
     });
@@ -221,6 +223,27 @@
     }
     return Object.prototype.hasOwnProperty.call(SERVICES,section);
   }
+  // El menú principal abre la PRIMERA subopción permitida y visible del
+  // catálogo oficial, sin asumir que todos los perfiles comparten permisos.
+  const mainSubmenus=Object.freeze({
+    administracion:'#adminSubnav',compras:'#purchaseSubnav',
+    proveedores:'#providerSubnav',clientes:'#clientSubnav',
+    productos:'#productSubnav'
+  });
+  function firstMainSubitem(section){
+    const container=mainSubmenus[section]&&$(mainSubmenus[section]);
+    if(!container)return null;
+    for(const entry of $$('.nav-sublink',container)){
+      if(entry.hidden||entry.closest('#ubicacionesSubnav'))continue;
+      const key=entry.dataset.adminCatalog
+        ?'catalogos.'+entry.dataset.adminCatalog:entry.dataset.nav;
+      if(key&&allowed(key))return key;
+    }
+    return null;
+  }
+  function navigateMain(section,from=null){
+    navigate(firstMainSubitem(section)||section,from);
+  }
   function titleFor(section){
     if(section.startsWith('ubicaciones.'))return NAMES[section.split('.')[1]]||'Ubicaciones';
     return section.startsWith('catalogos.')?
@@ -246,7 +269,8 @@
         ((section==='usuarios'||section==='perfiles')&&button.dataset.nav==='administracion') ||
         (section==='proveedores_productos'&&button.dataset.nav==='proveedores') ||
         (section==='compras_ordenes'&&button.dataset.nav==='compras') ||
-        (section==='clientes_listado'&&button.dataset.nav==='clientes');
+        (section==='clientes_listado'&&button.dataset.nav==='clientes') ||
+        (section==='listas_precios'&&button.dataset.nav==='productos');
       button.classList.toggle('active',active);
       if(active)button.setAttribute('aria-current','page');
       else button.removeAttribute('aria-current');
@@ -392,7 +416,10 @@
         link.closest('#productsNavGroup')?'productos':
         link.closest('#clientsNavGroup')?'clientes':
         link.closest('#purchasesNavGroup')?'compras':null;
-      navigate(key,from);return;
+      if(link.matches('.sidebar .nav-parent > .nav-link,.module-card'))
+        navigateMain(key,from);
+      else navigate(key,from);
+      return;
     }
     if(event.target.closest('#menuToggle')){
       // En móvil restaurar buscador al reabrir el menú después de navegar.

@@ -477,6 +477,7 @@
       return send('/ordenes-compra?'+q.toString());
     },
     getPurchaseOrder: orderId=>send('/ordenes-compra/'+id(orderId)),
+    purchaseProductCosts: data=>send('/ordenes-compra/costos-productos','POST',data),
     calculatePurchaseOrder: data=>send('/ordenes-compra/calcular','POST',data),
     createPurchaseOrder: data=>send('/ordenes-compra','POST',data),
     updatePurchaseOrder: (orderId,data)=>
