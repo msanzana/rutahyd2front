@@ -239,7 +239,10 @@
       input.focus();
     });
     input.addEventListener('focus',()=>{if(!disabled(select))input.select();});
-    input.addEventListener('click',()=>open(state));
+    input.addEventListener('click',()=>{
+      if(active!==state)input.value='';
+      open(state);
+    });
     input.addEventListener('input',()=>{
       if(active!==state)open(state);
       state.focusIndex=-1;draw(state);position(state);
