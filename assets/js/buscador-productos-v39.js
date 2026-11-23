@@ -39,10 +39,22 @@
  function open(settings={}){
    const {
      mode='single', title='Seleccionar productos', preset={},
-     lockedFilters={}, initial=[], excludeIds=[], source=null,onSelect=null,
+     lockedFilters: suppliedLocks={}, proveedorId=null, initial=[], excludeIds=[], source=null,onSelect=null,
      fields=null,context='general',initialSearch=''
    }=settings;
    if(!['single','multiple'].includes(mode))return Promise.reject(Error('Modo de búsqueda inválido'));
+   // Filtro de ENTRADA inmutable, inyectado por el módulo origen.
+   // No es una caja de búsqueda ni se muestra cuando no existe proveedorId.
+   const lockedFilters={...suppliedLocks};
+   if(proveedorId!==null&&proveedorId!==undefined){
+     const n=Number(proveedorId);
+     if(!Number.isSafeInteger(n)||n<1)
+       return Promise.reject(Error('Identificador del proveedor inválido'));
+     if(suppliedLocks.proveedor_id&&Number(suppliedLocks.proveedor_id)!==n)
+       return Promise.reject(Error('El proveedor no coincide con el filtro fijo'));
+     lockedFilters.proveedor_id=n;
+   }
+
    for(const x of [preset,lockedFilters]){
      if(!x||typeof x!=='object'||Array.isArray(x)||Object.keys(x).some(k=>!ALLOWED.has(k)))
        return Promise.reject(Error('Filtro preestablecido no permitido'));
@@ -61,6 +73,13 @@
      const close=button('×',()=>dialog.close(),'crud-close');
      close.setAttribute('aria-label','Cerrar buscador de productos');
      head.append(headings,close);shell.append(head);
+     if(lockedFilters.proveedor_id){
+       const caption=make('p','Catálogo limitado a productos del proveedor seleccionado.',
+         'hd-lookup-locked-supplier');
+       caption.setAttribute('role','note');
+       shell.append(caption);
+     }
+
      const form=make('form',null,'hd-lookup-filterbar');
      const query=make('input');query.type='search';query.maxLength=120;
      query.placeholder='SKU, nombre, descripción o código de barras';
