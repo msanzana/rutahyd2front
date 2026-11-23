@@ -36,7 +36,8 @@
  const scroll=(root)=>root.scrollIntoView({block:'start',
    behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
  function popup({title,subtitle='',kind='dialog'}={}){
-   const dialog=el('dialog',null,'modal hd-oc-modal'+(kind==='editor'?' hd-oc-modal--editor':''));
+   const dialog=el('dialog',null,'modal hd-oc-modal'+
+     (kind==='editor'?' hd-oc-modal--editor':kind==='supplier'?' hd-oc-modal--supplier':''));
    const box=el('section',null,'hd-oc-modal-body');
    const head=el('div',null,'hd-oc-modal-heading');
    head.append(el('div',null,'hd-oc-logo'));
@@ -56,7 +57,7 @@
 
  async function seleccionarProveedor(){
    return new Promise(resolve=>{
-     const {dialog,box}=popup({title:'Seleccionar proveedor',
+     const {dialog,box}=popup({title:'Seleccionar proveedor',kind:'supplier',
        subtitle:'El catálogo muestra proveedores activos con paginación real.'});
      const form=el('form',null,'hd-oc-inline-search');
      const search=el('input');search.type='search';search.maxLength=120;
@@ -148,12 +149,14 @@
    const notice=el('p',null,'hd-oc-message');
    notice.setAttribute('role','status');
    const form=el('form',null,'hd-oc-form');
+   const formScroll=el('div',null,'hd-oc-form-scroll');
+   form.append(formScroll);
    const identity=el('div',null,'hd-oc-identity');
    const code=readonly(order?.id);
    const number=readonly(order?.numero);
    const state=readonly(order?.estado_nombre||'Activa','Activa');
    identity.append(field('Código',code),field('Número de orden',number),field('Estado · Solo lectura',state));
-   form.append(identity);
+   formScroll.append(identity);
    const providerArea=el('div',null,'hd-oc-provider');
    const supplierInput=readonly(order?.proveedor_nombre||'','Selecciona un proveedor');
    const supplierButton=btn('Buscar proveedor',async()=>{
@@ -170,7 +173,7 @@
      notice.textContent='Proveedor seleccionado. Puedes incorporar sus productos.';
    },'ghost');
    providerArea.append(field('Proveedor *',supplierInput),supplierButton);
-   form.append(providerArea);
+   formScroll.append(providerArea);
    const grid=el('div',null,'hd-oc-fields');
    const requested=el('input');requested.type='date';requested.required=true;
    requested.value=String(order?.solicitada_en||today()).slice(0,10);
@@ -182,7 +185,7 @@
    grid.append(field('Fecha de solicitud *',requested),
      field('Fecha de recepción · Solo lectura',received),
      field('Observaciones',observations));
-   form.append(grid);
+   formScroll.append(grid);
    const detailFieldset=el('fieldset',null,'hd-oc-details');
    detailFieldset.disabled=!editing;
    const legend=el('legend','Detalle de productos');
@@ -209,14 +212,14 @@
    tools.append(add);
    const tableRegion=el('div',null,'hd-oc-table-scroll');
    detailFieldset.append(legend,tools,tableRegion);
-   form.append(detailFieldset);
+   formScroll.append(detailFieldset);
    const totals=el('div',null,'hd-oc-totals');
    const subtotal=readonly(order?.subtotal_neto?'$ '+order.subtotal_neto:'$ 0,00');
    const taxes=readonly(order?.total_impuestos?'$ '+order.total_impuestos:'Calculado al guardar');
    const gross=readonly(order?.total_bruto?'$ '+order.total_bruto:'Calculado al guardar');
    totals.append(field('Subtotal neto estimado',subtotal),
      field('Impuestos · Servidor',taxes),field('Total bruto · Servidor',gross));
-   form.append(totals);
+   formScroll.append(totals);
    if(editing){
      const metadata=el('details',null,'hd-oc-audit');
      metadata.append(el('summary','Información de control · Solo lectura'));
@@ -224,7 +227,7 @@
      auditGrid.append(field('Creado por · ID',readonly(order?.creado_por??'—')),
        field('Creado en',readonly(order?.creado_en??'—')),
        field('Actualizado en',readonly(order?.actualizado_en??'—')));
-     metadata.append(auditGrid);form.append(metadata);
+     metadata.append(auditGrid);formScroll.append(metadata);
    }
    const foot=el('div',null,'hd-oc-actions');
    const cancel=btn('Cancelar',()=>dialog.close());
