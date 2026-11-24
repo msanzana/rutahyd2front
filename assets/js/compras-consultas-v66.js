@@ -52,30 +52,49 @@ function mount(root,key){
   const supplier=el('input');supplier.disabled=true;const order=el('input');order.disabled=true;
   const docType=el('select'),depot=el('select');docType.id='hd-recepcion-documento-tipo';depot.id='hd-recepcion-bodega';docType.append(option('','Seleccione documento'));depot.append(option('','Seleccione bodega'));
   function typed(label,type='text'){const x=el('input');x.type=type;if(type==='number'){x.min='0';x.step='0.01';}return field(label,x);}
+  const money=(id,readOnly=false)=>{const x=el('input');x.type='number';x.id='hd-recepcion-'+id;x.step='1';if(!readOnly)x.min='0';x.readOnly=readOnly;return x;};
+  const net=money('neto'),exempt=money('exento'),vat=money('iva',true),other=money('otros'),total=money('total',true),declared=money('total-documento'),difference=money('diferencia',true),receivedSubtotal=money('subtotal-recibido',true);
+  const peso=x=>Math.max(0,Math.round(Number(x.value)||0));
+  let receivedLines=[];
+  function recalc(){
+   const doc=docType.selectedOptions[0];const taxCode=Number(doc?.dataset.sii||0);
+   const exemptDoc=[32,34,38,41].includes(taxCode);
+   vat.value=String(exemptDoc?0:Math.round(peso(net)*19/100));
+   total.value=String(peso(net)+peso(exempt)+peso(vat)+peso(other));
+   difference.value=declared.value===''?'':String(peso(declared)-peso(total));
+   difference.style.color=difference.value!==''&&Number(difference.value)!==0?'#a12645':'';
+   difference.style.fontWeight=difference.value!==''&&Number(difference.value)!==0?'700':'';
+   receivedSubtotal.value=receivedLines.length?String(receivedLines.reduce((sum,line)=>sum+Math.round(Math.max(0,Number(line.qty.value)||0)*line.cost),0)):'';
+   docStatus.textContent=exemptDoc&&peso(net)>0?'Documento exento: ingrese el importe en Monto exento, no en Monto neto afecto.':declared.value!==''&&Number(difference.value)!==0?'El total declarado por el proveedor presenta diferencias.':'';
+  }
+  for(const input of [net,exempt,other,declared])input.addEventListener('input',recalc);
+  docType.addEventListener('change',recalc);
   docs.append(el('h3','Documento de compra'),docGrid,docStatus);
-  docGrid.append(field('Orden de compra',order),field('Proveedor',supplier),field('Bodega de recepción',depot),field('Tipo de documento',docType),typed('Folio del documento'),typed('Fecha de emisión','date'),typed('Fecha de recepción','date'),typed('Monto neto','number'),typed('Monto exento','number'),typed('Impuestos','number'),typed('Total','number'));
+  docs.append(el('p','El total del proveedor se conserva por separado. El subtotal recibido es referencial, valorizado al costo de la orden de compra; no sustituye los importes tributarios.','hd-doc-help'));
+  recalc();
+  docGrid.append(field('Orden de compra',order),field('Proveedor',supplier),field('Bodega de recepción',depot),field('Tipo de documento',docType),typed('Folio del documento'),typed('Fecha de emisión','date'),typed('Fecha de recepción','date'),field('Monto neto afecto',net),field('Monto exento',exempt),field('IVA calculado (19 %)',vat),field('Otros impuestos',other),field('Total calculado',total),field('Total documento proveedor',declared),field('Diferencia del documento',difference),field('Subtotal recibido a costo OC',receivedSubtotal));
   const observations=el('textarea');observations.rows=3;docGrid.append(field('Observaciones y diferencias',observations));
   async function catalogs(){
    try{
     const all=async fn=>{let out=[],n=1,d;do{d=await fn(n++);out.push(...(d.data||d.items||[]));}while(n<=Math.min(100,d.last_page||1));return out;};
     const [types,warehouses]=await Promise.all([all(page=>api.documentTypes({page,activo:1})),all(page=>api.resources('bodegas',page,'',25))]);if(!dialog.open)return;
-    for(const d of types)if(Number(d.documento_compra)===1&&d.familia!=='INTERNO')docType.append(option(String(d.id),d.nombre));
+    for(const d of types)if(Number(d.documento_compra)===1&&d.familia!=='INTERNO'){const o=option(String(d.id),d.nombre);o.dataset.sii=String(d.codigo_sii??'');docType.append(o);}
     for(const b of warehouses)if(Number(b.activo??1)===1)depot.append(option(String(b.id),b.nombre));
    }catch(e){if(dialog.open)docStatus.textContent=e.userMessage||'No fue posible cargar los tipos de documento o las bodegas.';}
   }
   content.append(field('Código',code),info,filter,msg,p1,tableWrap,p2);if(key==='recepciones')content.append(docs);content.append(detail,notice);wrap.append(header,content,footer);dialog.append(wrap);document.body.append(dialog);dialog.addEventListener('close',()=>dialog.remove(),{once:true});dialog.showModal();if(key==='recepciones')void catalogs();
   let estadoId=null,seq=0,detailSeq=0,selected=null,appliedQuery='';
   async function showOrder(item){
-   selected=String(item.id);const token=++detailSeq;detail.replaceChildren(el('p','Cargando orden de compra…'));
+   selected=String(item.id);receivedLines=[];recalc();const token=++detailSeq;detail.replaceChildren(el('p','Cargando orden de compra…'));
    try{
     const d=await api.getPurchaseOrder(item.id);if(token!==detailSeq||!dialog.open)return;
     if(d.estado_codigo!=='ACTIVA'){detail.replaceChildren(el('p','La orden ya no está activa. Actualice la búsqueda.'));return;}
     order.value=d.numero??d.id;supplier.value=d.proveedor_nombre??'';
     const head=el('h3','Orden de compra '+(d.numero??d.id)),general=el('p',(d.proveedor_nombre??'')+' · '+(d.solicitada_en??'')+' · '+(d.estado_nombre??'ACTIVA'));
     const box=el('div',null,'hd-doc-table-scroll'),pt=el('table',null,'hd-doc-table'),ph=el('thead'),pr=el('tr'),pb=el('tbody');
-    for(const k of ['SKU','Producto','Cantidad solicitada','Costo neto','Subtotal'])pr.append(el('th',k));if(key==='recepciones')pr.append(el('th','Cantidad recibida'));ph.append(pr);
-    for(const row of d.detalles||[]){const tr=el('tr');for(const k of ['sku','nombre','cantidad','costo_unitario_neto','subtotal_neto'])tr.append(el('td',row[k]??'—'));if(key==='recepciones'){const td=el('td'),qty=el('input');qty.type='number';qty.min='0';qty.step='0.001';qty.setAttribute('aria-label','Cantidad recibida '+(row.sku??row.nombre));td.append(qty);tr.append(td);}pb.append(tr);}
-    pt.append(ph,pb);box.append(pt);detail.replaceChildren(head,general,box);
+    for(const k of ['SKU','Producto','Cantidad solicitada','Costo neto','Subtotal'])pr.append(el('th',k));if(key==='recepciones')pr.append(el('th','Cantidad recibida'),el('th','Subtotal recibido'));ph.append(pr);
+    for(const row of d.detalles||[]){const tr=el('tr');for(const k of ['sku','nombre','cantidad','costo_unitario_neto','subtotal_neto'])tr.append(el('td',row[k]??'—'));if(key==='recepciones'){const td=el('td'),qty=el('input');qty.type='number';qty.min='0';qty.step='0.001';qty.setAttribute('aria-label','Cantidad recibida '+(row.sku??row.nombre));td.append(qty);tr.append(td);const subtotal=el('td','0');tr.append(subtotal);const cost=Math.max(0,Number(row.costo_unitario_neto)||0);receivedLines.push({qty,cost});qty.addEventListener('input',()=>{subtotal.textContent=String(Math.round(Math.max(0,Number(qty.value)||0)*cost));recalc();});}pb.append(tr);}
+    pt.append(ph,pb);box.append(pt);detail.replaceChildren(head,general,box);recalc();
     if(key==='consolidaciones')detail.append(el('p','Los productos mostrados corresponden a la orden, no a recepciones consolidadas. La selección de recepciones elegibles requiere habilitar el servicio de consolidación.','hd-doc-help'));
    }catch(e){if(token===detailSeq&&dialog.open)detail.replaceChildren(el('p',e.userMessage||'No fue posible consultar la orden.'));}
   }
