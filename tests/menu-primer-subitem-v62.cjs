@@ -5,7 +5,7 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs'),path=require('node:path');
 const root=path.join(__dirname,'..');
 const raw=fs.readFileSync(path.join(root,'index.html'),'utf8');
-assert(raw.includes('app-produccion.js?v=20261123-v62'));
+assert(raw.includes('app-produccion.js?v=20261124-v63'));
 (async()=>{
  const browser=await chromium.launch({headless:true});
  try{
