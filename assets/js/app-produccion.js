@@ -8,7 +8,7 @@
   const api=()=>window.RutaHDApiCatalogos;
   const acl=()=>window.RutaHDAccesos;
   const SERVICES=Object.freeze({
-    administracion:'Administración',compras:'Compras',compras_ordenes:'Órdenes de Compra',ventas:'Ventas',
+    administracion:'Administración',administracion_documentos:'Documentos',compras:'Compras',compras_ordenes:'Órdenes de Compra',ventas:'Ventas',
     proveedores:'Proveedores',proveedores_productos:'Proveedores productos',clientes:'Clientes',
     clientes_listado:'Listado de clientes',productos:'Productos',listas_precios:'Listas de precios',
     bodega:'Bodega',cuentas_corrientes:'Cuentas corrientes',
@@ -71,6 +71,8 @@
     $$('#productSubnav [data-catalog-key]').forEach(btn=>{
       btn.hidden=!logged()||!acl().canViewCatalog(btn.dataset.catalogKey);
     });
+    const documentos=$('#adminSubnav [data-nav="administracion_documentos"]');
+    if(documentos)documentos.hidden=!logged()||!(acl().isAdmin()||acl().has('administracion.documentos.ver'));
     $$('#adminSubnav [data-admin-catalog]').forEach(btn=>{
       btn.hidden=!logged()||!acl().canViewCatalog(btn.dataset.adminCatalog);
     });
@@ -210,6 +212,7 @@
     // Una comprobación transitoria del estado no debe congelar menús de una sesión JWT válida.
     if(!logged())return false;
     if(section==='usuarios'||section==='perfiles')return acl().isAdmin();
+    if(section==='administracion_documentos')return acl().isAdmin()||acl().has('administracion.documentos.ver');
     if(section.startsWith('ubicaciones.'))
       return LOCATION_CATALOGS.has(section.split('.')[1])&&acl().isAdmin();
     if(section==='proveedores_productos')return acl().canSeeSubmodule('proveedores_productos');
@@ -266,7 +269,7 @@
       const active=button.dataset.nav===section || (section.startsWith('catalogos.')&&
         button.dataset.nav===categoryOrigin) ||
         (section.startsWith('ubicaciones.')&&button.dataset.nav==='administracion') ||
-        ((section==='usuarios'||section==='perfiles')&&button.dataset.nav==='administracion') ||
+        ((section==='usuarios'||section==='perfiles'||section==='administracion_documentos')&&button.dataset.nav==='administracion') ||
         (section==='proveedores_productos'&&button.dataset.nav==='proveedores') ||
         (section==='compras_ordenes'&&button.dataset.nav==='compras') ||
         (section==='clientes_listado'&&button.dataset.nav==='clientes') ||
@@ -285,7 +288,7 @@
       $('#ubicacionesSubnav').hidden=false;
       $('#toggleUbicacionesSubnav').setAttribute('aria-expanded','true');
     }else if(section.startsWith('catalogos.'))expand(categoryOrigin);
-    else if(['administracion','usuarios','perfiles'].includes(section))expand('administracion');
+    else if(['administracion','administracion_documentos','usuarios','perfiles'].includes(section))expand('administracion');
     else if(section==='productos'||section==='listas_precios')expand('productos');
     else if(section==='proveedores'||section==='proveedores_productos')expand('proveedores');
     else if(section==='compras_ordenes')expand('compras');
@@ -304,7 +307,10 @@
     $('#workspaceTitle').textContent=titleFor(section);
     $('#workspaceDescription').textContent='Gestiona los registros y operaciones disponibles para tu perfil.';
     $('#newButton').hidden=true;$('#exportButton').hidden=true;
-    if(section==='usuarios'){
+    if(section==='administracion_documentos'){
+      $('#workspaceDescription').textContent='Catálogo de documentos DTE e internos, permisos, códigos SII y vigencia.';
+      window.RutaHDTiposDocumentos?.mount(content);
+    }else if(section==='usuarios'){
       $('#workspaceDescription').textContent='Cuentas, roles, permisos y bajas lógicas de usuarios.';
       window.RutaHDUsuarios?.mount(content);
     }else if(section==='perfiles'){

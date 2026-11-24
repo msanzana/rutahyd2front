@@ -1,0 +1,40 @@
+/* Ruta H&D V63 · Catálogo Documentos */
+.hd-documents{display:flex;flex-direction:column;gap:14px;min-width:0}
+.hd-doc-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.hd-doc-heading h2{font-size:1.27rem;margin:0;color:var(--text-primary,#241b37)}
+.hd-doc-heading p{margin:5px 0 0;font-size:.85rem;color:var(--text-muted,#675f78)}
+.hd-doc-filter{display:grid;grid-template-columns:minmax(210px,1fr) minmax(135px,220px) minmax(120px,170px) auto;gap:10px;align-items:end}
+.hd-doc-filter input,.hd-doc-filter select,
+.hd-doc-field input,.hd-doc-field select{min-width:0;width:100%;box-sizing:border-box;min-height:39px;padding:9px 11px;border-radius:9px;border:1px solid #c8bedb;background:var(--surface,#fff);font:inherit;color:inherit}
+.hd-doc-status{font-size:.78rem;color:#5b4b75;min-height:18px;margin:0}
+.hd-doc-table-scroll{overflow-x:auto;border:1px solid #ded5e8;border-radius:12px;background:var(--surface,#fff)}
+.hd-doc-table{min-width:980px;width:100%;border-collapse:collapse;font-size:.82rem}
+.hd-doc-table th{text-align:left;white-space:nowrap;background:#f5f0fa;color:#4d396c;padding:11px 12px;font-weight:700}
+.hd-doc-table td{padding:10px 12px;border-top:1px solid #ede8f3;white-space:normal}
+.hd-doc-table tr:hover td{background:#faf8fc}
+.hd-doc-table td:last-child,.hd-doc-table th:last-child{text-align:right}
+.hd-doc-pager{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:6px}
+.hd-doc-pager span{color:#70667e;font-size:.8rem;margin-right:auto}
+.hd-doc-pager button{min-height:32px;padding:4px 10px;border-radius:8px;border:1px solid #cec1e3;background:#fff;color:#5a387f;cursor:pointer}
+.hd-doc-pager button:disabled{opacity:.5;cursor:default}
+.hd-doc-pager button.is-current{background:#55318c;color:white;border-color:#55318c}
+dialog.hd-doc-modal[open]{position:fixed;inset:0;margin:auto;box-sizing:border-box;width:min(800px,calc(100vw - 24px));max-width:min(800px,calc(100vw - 24px));height:min(650px,calc(100dvh - 24px));max-height:calc(100dvh - 24px);padding:0;border:1px solid #d8ceea;border-radius:16px;box-shadow:0 24px 75px #2b174a44;background:white;color:#261c35;overflow:hidden}
+dialog.hd-doc-modal::backdrop{background:rgba(14,9,29,.60)}
+.hd-doc-form{display:flex;flex-direction:column;height:100%;min-height:0}
+.hd-doc-modal-head{display:flex;align-items:center;gap:12px;flex:0 0 auto;padding:15px 20px 12px;border-bottom:1px solid #e3daec;background:#f9f6fc;flex-wrap:wrap}
+.hd-doc-modal-head h2{font-size:1.22rem;margin:0;color:#432465}
+.hd-doc-modal-head p{font-size:.78rem;color:#70627e;margin:2px auto 0 0}
+.hd-doc-close{border:0;background:transparent;color:#5c4878;padding:6px 9px;border-radius:9px;cursor:pointer;order:3}
+.hd-doc-modal-scroll{flex:1;overflow-y:auto;padding:17px 20px;min-height:0}
+.hd-doc-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.hd-doc-field{display:flex;flex-direction:column;gap:5px;min-width:0;font-size:.84rem;font-weight:600;color:#433259}
+.hd-doc-field input:disabled,.hd-doc-field select:disabled{background:#f2eef7;color:#655b70}
+.hd-doc-help{grid-column:1/-1;color:#735883;font-size:.78rem;margin:0}
+.hd-doc-flags{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px 16px;border:1px solid #e3d8ef;border-radius:12px;margin-top:17px;padding:13px}
+.hd-doc-flags legend{font-weight:700;font-size:.84rem;color:#523579;padding:0 5px}
+.hd-doc-switch{display:flex;align-items:center;gap:9px;font-size:.83rem;font-weight:500;min-height:30px}
+.hd-doc-switch input{width:16px;height:16px;accent-color:#653c9a}
+.hd-doc-message{min-height:16px;color:#b5263e;font-size:.79rem;margin:5px 20px}
+.hd-doc-modal-footer{display:flex;gap:10px;justify-content:flex-end;padding:12px 18px;border-top:1px solid #e3daec;background:#fcfaff}
+@media(max-width:800px){.hd-doc-filter{grid-template-columns:1fr 1fr}.hd-doc-filter input{grid-column:1/-1}.hd-doc-filter button{justify-self:end}}
+@media(max-width:560px){.hd-doc-filter{grid-template-columns:1fr}.hd-doc-filter input{grid-column:auto}.hd-doc-grid,.hd-doc-flags{grid-template-columns:1fr}.hd-doc-modal-head,.hd-doc-modal-scroll{padding-left:12px;padding-right:12px}dialog.hd-doc-modal[open]{width:calc(100vw - 12px);height:calc(100dvh - 12px);max-height:calc(100dvh - 12px)}.hd-doc-heading .button{margin-left:auto}}
