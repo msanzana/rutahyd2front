@@ -41,3 +41,17 @@ dialog.hd-doc-modal::backdrop{background:rgba(14,9,29,.60)}
 
 /* V67 consultas */
 .hd-v67 .hd-doc-filter{grid-template-columns:repeat(auto-fit,minmax(145px,1fr));align-items:end}.hd-v67 .hd-doc-table{min-width:550px}.hd-v67 .hd-doc-pager button{width:34px;height:34px;padding:0;border-radius:50%}.hd-v67 .hd-doc-pager button.is-current{opacity:1}.hd-v67 .hd-v67-eye{display:inline-flex;align-items:center;justify-content:center;color:#7040a4}.hd-v67 .hd-v67-credit td{color:#a12645;background:#fff1f4}dialog.hd-v67[open]{width:min(1100px,calc(100vw - 24px));max-width:calc(100vw - 24px)}.hd-v67 .hd-doc-modal-scroll .hd-doc-pager{margin:10px 0}
+
+/* V68: barra completa, controles de tamaño limitado, sin expansión por columnas vacías. */
+.hd-documents .hd-doc-filter,.hd-v67 .hd-doc-filter{display:flex;flex-wrap:wrap;justify-content:flex-start;align-items:flex-end;gap:8px 12px;width:100%;min-width:0;box-sizing:border-box}
+.hd-documents .hd-doc-filter > .hd-doc-field,.hd-v67 .hd-doc-filter > .hd-doc-field{flex:0 1 180px;width:180px;max-width:100%;min-width:0}
+.hd-documents .hd-doc-filter > .hd-doc-field:has(input[type=search]),.hd-v67 .hd-doc-filter > .hd-doc-field:has(input[type=search]){flex-basis:280px;width:280px}
+.hd-v67 .hd-doc-filter > .hd-doc-field:has(select):nth-child(2){flex-basis:180px;width:180px}
+.hd-v67 .hd-doc-filter > .hd-doc-field:has(select):nth-child(2):has(option[value=""]:first-child){max-width:220px}
+.hd-documents .hd-doc-filter > .hd-doc-field:has(input[type=date]){flex-basis:150px;width:150px}
+.hd-documents .hd-doc-filter > input[type=search]{flex:0 1 280px;width:280px;max-width:100%}
+.hd-documents .hd-doc-filter > select{flex:0 1 180px;width:180px;max-width:100%}
+.hd-documents .hd-doc-filter input,.hd-documents .hd-doc-filter select{height:36px;min-height:36px;max-height:36px;padding:6px 10px;font-size:.85rem}
+.hd-documents .hd-doc-filter > button,.hd-v67 .hd-doc-filter > button{flex:0 0 auto;width:100px;min-width:100px;max-width:100%;height:36px;min-height:36px;padding:0 12px;box-sizing:border-box;align-self:flex-end;justify-self:auto}
+.hd-documents .hd-doc-heading > .button{flex:0 0 auto;width:auto;margin-left:auto;min-height:36px}
+@media(max-width:560px){.hd-documents .hd-doc-filter,.hd-v67 .hd-doc-filter{gap:8px}.hd-documents .hd-doc-filter > .hd-doc-field,.hd-v67 .hd-doc-filter > .hd-doc-field{flex-shrink:1}.hd-documents .hd-doc-filter > button{flex-shrink:0}}
