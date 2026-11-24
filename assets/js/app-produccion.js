@@ -73,7 +73,7 @@
     });
     const documentos=$('#adminSubnav [data-nav="administracion_documentos"]');
     if(documentos)documentos.hidden=!logged()||!(acl().isAdmin()||acl().has('administracion.documentos.ver'));
-    $('#adminSubnav [data-admin-catalog]').forEach(btn=>{
+    $$('#adminSubnav [data-admin-catalog]').forEach(btn=>{
       btn.hidden=!logged()||!acl().canViewCatalog(btn.dataset.adminCatalog);
     });
     $('#toggleProductSubnav').hidden=!logged();
