@@ -7,7 +7,7 @@ const fs=require('node:fs'),path=require('node:path');
 const root=path.join(__dirname,'..');
 const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 assert(html.includes('ordenes-compra-v55.js?v=20261123-v62'));
-assert(html.includes('catalogos-api.js?v=20261123-v62'));
+assert(html.includes('catalogos-api.js?v=20261124-v63'));
 const apiCode=fs.readFileSync(path.join(root,'assets/js/catalogos-api.js'),'utf8');
 assert(apiCode.includes("purchaseProductCosts: data=>send('/ordenes-compra/costos-productos','POST',data)"));
 (async()=>{
