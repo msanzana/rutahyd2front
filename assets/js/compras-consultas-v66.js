@@ -17,7 +17,7 @@ function mount(root,key){
   const create=el('button',key==='recepciones'?'+ Nueva recepción':'+ Nueva consolidación','button primary');create.type='button';create.dataset.action='nuevo-documento';create.onclick=()=>openNew();create.classList.add('hd-v70-new');form.append(create);
  }
  const warehouse=el('select'), state=el('select'), from=el('input'), to=el('input');
- const field=(title,input)=>{const l=el('label',title,'hd-doc-field');l.append(input);return l;};
+ let fieldSeq=0;const field=(title,input)=>{const l=el('label',title,'hd-doc-field');input.id=input.id||('hd-'+key+'-field-'+(++fieldSeq));input.setAttribute('aria-label',title);l.htmlFor=input.id;l.append(input);return l;};
  const option=(v,t)=>{const o=el('option',t);o.value=v;return o;};
  search.type='search';search.placeholder=key==='kardex'?'SKU o nombre':'Buscar registros';search.maxLength=120;
  form.append(field('Buscar',search));
@@ -50,7 +50,7 @@ function mount(root,key){
   const cancel=el('button','Cerrar','button ghost');cancel.type='button';cancel.onclick=close.onclick=()=>dialog.close();const save=el('button',key==='recepciones'?'Guardar recepción':'Guardar consolidación','button primary');save.type='button';save.disabled=true;save.title='Guardado pendiente de habilitación';footer.append(cancel,save);
   const docs=el('section',null,'hd-v70-docs'), docGrid=el('div',null,'hd-doc-grid'), docStatus=el('p',null,'hd-doc-status');
   const supplier=el('input');supplier.disabled=true;const order=el('input');order.disabled=true;
-  const docType=el('select'),depot=el('select');docType.append(option('','Seleccione documento'));depot.append(option('','Seleccione bodega'));
+  const docType=el('select'),depot=el('select');docType.id='hd-recepcion-documento-tipo';depot.id='hd-recepcion-bodega';docType.append(option('','Seleccione documento'));depot.append(option('','Seleccione bodega'));
   function typed(label,type='text'){const x=el('input');x.type=type;if(type==='number'){x.min='0';x.step='0.01';}return field(label,x);}
   docs.append(el('h3','Documento de compra'),docGrid,docStatus);
   docGrid.append(field('Orden de compra',order),field('Proveedor',supplier),field('Bodega de recepción',depot),field('Tipo de documento',docType),typed('Folio del documento'),typed('Fecha de emisión','date'),typed('Fecha de recepción','date'),typed('Monto neto','number'),typed('Monto exento','number'),typed('Impuestos','number'),typed('Total','number'));
