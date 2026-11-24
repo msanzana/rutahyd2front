@@ -56,6 +56,11 @@ function mount(root,key){
   const net=money('neto'),exempt=money('exento'),vat=money('iva',true),other=money('otros'),total=money('total',true),declared=money('total-documento'),difference=money('diferencia',true),receivedSubtotal=money('subtotal-recibido',true);
   const peso=x=>Math.max(0,Math.round(Number(x.value)||0));
   let receivedLines=[];
+  const validCost=x=>/^\d{1,11}(?:\.\d{1,4})?$/.test(x.value)&&Number.isFinite(Number(x.value))&&Number(x.value)>=0;
+  const validQty=x=>/^\d{1,9}(?:\.\d{1,3})?$/.test(x.value)&&Number(x.value)>=0;
+  function lineValue(line){return validQty(line.qty)&&validCost(line.cost)&&(Number(line.cost.value)>0||line.zero.checked)?Math.round(Number(line.qty.value)*Number(line.cost.value)):null;}
+  function updateLine(line){const hasQty=Number(line.qty.value)>0,valid=validCost(line.cost),zero=valid&&Number(line.cost.value)===0;line.zeroLabel.hidden=!zero;line.cost.setCustomValidity(!valid?'Ingrese un costo numérico no negativo con hasta cuatro decimales.':zero&&!line.zero.checked?'Confirme expresamente el costo cero.':'');line.qty.setCustomValidity(line.qty.value!==''&&!validQty(line.qty)?'Ingrese una cantidad no negativa con hasta tres decimales.':'');line.cost.setAttribute('aria-invalid',String(hasQty&&(!valid||(zero&&!line.zero.checked))));line.subtotal.textContent=lineValue(line)===null?'—':String(lineValue(line));line.delta.textContent=valid?(Number(line.cost.value)-line.ocCost).toFixed(4):'—';line.delta.style.color=valid&&Number(line.cost.value)!==line.ocCost?'#a12645':'';}
+
   function recalc(){
    const doc=docType.selectedOptions[0];const taxCode=Number(doc?.dataset.sii||0);
    const exemptDoc=[32,34,38,41].includes(taxCode);
@@ -64,15 +69,15 @@ function mount(root,key){
    difference.value=declared.value===''?'':String(peso(declared)-peso(total));
    difference.style.color=difference.value!==''&&Number(difference.value)!==0?'#a12645':'';
    difference.style.fontWeight=difference.value!==''&&Number(difference.value)!==0?'700':'';
-   receivedSubtotal.value=receivedLines.length?String(receivedLines.reduce((sum,line)=>sum+Math.round(Math.max(0,Number(line.qty.value)||0)*line.cost),0)):'';
-   docStatus.textContent=exemptDoc&&peso(net)>0?'Documento exento: ingrese el importe en Monto exento, no en Monto neto afecto.':declared.value!==''&&Number(difference.value)!==0?'El total declarado por el proveedor presenta diferencias.':'';
+   const incomplete=receivedLines.some(line=>Number(line.qty.value)>0&&lineValue(line)===null);receivedSubtotal.value=receivedLines.length&&!incomplete?String(receivedLines.reduce((sum,line)=>sum+(lineValue(line)??0),0)):'';
+   docStatus.textContent=exemptDoc&&peso(net)>0?'Documento exento: ingrese el importe en Monto exento, no en Monto neto afecto.':declared.value!==''&&Number(difference.value)!==0?'El total declarado por el proveedor presenta diferencias.':incomplete?'Complete y valide el costo del documento de cada producto recibido.':'';
   }
   for(const input of [net,exempt,other,declared])input.addEventListener('input',recalc);
   docType.addEventListener('change',recalc);
   docs.append(el('h3','Documento de compra'),docGrid,docStatus);
-  docs.append(el('p','El total del proveedor se conserva por separado. El subtotal recibido es referencial, valorizado al costo de la orden de compra; no sustituye los importes tributarios.','hd-doc-help'));
+  docs.append(el('p','El total del proveedor se conserva por separado. El subtotal recibido se calcula con el costo neto real del documento. El costo OC es solo una referencia. No sustituye los importes tributarios.','hd-doc-help'));
   recalc();
-  docGrid.append(field('Orden de compra',order),field('Proveedor',supplier),field('Bodega de recepción',depot),field('Tipo de documento',docType),typed('Folio del documento'),typed('Fecha de emisión','date'),typed('Fecha de recepción','date'),field('Monto neto afecto',net),field('Monto exento',exempt),field('IVA calculado (19 %)',vat),field('Otros impuestos',other),field('Total calculado',total),field('Total documento proveedor',declared),field('Diferencia del documento',difference),field('Subtotal recibido a costo OC',receivedSubtotal));
+  docGrid.append(field('Orden de compra',order),field('Proveedor',supplier),field('Bodega de recepción',depot),field('Tipo de documento',docType),typed('Folio del documento'),typed('Fecha de emisión','date'),typed('Fecha de recepción','date'),field('Monto neto afecto',net),field('Monto exento',exempt),field('IVA calculado (19 %)',vat),field('Otros impuestos',other),field('Total calculado',total),field('Total documento proveedor',declared),field('Diferencia del documento',difference),field('Subtotal recibido a costo documento',receivedSubtotal));
   const observations=el('textarea');observations.rows=3;docGrid.append(field('Observaciones y diferencias',observations));
   async function catalogs(){
    try{
@@ -92,8 +97,8 @@ function mount(root,key){
     order.value=d.numero??d.id;supplier.value=d.proveedor_nombre??'';
     const head=el('h3','Orden de compra '+(d.numero??d.id)),general=el('p',(d.proveedor_nombre??'')+' · '+(d.solicitada_en??'')+' · '+(d.estado_nombre??'ACTIVA'));
     const box=el('div',null,'hd-doc-table-scroll'),pt=el('table',null,'hd-doc-table'),ph=el('thead'),pr=el('tr'),pb=el('tbody');
-    for(const k of ['SKU','Producto','Cantidad solicitada','Costo neto','Subtotal'])pr.append(el('th',k));if(key==='recepciones')pr.append(el('th','Cantidad recibida'),el('th','Subtotal recibido'));ph.append(pr);
-    for(const row of d.detalles||[]){const tr=el('tr');for(const k of ['sku','nombre','cantidad','costo_unitario_neto','subtotal_neto'])tr.append(el('td',row[k]??'—'));if(key==='recepciones'){const td=el('td'),qty=el('input');qty.type='number';qty.min='0';qty.step='0.001';qty.setAttribute('aria-label','Cantidad recibida '+(row.sku??row.nombre));td.append(qty);tr.append(td);const subtotal=el('td','0');tr.append(subtotal);const cost=Math.max(0,Number(row.costo_unitario_neto)||0);receivedLines.push({qty,cost});qty.addEventListener('input',()=>{subtotal.textContent=String(Math.round(Math.max(0,Number(qty.value)||0)*cost));recalc();});}pb.append(tr);}
+    for(const k of ['SKU','Producto','Cantidad solicitada','Costo unitario OC','Subtotal OC'])pr.append(el('th',k));if(key==='recepciones')pr.append(el('th','Cantidad recibida'),el('th','Costo unitario neto documento'),el('th','Subtotal recibido'),el('th','Diferencia costo unitario'));ph.append(pr);
+    for(const row of d.detalles||[]){const tr=el('tr');for(const k of ['sku','nombre','cantidad','costo_unitario_neto','subtotal_neto'])tr.append(el('td',row[k]??'—'));if(key==='recepciones'){const td=el('td'),qty=el('input');qty.type='number';qty.min='0';qty.step='0.001';qty.setAttribute('aria-label','Cantidad recibida '+(row.sku??row.nombre));td.append(qty);tr.append(td);const ct=el('td'),cost=el('input');cost.type='number';cost.min='0';cost.step='0.0001';cost.required=true;cost.placeholder='Costo documento';cost.setAttribute('aria-label','Costo documento '+(row.sku??row.nombre));const zero=el('input');zero.type='checkbox';zero.setAttribute('aria-label','Confirmar costo cero '+(row.sku??row.nombre));const zeroLabel=el('label','Confirmar costo cero','hd-doc-field');zeroLabel.prepend(zero);zeroLabel.hidden=true;ct.append(cost,zeroLabel);tr.append(ct);const subtotal=el('td','—'),delta=el('td','—');tr.append(subtotal,delta);const line={qty,cost,zero,zeroLabel,subtotal,delta,ocCost:Math.max(0,Number(row.costo_unitario_neto)||0)};receivedLines.push(line);for(const control of [qty,cost,zero])control.addEventListener('input',()=>{updateLine(line);recalc();});updateLine(line);}pb.append(tr);}
     pt.append(ph,pb);box.append(pt);detail.replaceChildren(head,general,box);recalc();
     if(key==='consolidaciones')detail.append(el('p','Los productos mostrados corresponden a la orden, no a recepciones consolidadas. La selección de recepciones elegibles requiere habilitar el servicio de consolidación.','hd-doc-help'));
    }catch(e){if(token===detailSeq&&dialog.open)detail.replaceChildren(el('p',e.userMessage||'No fue posible consultar la orden.'));}
