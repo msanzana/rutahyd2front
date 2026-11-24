@@ -9,7 +9,7 @@ const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 for(const tag of [
  'ordenes-compra-v55.js?v=20261123-v62',
  'ordenes-compra-v55.css?v=20261123-v59',
- 'catalogos-api.js?v=20261123-v62'
+ 'catalogos-api.js?v=20261124-v63'
 ])assert(html.includes(tag),'Falta versión de caché '+tag);
 const api=fs.readFileSync(path.join(root,'assets/js/catalogos-api.js'),'utf8');
 assert(api.includes("calculatePurchaseOrder: data=>send('/ordenes-compra/calcular','POST',data)"));
