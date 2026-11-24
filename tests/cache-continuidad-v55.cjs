@@ -12,9 +12,9 @@ for(const tag of [
   'clientes-v50.css?v=20261123-v52',
   'ordenes-compra-v55.js?v=20261123-v62',
   'ordenes-compra-v55.css?v=20261123-v59',
-  'app-produccion.js?v=20261123-v62',
+  'app-produccion.js?v=20261124-v63',
   'buscador-productos-v39.js?v=20261123-v55',
-  'catalogos-api.js?v=20261123-v62',
+  'catalogos-api.js?v=20261124-v63',
   'listados-ui.js?v=20261123-v55'
 ])assert(html.includes(tag),'Falta etiqueta de recurso: '+tag);
 assert(!html.includes('catalogos.js')&&!html.includes('app.js?v='));
