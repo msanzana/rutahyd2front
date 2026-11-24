@@ -144,7 +144,7 @@
   q.setAttribute('aria-label','Buscar documentos');
   const family=select([['','Todas las familias'],...familias.map(x=>[x,labels[x]])],'');
   family.setAttribute('aria-label','Filtrar familia');
-  const status=select([['','Todos los estados'],['1','Activos'],['0','Inactivos']],'');
+  const status=select([['1','Activos'],['0','Historial de inactivos']],'1');
   status.setAttribute('aria-label','Filtrar estado');
   const submit=button('Buscar',()=>{page=1;void load();},'button primary');
   search.append(q,family,status,submit);
