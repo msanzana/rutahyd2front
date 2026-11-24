@@ -38,3 +38,6 @@ dialog.hd-doc-modal::backdrop{background:rgba(14,9,29,.60)}
 .hd-doc-modal-footer{display:flex;gap:10px;justify-content:flex-end;padding:12px 18px;border-top:1px solid #e3daec;background:#fcfaff}
 @media(max-width:800px){.hd-doc-filter{grid-template-columns:1fr 1fr}.hd-doc-filter input{grid-column:1/-1}.hd-doc-filter button{justify-self:end}}
 @media(max-width:560px){.hd-doc-filter{grid-template-columns:1fr}.hd-doc-filter input{grid-column:auto}.hd-doc-grid,.hd-doc-flags{grid-template-columns:1fr}.hd-doc-modal-head,.hd-doc-modal-scroll{padding-left:12px;padding-right:12px}dialog.hd-doc-modal[open]{width:calc(100vw - 12px);height:calc(100dvh - 12px);max-height:calc(100dvh - 12px)}.hd-doc-heading .button{margin-left:auto}}
+
+/* V67 consultas */
+.hd-v67 .hd-doc-filter{grid-template-columns:repeat(auto-fit,minmax(145px,1fr));align-items:end}.hd-v67 .hd-doc-table{min-width:550px}.hd-v67 .hd-doc-pager button{width:34px;height:34px;padding:0;border-radius:50%}.hd-v67 .hd-doc-pager button.is-current{opacity:1}.hd-v67 .hd-v67-eye{display:inline-flex;align-items:center;justify-content:center;color:#7040a4}.hd-v67 .hd-v67-credit td{color:#a12645;background:#fff1f4}dialog.hd-v67[open]{width:min(1100px,calc(100vw - 24px));max-width:calc(100vw - 24px)}.hd-v67 .hd-doc-modal-scroll .hd-doc-pager{margin:10px 0}
