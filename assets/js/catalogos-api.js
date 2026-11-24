@@ -466,6 +466,18 @@
       }
       return send('/productos?'+query.toString());
     },
+    documentTypes: ({page=1,buscar='',familia='',activo=''}={})=>{
+      const query=new URLSearchParams({page:String(page),buscar:String(buscar).slice(0,120)});
+      if(familia)query.set('familia',familia);
+      if(activo!==''&&activo!==null)query.set('activo',String(activo));
+      return send('/tipos-documentos?'+query.toString());
+    },
+    documentType: documentId=>send('/tipos-documentos/'+id(documentId)),
+    createDocumentType: data=>send('/tipos-documentos','POST',data),
+    updateDocumentType: (documentId,data)=>
+      send('/tipos-documentos/'+id(documentId),'PUT',data),
+    setDocumentTypeActive: (documentId,activo)=>
+      send('/tipos-documentos/'+id(documentId)+'/estado','PATCH',{activo:Number(activo)}),
     orderStates: ()=>send('/ordenes-compra/estados'),
     orderSuppliers: (page=1,buscar='')=>send('/ordenes-compra/proveedores?'+
       new URLSearchParams({page:String(page),buscar:String(buscar).slice(0,120)})),
