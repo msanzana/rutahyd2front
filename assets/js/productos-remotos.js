@@ -420,6 +420,7 @@
     priceIntro.append(el('span','','Costo neto: '+money(cost)),
       el('span','product-detail-average-cost','Costo promedio ponderado: '+
         (producto.costoPromedioPonderado==null?'—':averageMoney(producto.costoPromedioPonderado))),
+      el('span','','Stock mínimo: '+(producto.stockMinimo??'—')),
       el('span','','Margen mínimo línea: '+Number(producto.minimoMargenPrecioVenta||0).toFixed(2)+' %'));
     pricesSection.append(priceIntro);
     const prices=Array.isArray(producto.precios)?producto.precios:[];
@@ -592,6 +593,8 @@
     const cost=inputField('Costo neto (CLP)','number',costFields,producto?.costoNeto??'0',
       {required:true,min:0,step:0.0001});
     cost.id='productoCostoNeto';
+    const stockMinimo=inputField('Stock mínimo','number',costFields,producto?.stockMinimo??'0',{required:true,min:0,max:99999999999.9999,step:0.0001});
+    stockMinimo.id='productoStockMinimo';
     const average=inputField('Costo promedio ponderado (CLP)','number',costFields,
       producto ? (producto.costoPromedioPonderado??'') : '0.0000',
       {min:0,step:0.0001});
@@ -859,6 +862,7 @@
           precioNeto:prices.find(item=>item.list.es_base)?.price.value||'0'
         },
         costoNeto:cost.value,
+        stockMinimo:stockMinimo.value,
         precios:prices.filter(item=>item.row.isConnected&&item.list.id!==null).map(item=>({
           listaPrecioId:Number(item.list.id),
           activo:item.list.es_base?true:item.active.checked,
