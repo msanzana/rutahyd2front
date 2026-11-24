@@ -14,7 +14,7 @@ function mount(root,key){
  const panel=el('section',null,'surface-panel hd-documents hd-v67'), heading=el('div',null,'hd-doc-heading'), search=el('input'), form=el('form',null,'hd-doc-filter'), status=el('p',null,'hd-doc-status'), top=el('div',null,'hd-doc-pager'), bottom=el('div',null,'hd-doc-pager');
  heading.append(el('h2',({facturas:'Documentos de compra',recepciones:'Recepciones',consolidaciones:'Consolidaciones',stock:'Stock',kardex:'Kardex por producto',libro:'Libro de compras'})[key]));
  if(['recepciones','consolidaciones'].includes(key)){
-  const create=el('button',key==='recepciones'?'+ Nueva recepción':'+ Nueva consolidación','button primary');create.type='button';create.dataset.action='nuevo-documento';create.onclick=()=>openNew();heading.append(create);
+  const create=el('button',key==='recepciones'?'+ Nueva recepción':'+ Nueva consolidación','button primary');create.type='button';create.dataset.action='nuevo-documento';create.onclick=()=>openNew();create.classList.add('hd-v70-new');form.append(create);
  }
  const warehouse=el('select'), state=el('select'), from=el('input'), to=el('input');
  const field=(title,input)=>{const l=el('label',title,'hd-doc-field');l.append(input);return l;};
@@ -24,7 +24,7 @@ function mount(root,key){
  if(key==='kardex'){warehouse.append(option('','Seleccione bodega'));form.append(field('Bodega',warehouse));}
  if(['facturas','recepciones','consolidaciones'].includes(key)){state.append(option('','Todos los estados'));for(const v of ['ACTIVA','PENDIENTE','RECEPCIONADA','DESCUADRADA','FINALIZADA','CONSOLIDADA'])state.append(option(v,v));form.append(field('Estado',state));}
  from.type=to.type='date';if(key==='facturas')form.append(field('Desde',from),field('Hasta',to));
- const submit=el('button','Buscar','button primary');submit.type='submit';form.append(submit);
+ const submit=el('button','Buscar','button primary');submit.type='submit';form.append(submit);const newButton=form.querySelector('.hd-v70-new');if(newButton)form.append(newButton);
  const scroll=el('div',null,'hd-doc-table-scroll'), table=el('table',null,'hd-table hd-doc-table'), head=el('thead'), tr=el('tr'), body=el('tbody');
  Object.values(fields).forEach(name=>tr.append(el('th',name)));if(key==='kardex')tr.append(el('th','Acciones'));head.append(tr);table.append(head,body);scroll.append(table);
  status.setAttribute('role','status');panel.append(heading,form,status,top,scroll,bottom);root.replaceChildren(panel);
@@ -40,25 +40,41 @@ function mount(root,key){
  function openNew(){
   const api=window.RutaHDApiCatalogos;
   const name=key==='recepciones'?'Nueva recepción':'Nueva consolidación';
-  const dialog=el('dialog',null,'hd-doc-modal hd-v67'),wrap=el('div',null,'hd-doc-form'),header=el('div',null,'hd-doc-modal-head'),close=el('button','×','hd-doc-close'),content=el('div',null,'hd-doc-modal-scroll'),footer=el('div',null,'hd-doc-modal-footer');
+  const dialog=el('dialog',null,'hd-doc-modal hd-v67 hd-v70-dialog'),wrap=el('div',null,'hd-doc-form'),header=el('div',null,'hd-doc-modal-head'),close=el('button','×','hd-doc-close'),content=el('div',null,'hd-doc-modal-scroll'),footer=el('div',null,'hd-doc-modal-footer');
   close.type='button';close.setAttribute('aria-label','Cerrar');header.append(el('h2',name),close);
   const info=el('p','Seleccione una orden de compra activa para revisar sus antecedentes.'),filter=el('form',null,'hd-doc-filter'),query=el('input'),submit=el('button','Buscar','button primary'),msg=el('p',null,'hd-doc-status'),p1=el('div',null,'hd-doc-pager'),p2=el('div',null,'hd-doc-pager'),tableWrap=el('div',null,'hd-doc-table-scroll'),t=el('table',null,'hd-doc-table'),h=el('thead'),hr=el('tr'),tb=el('tbody'),detail=el('section',null,'hd-documents');
   query.type='search';query.placeholder='Número, proveedor o RUT';query.maxLength=120;submit.type='submit';filter.append(field('Buscar orden de compra',query),submit);
   const code=el('input');code.value='Automático';code.disabled=true;
-  for(const k of ['Seleccionar','Orden de compra','Proveedor','Fecha','Total'])hr.append(el('th',k));h.append(hr);t.append(h,tb);tableWrap.append(t);
+  for(const k of ['Orden de compra','Proveedor','Fecha','Total','Acciones'])hr.append(el('th',k));h.append(hr);t.append(h,tb);tableWrap.append(t);
   const notice=el('p','La selección es una consulta preliminar. El guardado y cierre del documento aún no están habilitados.','hd-doc-help');notice.setAttribute('role','note');
-  const cancel=el('button','Cerrar','button ghost');cancel.type='button';cancel.onclick=close.onclick=()=>dialog.close();footer.append(cancel);
-  content.append(field('Código',code),info,filter,msg,p1,tableWrap,p2,detail,notice);wrap.append(header,content,footer);dialog.append(wrap);document.body.append(dialog);dialog.addEventListener('close',()=>dialog.remove(),{once:true});dialog.showModal();
+  const cancel=el('button','Cerrar','button ghost');cancel.type='button';cancel.onclick=close.onclick=()=>dialog.close();const save=el('button',key==='recepciones'?'Guardar recepción':'Guardar consolidación','button primary');save.type='button';save.disabled=true;save.title='Guardado pendiente de habilitación';footer.append(cancel,save);
+  const docs=el('section',null,'hd-v70-docs'), docGrid=el('div',null,'hd-doc-grid'), docStatus=el('p',null,'hd-doc-status');
+  const supplier=el('input');supplier.disabled=true;const order=el('input');order.disabled=true;
+  const docType=el('select'),depot=el('select');docType.append(option('','Seleccione documento'));depot.append(option('','Seleccione bodega'));
+  function typed(label,type='text'){const x=el('input');x.type=type;if(type==='number'){x.min='0';x.step='0.01';}return field(label,x);}
+  docs.append(el('h3','Documento de compra'),docGrid,docStatus);
+  docGrid.append(field('Orden de compra',order),field('Proveedor',supplier),field('Bodega de recepción',depot),field('Tipo de documento',docType),typed('Folio del documento'),typed('Fecha de emisión','date'),typed('Fecha de recepción','date'),typed('Monto neto','number'),typed('Monto exento','number'),typed('Impuestos','number'),typed('Total','number'));
+  const observations=el('textarea');observations.rows=3;docGrid.append(field('Observaciones y diferencias',observations));
+  async function catalogs(){
+   try{
+    const all=async fn=>{let out=[],n=1,d;do{d=await fn(n++);out.push(...(d.data||d.items||[]));}while(n<=Math.min(100,d.last_page||1));return out;};
+    const [types,warehouses]=await Promise.all([all(page=>api.documentTypes({page,activo:1})),all(page=>api.resources('bodegas',page,'',25))]);if(!dialog.open)return;
+    for(const d of types)if(Number(d.documento_compra)===1&&d.familia!=='INTERNO')docType.append(option(String(d.id),d.nombre));
+    for(const b of warehouses)if(Number(b.activo??1)===1)depot.append(option(String(b.id),b.nombre));
+   }catch(e){if(dialog.open)docStatus.textContent=e.userMessage||'No fue posible cargar los tipos de documento o las bodegas.';}
+  }
+  content.append(field('Código',code),info,filter,msg,p1,tableWrap,p2);if(key==='recepciones')content.append(docs);content.append(detail,notice);wrap.append(header,content,footer);dialog.append(wrap);document.body.append(dialog);dialog.addEventListener('close',()=>dialog.remove(),{once:true});dialog.showModal();if(key==='recepciones')void catalogs();
   let estadoId=null,seq=0,detailSeq=0,selected=null,appliedQuery='';
   async function showOrder(item){
    selected=String(item.id);const token=++detailSeq;detail.replaceChildren(el('p','Cargando orden de compra…'));
    try{
     const d=await api.getPurchaseOrder(item.id);if(token!==detailSeq||!dialog.open)return;
     if(d.estado_codigo!=='ACTIVA'){detail.replaceChildren(el('p','La orden ya no está activa. Actualice la búsqueda.'));return;}
+    order.value=d.numero??d.id;supplier.value=d.proveedor_nombre??'';
     const head=el('h3','Orden de compra '+(d.numero??d.id)),general=el('p',(d.proveedor_nombre??'')+' · '+(d.solicitada_en??'')+' · '+(d.estado_nombre??'ACTIVA'));
     const box=el('div',null,'hd-doc-table-scroll'),pt=el('table',null,'hd-doc-table'),ph=el('thead'),pr=el('tr'),pb=el('tbody');
-    for(const k of ['SKU','Producto','Cantidad solicitada','Costo neto','Subtotal'])pr.append(el('th',k));ph.append(pr);
-    for(const row of d.detalles||[]){const tr=el('tr');for(const k of ['sku','nombre','cantidad','costo_unitario_neto','subtotal_neto'])tr.append(el('td',row[k]??'—'));pb.append(tr);}
+    for(const k of ['SKU','Producto','Cantidad solicitada','Costo neto','Subtotal'])pr.append(el('th',k));if(key==='recepciones')pr.append(el('th','Cantidad recibida'));ph.append(pr);
+    for(const row of d.detalles||[]){const tr=el('tr');for(const k of ['sku','nombre','cantidad','costo_unitario_neto','subtotal_neto'])tr.append(el('td',row[k]??'—'));if(key==='recepciones'){const td=el('td'),qty=el('input');qty.type='number';qty.min='0';qty.step='0.001';qty.setAttribute('aria-label','Cantidad recibida '+(row.sku??row.nombre));td.append(qty);tr.append(td);}pb.append(tr);}
     pt.append(ph,pb);box.append(pt);detail.replaceChildren(head,general,box);
     if(key==='consolidaciones')detail.append(el('p','Los productos mostrados corresponden a la orden, no a recepciones consolidadas. La selección de recepciones elegibles requiere habilitar el servicio de consolidación.','hd-doc-help'));
    }catch(e){if(token===detailSeq&&dialog.open)detail.replaceChildren(el('p',e.userMessage||'No fue posible consultar la orden.'));}
@@ -68,7 +84,7 @@ function mount(root,key){
    try{
     if(!estadoId){const states=await api.orderStates();estadoId=(states.items||[]).find(s=>s.codigo==='ACTIVA')?.id;if(!estadoId)throw Error('Estado activo no disponible');}
     const d=await api.purchaseOrders({page:n,buscar:appliedQuery,estadoId});if(token!==seq||!dialog.open)return;
-    for(const item of d.data||[]){if(item.estado_codigo!=='ACTIVA')continue;const tr=el('tr'),td=el('td'),radio=el('input');radio.type='radio';radio.name='oc-seleccion';radio.setAttribute('aria-label','Seleccionar orden '+(item.numero??item.id));radio.checked=selected===String(item.id);radio.onchange=()=>void showOrder(item);td.append(radio);tr.append(td);for(const k of ['numero','proveedor_nombre','solicitada_en','total_bruto'])tr.append(el('td',item[k]??'—'));tb.append(tr);}
+    for(const item of d.data||[]){if(item.estado_codigo!=='ACTIVA')continue;const tr=el('tr'),td=el('td'),pick=el('button',selected===String(item.id)?'Seleccionada':'Seleccionar','button ghost hd-v70-pick');pick.type='button';pick.setAttribute('aria-label','Seleccionar orden '+(item.numero??item.id));pick.setAttribute('aria-pressed',String(selected===String(item.id)));pick.onclick=()=>{for(const b of tb.querySelectorAll('.hd-v70-pick')){b.textContent='Seleccionar';b.setAttribute('aria-pressed','false');}pick.textContent='Seleccionada';pick.setAttribute('aria-pressed','true');void showOrder(item);};for(const k of ['numero','proveedor_nombre','solicitada_en','total_bruto'])tr.append(el('td',item[k]??'—'));td.append(pick);tr.append(td);tb.append(tr);}
     if(!tb.children.length){const tr=el('tr'),td=el('td','No hay órdenes activas para esta búsqueda.');td.colSpan=5;tr.append(td);tb.append(tr);}
     msg.textContent=(d.total??0)+' órdenes activas';for(const p of [p1,p2])pager(p,n,Math.max(1,d.last_page||1),d.total??0,loadOrders);
    }catch(e){if(token===seq&&dialog.open)msg.textContent=e.userMessage||'No fue posible consultar las órdenes activas.';}
