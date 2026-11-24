@@ -269,6 +269,11 @@
   }
   const api = Object.freeze({
     configure, authenticate, login, logout, signOut, status,
+    purchaseConsultation: (key,page=1,buscar='')=>{
+      const stock=['stock','kardex'].includes(key);
+      if(!stock&&!['facturas','recepciones','consolidaciones','libro'].includes(key))throw Error('Consulta no válida');
+      return send((stock?'/inventario-consultas/':'/compras-consultas/')+key+'?'+new URLSearchParams({page:String(page),buscar}));
+    },
     profile: () => send('/perfil'),
     userTheme: () => send('/perfil/preferencias'),
     saveTheme: tema_interfaz => {

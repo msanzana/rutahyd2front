@@ -7,7 +7,8 @@
   const $$=(selector,scope=document)=>[...scope.querySelectorAll(selector)];
   const api=()=>window.RutaHDApiCatalogos;
   const acl=()=>window.RutaHDAccesos;
-  const SERVICES=Object.freeze({
+  const CONSULTAS={"compras_facturas":"Facturas de compra","compras_recepciones":"Recepciones","compras_consolidaciones":"Consolidaciones","compras_libro":"Libro de compras","bodega_stock":"Stock","bodega_kardex":"Kardex"};
+  const SERVICES=Object.freeze({ ...CONSULTAS,
     administracion:'Administración',administracion_documentos:'Documentos',compras:'Compras',compras_ordenes:'Órdenes de Compra',ventas:'Ventas',
     proveedores:'Proveedores',proveedores_productos:'Proveedores productos',clientes:'Clientes',
     clientes_listado:'Listado de clientes',productos:'Productos',listas_precios:'Listas de precios',
@@ -56,6 +57,10 @@
     if(purchaseToggle)purchaseToggle.hidden=!logged()||!acl().has('compras.gestionar');
     const purchaseList=$('#purchaseSubnav [data-nav="compras_ordenes"]');
     if(purchaseList)purchaseList.hidden=!logged()||!acl().has('compras.gestionar');
+    for(const key of Object.keys(CONSULTAS)){
+      const b=$('.sidebar [data-nav="'+key+'"]');if(b)b.hidden=!allowed(key);
+    }
+    $('#toggleBodegaSubnav').hidden=!logged()||!acl().has('inventario.gestionar');
     const clientsToggle=$('#toggleClientSubnav');
     if(clientsToggle)clientsToggle.hidden=!logged();
     const clientsList=$('#clientSubnav [data-nav="clientes_listado"]');
@@ -180,6 +185,7 @@
   }
   function collapse(){
     $('#productSubnav').hidden=true;
+    $('#bodegaSubnav').hidden=true;$('#toggleBodegaSubnav').setAttribute('aria-expanded','false');
     $('#adminSubnav').hidden=true;
     $('#providerSubnav').hidden=true;
     const purchase=$('#purchaseSubnav'),purchaseToggle=$('#togglePurchaseSubnav');
@@ -198,6 +204,7 @@
   function expand(which){
     for(const [key,container,toggle] of [
       ['productos','#productSubnav','#toggleProductSubnav'],
+      ['bodega','#bodegaSubnav','#toggleBodegaSubnav'],
       ['administracion','#adminSubnav','#toggleAdminSubnav'],
       ['proveedores','#providerSubnav','#toggleProviderSubnav'],
       ['compras','#purchaseSubnav','#togglePurchaseSubnav'],
@@ -216,7 +223,8 @@
     if(section.startsWith('ubicaciones.'))
       return LOCATION_CATALOGS.has(section.split('.')[1])&&acl().isAdmin();
     if(section==='proveedores_productos')return acl().canSeeSubmodule('proveedores_productos');
-    if(section==='compras_ordenes')return acl().has('compras.gestionar');
+    if(section==='compras_ordenes'||section.startsWith('compras_')&&CONSULTAS[section])return acl().has('compras.gestionar');
+    if(section.startsWith('bodega_')&&CONSULTAS[section])return acl().has('inventario.gestionar');
     if(section==='proveedores')return acl().canSeeSubmodule('proveedores_listado');
     if(section==='clientes_listado')return acl().isAdmin()||acl().has('clientes.gestionar');
     if(section==='productos'||section==='listas_precios')return acl().canSeeSubmodule('productos_listado');
@@ -231,7 +239,7 @@
   const mainSubmenus=Object.freeze({
     administracion:'#adminSubnav',compras:'#purchaseSubnav',
     proveedores:'#providerSubnav',clientes:'#clientSubnav',
-    productos:'#productSubnav'
+    productos:'#productSubnav',bodega:'#bodegaSubnav'
   });
   function firstMainSubitem(section){
     const container=mainSubmenus[section]&&$(mainSubmenus[section]);
@@ -271,7 +279,7 @@
         (section.startsWith('ubicaciones.')&&button.dataset.nav==='administracion') ||
         ((section==='usuarios'||section==='perfiles'||section==='administracion_documentos')&&button.dataset.nav==='administracion') ||
         (section==='proveedores_productos'&&button.dataset.nav==='proveedores') ||
-        (section==='compras_ordenes'&&button.dataset.nav==='compras') ||
+        (section.startsWith('compras_')&&button.dataset.nav==='compras') || (section.startsWith('bodega_')&&button.dataset.nav==='bodega') ||
         (section==='clientes_listado'&&button.dataset.nav==='clientes') ||
         (section==='listas_precios'&&button.dataset.nav==='productos');
       button.classList.toggle('active',active);
@@ -291,7 +299,8 @@
     else if(['administracion','administracion_documentos','usuarios','perfiles'].includes(section))expand('administracion');
     else if(section==='productos'||section==='listas_precios')expand('productos');
     else if(section==='proveedores'||section==='proveedores_productos')expand('proveedores');
-    else if(section==='compras_ordenes')expand('compras');
+    else if(section.startsWith('compras_'))expand('compras');
+    else if(section.startsWith('bodega_'))expand('bodega');
     else if(section==='clientes'||section==='clientes_listado')expand('clientes');
     else collapse();
     if(!isHome)renderWorkspace(section);
@@ -307,7 +316,10 @@
     $('#workspaceTitle').textContent=titleFor(section);
     $('#workspaceDescription').textContent='Gestiona los registros y operaciones disponibles para tu perfil.';
     $('#newButton').hidden=true;$('#exportButton').hidden=true;
-    if(section==='administracion_documentos'){
+    if(CONSULTAS[section]){
+      $('#workspaceDescription').textContent='Consulta de registros comerciales e inventario.';
+      window.RutaHDComprasConsultas.mount(content,section.split('_')[1]);
+    }else if(section==='administracion_documentos'){
       $('#workspaceDescription').textContent='Catálogo de documentos DTE e internos, permisos, códigos SII y vigencia.';
       window.RutaHDTiposDocumentos?.mount(content);
     }else if(section==='usuarios'){
@@ -394,15 +406,15 @@
       geoExpand.setAttribute('aria-expanded',String(!target.hidden));
       return;
     }
-    const exp=event.target.closest('#toggleProductSubnav,#toggleAdminSubnav,#toggleProviderSubnav,#toggleClientSubnav,#togglePurchaseSubnav');
+    const exp=event.target.closest('#toggleProductSubnav,#toggleAdminSubnav,#toggleProviderSubnav,#toggleClientSubnav,#togglePurchaseSubnav,#toggleBodegaSubnav');
     if(exp){
       event.preventDefault();
       if(!logged())return;
-      const type=exp.id==='togglePurchaseSubnav'?'compras':
+      const type=exp.id==='toggleBodegaSubnav'?'bodega':exp.id==='togglePurchaseSubnav'?'compras':
         exp.id==='toggleProductSubnav'?'productos':
         exp.id==='toggleAdminSubnav'?'administracion':
         exp.id==='toggleClientSubnav'?'clientes':'proveedores';
-      const id=type==='compras'?'#purchaseSubnav':
+      const id=type==='bodega'?'#bodegaSubnav':type==='compras'?'#purchaseSubnav':
         type==='productos'?'#productSubnav':
         type==='administracion'?'#adminSubnav':
         type==='clientes'?'#clientSubnav':'#providerSubnav';
