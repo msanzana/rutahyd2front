@@ -110,7 +110,31 @@
       if(!active.size&&dialog?.open)dialog.close();
     },wait);
   }
+  // Lecturas del formulario de recepción: estado local, sin poner un
+  // diálogo modal encima de los controles de salida. Las escrituras
+  // mantienen el overlay bloqueante y sus tickets independientes.
+  const localReads=new WeakMap();
+  function localRead(owner,text){
+    let entry=localReads.get(owner);
+    if(!entry){
+      const status=document.createElement('p');
+      status.className='hd-receipt-loading';status.setAttribute('role','status');
+      status.setAttribute('aria-live','polite');
+      entry={status,tickets:new Map()};localReads.set(owner,entry);
+      owner.querySelector('.hd-doc-modal-head')?.append(status);
+    }
+    const ticket=++serial;entry.tickets.set(ticket,text);
+    const paint=()=>{
+      entry.status.hidden=!entry.tickets.size;
+      entry.status.textContent=entry.tickets.size?[...entry.tickets.values()].at(-1):'';
+    };
+    paint();let closed=false;
+    return ()=>{if(closed)return;closed=true;entry.tickets.delete(ticket);paint();};
+  }
   function start({path='',method='GET',message=''}={}){
+    const owner=document.querySelector('dialog[data-hd-receipt-window][open]');
+    if(owner&&String(method).toUpperCase()==='GET')
+      return localRead(owner,String(message||label(path,method)).slice(0,120));
     // Es intencional que el popup no aparezca para lecturas instantáneas:
     // evita parpadeos en listas y catálogos cacheados.
     const ticket=++serial;

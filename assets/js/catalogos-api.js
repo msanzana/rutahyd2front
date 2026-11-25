@@ -123,7 +123,6 @@
         credentials:'same-origin',
         cache:'no-store'
       });
-    } finally { clearTimeout(timer); }
     if (!response.ok) {
       const error = new Error('Error HTTP ' + response.status);
       error.status = response.status;
@@ -154,7 +153,11 @@
     if (!(response.headers.get('Content-Type') || '').includes('application/json')) {
       throw new Error('La API no devolvió una respuesta JSON válida.');
     }
-    return response.json();
+    return await response.json();
+    } catch (e) {
+      if(e?.name==='AbortError'){const err=new Error('La solicitud excedió el tiempo de espera.');err.userMessage=method==='GET'?'No se pudo completar la consulta. Puede cerrar la ventana y volver a intentarlo.':'No se confirmó el resultado de la operación. Revise el estado antes de volver a intentarlo.';throw err;}
+      throw e;
+    } finally { clearTimeout(timer); }
   }
 
   async function send(path,method='GET',body){

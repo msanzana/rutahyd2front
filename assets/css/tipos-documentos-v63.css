@@ -76,3 +76,9 @@ dialog .hd-doc-modal-head p{order:4;flex:0 0 100%;margin:0}
 dialog .hd-doc-modal-head > button.hd-doc-close{order:3}
 dialog .hd-oc-modal-heading > :not(button){min-width:0;overflow-wrap:anywhere}
 dialog .crud-close,dialog .button.crud-close{width:36px;height:36px;min-height:36px;min-width:36px;border-radius:11px;font-size:26px;line-height:1}
+
+/* V85 · Carga de lectura local: no bloquea los botones de salida. */
+dialog[data-hd-receipt-window] .hd-doc-modal-head .hd-receipt-loading{order:4;flex:0 0 100%;font-size:.78rem;color:#65428b;margin:0;min-height:0}
+dialog[data-hd-receipt-window] .hd-receipt-loading[hidden]{display:none!important}
+dialog[data-hd-receipt-window] .hd-receipt-loading:not([hidden])::before{content:"";display:inline-block;width:10px;height:10px;border:2px solid #e2d4f1;border-top-color:#7040a4;border-radius:50%;margin-right:6px;vertical-align:middle;animation:hd-loader-spin .8s linear infinite}
+dialog[data-hd-receipt-window] .hd-doc-modal-head{position:relative;z-index:2}
