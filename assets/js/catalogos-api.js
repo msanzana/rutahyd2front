@@ -269,6 +269,9 @@
   }
   const api = Object.freeze({
     configure, authenticate, login, logout, signOut, status,
+    createReceiptDraft: datos=>send('/recepciones-borrador','POST',datos),
+    getReceiptDraft: receiptId=>send('/recepciones-borrador/'+id(receiptId)),
+    updateReceiptDraft: (receiptId,datos)=>send('/recepciones-borrador/'+id(receiptId),'PUT',datos),
     purchaseConsultation: (key,page=1,buscar='',filters={})=>{
       const stock=['stock','kardex'].includes(key);
       if(!stock&&!['facturas','recepciones','consolidaciones','libro'].includes(key))throw Error('Consulta no válida');
