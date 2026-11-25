@@ -1,0 +1,83 @@
+/* Ruta H&D V89 — densidad transversal, sin zoom ni cambios funcionales.
+   Se carga al final. Mantiene colores, estados, switches y foco existentes. */
+:root{--hd-dense-gap:8px;--hd-dense-control:32px;--hd-dense-cell-y:5px;--hd-dense-cell-x:8px}
+body{line-height:1.4}
+.app-shell .page{max-width:none;padding:12px clamp(12px,1.5vw,24px) 8px}
+.app-shell .topbar{height:56px;min-height:56px;padding-inline:clamp(12px,1.5vw,24px);gap:10px}
+.app-shell .topbar-left,.app-shell .topbar-right{gap:10px}
+.app-shell .topbar .search{height:34px}
+.app-shell .profile{gap:7px;padding-left:10px}
+.app-shell .avatar{width:34px;height:34px}
+.app-shell .sidebar{min-height:0;padding:12px 9px 10px}
+.app-shell .sidebar .brand{gap:9px;padding:0 6px 10px}
+.app-shell .brand-logo{width:48px;height:48px;flex-shrink:0}
+.app-shell .brand strong{font-size:18px}
+.app-shell .sidebar .sidebar-heading{margin:12px 9px 6px}
+.app-shell .sidebar .nav{gap:2px;min-height:0;overflow-y:auto;overflow-x:hidden}
+.app-shell .sidebar .nav-link,.app-shell .sidebar [data-nav="cuentas_corrientes"].nav-link{min-height:34px;padding:6px 9px;gap:8px;font-size:13px;line-height:1.35}
+.app-shell .sidebar .nav-link .icon{width:17px;height:17px}
+.app-shell .sidebar .nav-expand{min-height:34px}
+.app-shell .sidebar .nav .nav-sublink{padding:5px 9px!important;min-height:28px;font-size:12px;line-height:1.35}
+.app-shell .sidebar .hd-menu-finder{padding:6px;margin:4px 4px 0}
+.app-shell .hd-menu-finder-input,.app-shell #menuQuickSearch{min-height:30px;height:30px}
+.app-shell .sidebar-footer{padding:8px 9px;line-height:1.35}
+.app-shell .workspace-header{gap:10px;margin:6px 0 12px}
+.app-shell .workspace-header h1{font-size:clamp(20px,2vw,26px);line-height:1.2;margin-bottom:4px}
+.app-shell .workspace-header p{font-size:12px;line-height:1.4;margin-bottom:0}
+.app-shell .hero{padding:18px 22px}
+.app-shell .hero h1{font-size:clamp(23px,2.5vw,34px);margin-bottom:6px}
+.app-shell .hero p{margin-bottom:10px}
+.app-shell :is(.stats-grid,.module-grid,.overview-grid,.inform-grid){gap:9px}
+.app-shell .home-heading{margin:14px 0 8px}
+.app-shell .home-heading h2{font-size:19px}
+.app-shell .module-grid .module-card{min-height:94px;padding:10px 12px}
+.app-shell #officialModuleGrid .module-card{padding-right:23px}
+.app-shell .stat-card,#workspaceContent .stat-card,#workspaceContent .module-card{padding:9px 11px}
+.app-shell .stat-card strong{font-size:23px}
+.app-shell :is(.module-icon,.stat-icon){width:34px;height:34px}
+.app-shell .activity-item{padding-block:7px;gap:8px}
+.app-shell .surface-panel,#workspaceContent .surface-panel{padding:10px 12px;gap:7px;border-radius:12px}
+.app-shell .table-panel{padding:0}
+#workspaceContent .surface-panel .panel-heading,.app-shell .panel-heading{margin-bottom:6px;gap:8px}
+#workspaceContent .surface-panel h2,.app-shell .panel-heading h3{font-size:17px;line-height:1.25}
+.app-shell .table-panel-top,.app-shell .table-footer{padding:9px 12px}
+#workspaceContent :is(.workspace-actions,.normalized-toolbar,.official-search-bar,.supplier-search-bar,.hd-customers-search,.hd-oc-toolbar,.hd-oc-inline-search,.hd-doc-filter,.hd-search-toolbar,.hd-export-toolbar){gap:6px;margin-block:5px}
+#workspaceContent .hd-documents{gap:8px}
+#workspaceContent .hd-doc-heading{gap:8px}
+#workspaceContent .hd-doc-heading h2{font-size:18px}
+#workspaceContent .hd-advanced-panel{padding:8px 10px;gap:6px}
+#workspaceContent .hd-advanced-grid{gap:6px 10px}
+#workspaceContent .hd-documents .hd-doc-filter input,#workspaceContent .hd-documents .hd-doc-filter select,#workspaceContent .hd-documents .hd-doc-filter > button,#workspaceContent .hd-search-toolbar>.button{height:var(--hd-dense-control);max-height:none}
+.app-shell .button, #workspaceContent .button,dialog:not(#loginDialog) .button{min-height:var(--hd-dense-control);padding:5px 10px;gap:6px;font-size:12px;line-height:1.3}
+#workspaceContent :is(.normalized-toolbar,.workspace-actions,.official-search-bar,.supplier-search-bar,.hd-customers-search,.hd-oc-inline-search) :is(input[type=search],select),#workspaceContent .hd-documents .hd-doc-filter :is(input,select),#workspaceContent .hd-search-toolbar input{min-height:var(--hd-dense-control);padding:5px 8px;font-size:13px;line-height:1.35}
+#workspaceContent :is(.catalog-table,.normalized-table,.official-table,.supplier-products-table,.data-table,.hd-doc-table,.hd-customers-table,.hd-oc-table) :is(th,td),#productosRealesListado .product-index-table :is(th,td),dialog:not(#loginDialog) :is(.catalog-table,.hd-doc-table,.hd-lookup-table,.hd-oc-table) :is(th,td){padding:var(--hd-dense-cell-y) var(--hd-dense-cell-x)!important;font-size:12px;line-height:1.35;vertical-align:middle}
+#workspaceContent .product-data-pill{padding:2px 6px;margin-block:1px;font-size:11px}
+#workspaceContent .hd-page-top{margin:3px 0 5px!important;padding:4px 6px!important}
+#workspaceContent .list-pagination,.hd-doc-pager{gap:5px;padding-block:3px}
+.hd-numbered-pagination .hd-page-button,.hd-v67 .hd-doc-pager button,.hd-doc-pager button{min-height:28px;width:30px;height:30px;padding:0 5px;border-radius:50%}
+.hd-numbered-pagination .hd-page-button.hd-page-arrow{width:auto;min-width:30px;padding-inline:7px}
+#workspaceContent .list-icon-action,dialog:not(#loginDialog) .list-icon-action{min-width:28px;min-height:28px;width:30px;height:30px;padding:5px;margin-block:0}
+dialog:not(#loginDialog) :is(.crud-heading,.official-editor-heading,.product-editor-heading,.supplier-dialog-header,.hd-doc-modal-head,.hd-oc-modal-heading,.hd-lookup-head,.product-gallery-header,.modal-heading){padding:9px 13px;gap:7px}
+dialog:not(#loginDialog) :is(.crud-heading,.official-editor-heading,.product-editor-heading,.supplier-dialog-header,.hd-doc-modal-head,.hd-oc-modal-heading,.hd-lookup-head) h2{font-size:18px;line-height:1.25}
+dialog:not(#loginDialog) :is(.crud-fields,.official-editor-grid,.product-editor-section,.supplier-dialog-form,.hd-doc-modal-scroll,.hd-oc-modal-body,.hd-lookup-shell,.modal-body,.supplier-mix-content){padding:10px 13px;gap:8px}
+dialog:not(#loginDialog) :is(.crud-form-grid,.official-editor-grid,.hd-doc-grid,.hd-oc-fields,.hd-oc-identity,.hd-oc-totals,.location-chain,.supplier-barcode-form,.product-editor-form){gap:7px 10px}
+dialog:not(#loginDialog) :is(.field,.crud-field,.supplier-field,.hd-doc-field,.location-field,.hd-customer-identity-field){gap:3px;font-size:12px;line-height:1.35}
+dialog:not(#loginDialog) :is(.field,.crud-field,.supplier-field,.hd-doc-field,.location-field,.hd-customer-identity-field) :is(input:not([type=checkbox]):not([type=radio]):not([type=file]):not([type=range]):not([type=color]),select),dialog:not(#loginDialog) .hd-oc-details .hd-oc-table input,dialog:not(#loginDialog) .hd-v70-dialog td input[type=number],dialog:not(#loginDialog) .hd-lookup-filterbar input{min-height:var(--hd-dense-control);padding:5px 8px;font-size:13px;line-height:1.35}
+dialog:not(#loginDialog) :is(.field,.crud-field,.supplier-field,.hd-doc-field) textarea{min-height:56px;padding:6px 8px;font-size:13px;line-height:1.4}
+dialog:not(#loginDialog) :is(.hd-doc-flags,.hd-oc-details,.hd-customer-prices,.supplier-mix-provider-block,.supplier-mix-stat,.supplier-mix-saved-block){padding:8px 10px;margin-block:7px;gap:7px}
+dialog:not(#loginDialog) :is(.crud-footer,.official-editor-actions,.product-editor-actions,.supplier-dialog-actions,.hd-doc-modal-footer,.hd-oc-actions,.hd-lookup-footer,.supplier-mix-footer,.modal-footer){padding:8px 12px;gap:7px}
+dialog:not(#loginDialog) :is(.crud-close,.hd-doc-close,.hd-oc-close){width:36px;height:36px;min-width:36px;min-height:36px;padding:0}
+@media(min-width:961px){.app-shell{grid-template-columns:210px minmax(0,1fr)}}
+@media(max-width:760px),(pointer:coarse){
+ :root{--hd-dense-control:40px;--hd-dense-cell-y:6px}
+ .app-shell .page{padding:10px}
+ .app-shell .topbar{padding-inline:10px}
+ .app-shell .sidebar .nav-link,.app-shell .sidebar [data-nav="cuentas_corrientes"].nav-link,.app-shell .sidebar .nav-expand{min-height:44px}
+ .app-shell .sidebar .nav .nav-sublink{min-height:40px}
+ .app-shell .button,#workspaceContent .button,dialog:not(#loginDialog) .button{min-height:44px}
+ #workspaceContent .hd-documents .hd-doc-filter > button,#workspaceContent .hd-search-toolbar>.button{height:44px;min-height:44px}
+ #workspaceContent .list-icon-action,dialog:not(#loginDialog) .list-icon-action{width:36px;height:36px}
+ .hd-numbered-pagination .hd-page-button,.hd-v67 .hd-doc-pager button,.hd-doc-pager button{width:36px;height:36px;min-height:36px}
+ dialog:not(#loginDialog) :is(.crud-heading,.official-editor-heading,.product-editor-heading,.supplier-dialog-header,.hd-doc-modal-head,.hd-oc-modal-heading,.hd-lookup-head,.product-gallery-header,.modal-heading, .crud-fields,.official-editor-grid,.product-editor-section,.supplier-dialog-form,.hd-doc-modal-scroll,.hd-oc-modal-body,.hd-lookup-shell,.modal-body,.supplier-mix-content){padding-inline:10px}
+ dialog:not(#loginDialog) :is(.field,.crud-field,.supplier-field,.hd-doc-field,.location-field) :is(input:not([type=checkbox]):not([type=radio]):not([type=file]),select,textarea){font-size:16px}
+}
