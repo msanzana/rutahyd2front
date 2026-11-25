@@ -1,0 +1,18 @@
+/* V96 · geometría de paginación unificada. No cambia navegación ni datos. */
+:root{--hd-page-size:30px;--hd-page-gap:6px}
+.hd-numbered-pagination,.hd-numbered-pagination .hd-page-numbers,.hd-doc-pager{align-items:center;gap:var(--hd-page-gap)}
+.hd-numbered-pagination .hd-page-button,.hd-doc-pager button{
+ box-sizing:border-box!important;display:inline-flex!important;align-items:center;justify-content:center;
+ flex:0 0 auto!important;min-height:var(--hd-page-size)!important;height:var(--hd-page-size)!important;max-height:var(--hd-page-size)!important;
+ margin:0!important;padding:0!important;line-height:1!important;font-size:12px!important;font-variant-numeric:tabular-nums;
+ vertical-align:middle;white-space:nowrap
+}
+.hd-numbered-pagination .hd-page-button:not(.hd-page-arrow),.hd-doc-pager button{
+ width:var(--hd-page-size)!important;min-width:var(--hd-page-size)!important;max-width:var(--hd-page-size)!important;aspect-ratio:1 / 1;border-radius:50%!important
+}
+.hd-numbered-pagination .hd-page-button.hd-page-arrow{
+ width:auto!important;min-width:76px!important;max-width:none!important;aspect-ratio:auto;padding-inline:10px!important;border-radius:999px!important
+}
+.hd-numbered-pagination .hd-page-ellipsis,.hd-doc-pager i{display:inline-flex;align-items:center;justify-content:center;height:var(--hd-page-size);line-height:1;font-style:normal}
+.hd-numbered-pagination .hd-page-button:focus-visible,.hd-doc-pager button:focus-visible{outline:2px solid #a679d5;outline-offset:2px}
+@media(max-width:760px),(pointer:coarse){:root{--hd-page-size:40px;--hd-page-gap:6px}.hd-numbered-pagination .hd-page-button.hd-page-arrow{min-width:80px!important}}
