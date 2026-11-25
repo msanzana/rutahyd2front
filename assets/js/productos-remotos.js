@@ -353,6 +353,41 @@
     result.appendChild(footer);
     message('');
   }
+  function stockQuantity(v){
+    if(v===null||v===undefined)return '—';
+    const m=String(v).match(/^(-?)(\d+)(?:\.(\d+))?$/);
+    if(!m)return String(v);
+    const decimals=(m[3]||'').replace(/0+$/,'');
+    return m[1]+m[2].replace(/\B(?=(\d{3})+(?!\d))/g,'.')+(decimals?','+decimals:'');
+  }
+  function warehouseStock(producto,editor=false){
+    const section=el('section',editor?'product-editor-wide hd98-stock':'product-detail-section product-detail-wide hd98-stock');
+    section.append(el('h3','','Existencias por bodega'));
+    const data=producto.existencias;
+    if(!data||!Array.isArray(data.bodegas)||!data.totales){
+      section.append(el('p','product-detail-empty','No se pudo obtener el desglose de inventario. No se debe interpretar como stock cero.'));
+      return section;
+    }
+    const fields=[['disponible','Disponible'],['transito','En tránsito'],['comprometido','Comprometido'],['cantidad_fisica','Existencia física']];
+    const table=el('table','product-detail-table hd98-stock-table'),head=el('thead'),hr=el('tr'),body=el('tbody'),foot=el('tfoot'),fr=el('tr');
+    for(const label of ['Bodega',...fields.map(x=>x[1])]){const th=el('th','',label);th.scope='col';hr.append(th);}
+    head.append(hr);
+    for(const stock of data.bodegas){
+      const row=el('tr'),name=el('td','',stock.bodega);
+      if(!stock.activo)name.append(el('span','hd98-inactive','Inactiva'));
+      row.append(name);
+      for(const [key] of fields)row.append(el('td','hd98-quantity hd98-'+key,stockQuantity(stock[key])));
+      body.append(row);
+    }
+    if(!data.bodegas.length){const tr=el('tr'),td=el('td','','No hay bodegas registradas para consultar.');td.colSpan=5;tr.append(td);body.append(tr);}
+    const total=el('th','','Total general');total.scope='row';fr.append(total);
+    for(const [key] of fields)fr.append(el('td','hd98-quantity hd98-'+key,stockQuantity(data.totales[key])));
+    foot.append(fr);table.append(head,body,foot);
+    const scroll=el('div','product-detail-table-scroll');scroll.append(table);section.append(scroll);
+    section.append(el('p','hd98-stock-note','Solo lectura · Disponible para venta; tránsito pendiente de consolidación; comprometido reservado. Existencia física incluye estos tres saldos.'));
+    if(producto.stock!=null&&Number(producto.stock)!==0)section.append(el('p','hd98-stock-note hd98-stock-legacy','Inventario anterior de la presentación principal: '+stockQuantity(producto.stock)+'. Se informa por separado y no se suma al stock operativo.'));
+    return section;
+  }
   async function detailProduct(id){
     const producto=await api().getProduct(id);
     // Compatibilidad con API anterior: el listado tiene nombres pero GET individual
@@ -398,7 +433,7 @@
     item(summary,'Unidades por envase',producto.presentacion?.unidadesPorEnvase??'—');
     item(summary,'Tipo de impuesto',Number(producto.presentacion?.tasaIva)===0?'Exento':'Afecto');
     item(summary,'IVA',producto.presentacion?.tasaIva!=null?producto.presentacion.tasaIva+' %':'—');
-    item(summary,'Stock en bodegas · lectura',producto.stock??'0');
+    item(summary,'Existencia física total',stockQuantity(producto.existencias?.totales?.cantidad_fisica));
     info.append(summary);content.append(info);
     const classification=el('section','product-detail-section');
     classification.append(el('h3','','Clasificación del producto'));
@@ -412,7 +447,7 @@
            'Asignado · ID '+String(categoryId));
       item(taxonomy,label,labelValue);
     }
-    classification.append(taxonomy);content.append(classification);
+    classification.append(taxonomy);content.append(classification,warehouseStock(producto));
     const pricesSection=el('section','product-detail-section product-detail-wide');
     pricesSection.append(el('h3','','Precios por lista'));
     const cost=Number(producto.costoNeto||0);
@@ -757,9 +792,7 @@
       }
     });
     refreshSelector();
-    if(producto)form.appendChild(el('p','catalog-footnote',
-      'Presentación principal ID '+(producto.presentacion?.id??'sin asignar')+
-      ' · Existencias actuales: '+producto.stock+' (solo lectura).'));
+    if(producto)form.append(warehouseStock(producto,true));
     const barcodeHeading=el('h3','product-editor-section','Códigos de barras de venta');
     form.appendChild(barcodeHeading);
     form.appendChild(el('p','catalog-footnote product-editor-wide',
