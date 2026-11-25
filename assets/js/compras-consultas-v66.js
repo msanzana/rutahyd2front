@@ -170,7 +170,7 @@ function mount(root,key){
    const payload={orden_compra_id:Number(selected),bodega_id:Number(depot.value),documento_id:Number(docType.value),folio:folio.value.trim(),fecha_documento:emision.value,fecha_recepcion:fechaRec.value,neto:net.value,exento:exempt.value,otros:other.value,total_informado:declared.value,observaciones:observations.value,detalles};
    if(editId)payload.version_borrador=loadedDraft.recepcion.version_borrador;
    saving=true;save.disabled=cancel.disabled=close.disabled=true;notice.textContent='Guardando recepción…';feedback.hidden=false;feedback.textContent='Guardando recepción…';
-   try{const result=editId?await api.updateReceiptDraft(editId,payload):await api.createReceiptDraft(payload);if(!result?.id)throw Error('No se recibió el código de la recepción. Consulte el listado antes de reintentar.');dialog.close();page=1;void load(true);void reviewReceipt({id:result.id});}
+   try{const result=editId?await api.updateReceiptDraft(editId,payload):await api.createReceiptDraft(payload);if(!result?.id)throw Error('No se recibió el código de la recepción. Consulte el listado antes de reintentar.');dialog.close();page=1;void reviewReceipt({id:result.id});void load(true);}
    catch(e){fail(e.userMessage||e.message||'No fue posible guardar la recepción.');}
    finally{saving=false;save.disabled=!orderReady;cancel.disabled=close.disabled=false;}
   };
@@ -212,11 +212,11 @@ function mount(root,key){
    const pending=(d.saldos_oc||[]);content.append(el('h3','Saldo pendiente de la orden'),el('p',pending.length?pending.length+' líneas mantienen saldo pendiente. Una entrega parcial no es por sí sola una diferencia documental.':'Sin saldo pendiente.'));
 
    if(d.cierre_habilitado){
-    const msg=el('p','','hd-doc-status'),confirm=el('button','Confirmar recepción','button primary'),accept=el('input'),reason=el('textarea');
+    const msg=el('p','','hd-receipt-feedback'),confirm=el('button','Confirmar recepción','button primary'),accept=el('input'),reason=el('textarea');
     confirm.type='button';accept.type='checkbox';reason.rows=3;reason.maxLength=1000;const hasDif=(d.diferencias||[]).length>0;
     if(hasDif){content.append(field('Acepto guardar la recepción descuadrada',accept),field('Motivo de aceptación de diferencias',reason));}
     else content.append(el('p','La recepción se guardará como Recepcionada.','hd-doc-help'));
-    content.append(msg);footer.append(confirm);
+    msg.setAttribute('role','alert');footer.prepend(msg);footer.append(confirm);
     // UUID conservado en el diálogo para reintentos de una respuesta perdida.
     const token=typeof crypto.randomUUID==='function'?crypto.randomUUID():Array.from(crypto.getRandomValues(new Uint8Array(16)),(b,i)=>((i===6?(b&15)|64:i===8?(b&63)|128:b).toString(16).padStart(2,'0'))).join('').replace(/^(.{8})(.{4})(.{4})(.{4})(.{12})$/,'$1-$2-$3-$4-$5');
     confirm.onclick=async()=>{
