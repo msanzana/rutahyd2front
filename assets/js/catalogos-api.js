@@ -269,6 +269,12 @@
   }
   const api = Object.freeze({
     configure, authenticate, login, logout, signOut, status,
+    consolidationCandidates: oc=>send('/consolidaciones-recepcion/candidatas/'+id(oc)),
+    createConsolidation: datos=>send('/consolidaciones-recepcion','POST',datos),
+    getConsolidation: cid=>send('/consolidaciones-recepcion/'+id(cid)),
+    updateConsolidation: (cid,datos)=>send('/consolidaciones-recepcion/'+id(cid),'PUT',datos),
+    confirmConsolidation: (cid,datos)=>send('/consolidaciones-recepcion/'+id(cid)+'/confirmar','POST',datos),
+    cancelConsolidation: (cid,datos)=>send('/consolidaciones-recepcion/'+id(cid)+'/anular','POST',datos),
     confirmReceiptDraft: (receiptId,datos)=>send('/recepciones-borrador/'+id(receiptId)+'/confirmar','POST',datos),
     reviewReceiptDraft: receiptId=>send('/recepciones-borrador/'+id(receiptId)+'/revision'),
     cancelReceiptDraft: (receiptId,datos)=>send('/recepciones-borrador/'+id(receiptId)+'/anular','POST',datos),
