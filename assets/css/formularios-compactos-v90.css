@@ -1,0 +1,40 @@
+/* V90 · densidad de formularios. Conserva estructuras, campos, validación y navegación. */
+:root{--hd-form-control:30px;--hd-form-pad-y:7px;--hd-form-pad-x:12px;--hd-form-gap-y:5px;--hd-form-gap-x:9px;--hd-form-font:13px}
+dialog:not(#loginDialog) :is(.product-editor-form,.official-editor-grid,.crud-fields,.supplier-dialog-form,.location-editor-shell,.location-editor-grid,.hd-doc-modal-scroll,.hd-lookup-shell,.hd-oc-form-scroll,.supplier-mix-content){gap:var(--hd-form-gap-y) var(--hd-form-gap-x)}
+dialog:not(#loginDialog) :is(.product-editor-form,.official-editor-grid,.crud-fields,.supplier-dialog-form,.location-editor-shell,.hd-doc-modal-scroll,.supplier-mix-content){padding:var(--hd-form-pad-y) var(--hd-form-pad-x)}
+dialog:not(#loginDialog) :is(.crud-heading,.official-editor-heading,.product-editor-heading,.supplier-dialog-header,.location-editor-heading,.hd-doc-modal-head,.hd-lookup-head,.modal-heading){padding:6px 12px;gap:4px}
+dialog:not(#loginDialog) :is(.crud-heading,.official-editor-heading,.product-editor-heading,.supplier-dialog-header,.location-editor-heading,.hd-doc-modal-head,.hd-oc-modal-heading,.hd-lookup-head) h2{font-size:17px;line-height:1.25;margin-block:0}
+dialog:not(#loginDialog) :is(.crud-heading,.official-editor-heading,.product-editor-heading,.supplier-dialog-header,.location-editor-heading,.hd-doc-modal-head,.hd-oc-modal-heading,.hd-lookup-head) p{margin-block:2px;font-size:12px;line-height:1.35}
+dialog:not(#loginDialog) :is(.crud-form-grid,.hd-doc-grid,.hd-oc-identity,.hd-oc-fields,.hd-oc-totals,.location-chain,.supplier-barcode-form,.product-barcode-row,.hd-customer-identity-row){gap:var(--hd-form-gap-y) var(--hd-form-gap-x)}
+dialog:not(#loginDialog) :is(.field,.crud-field,.hd-doc-field,.supplier-field,.location-field,.hd-record-id-field,.hd-customer-identity-field,.official-customer-price-field){gap:2px;min-width:0;line-height:1.3}
+dialog:not(#loginDialog) :is(.field,.crud-field,.supplier-field,.location-field,.hd-record-id-field,.hd-customer-identity-field,.official-customer-price-field)>span{font-size:12px;line-height:1.3;min-height:0;margin:0}
+dialog:not(#loginDialog) :is(.field,.crud-field,.hd-doc-field,.supplier-field,.location-field,.hd-record-id-field,.hd-customer-identity-field,.official-customer-price-field,.product-price-table,.hd-oc-details,.hd-v70-dialog) :is(input:not([type=checkbox]):not([type=radio]):not([type=file]):not([type=hidden]):not([type=range]):not([type=color]):not([type=button]):not([type=submit]),select:not(.hd-choice-native)){
+ min-height:var(--hd-form-control)!important;padding:4px 8px!important;font-size:var(--hd-form-font)!important;line-height:1.3!important;box-sizing:border-box
+}
+dialog.official-editor.crud-official-dialog .hd-customer-identity-field>input{height:var(--hd-form-control)!important;min-height:var(--hd-form-control)!important;border-radius:8px!important}
+dialog:not(#loginDialog) .hd-choice>input.hd-choice-search{min-height:var(--hd-form-control)!important;padding:4px 28px 4px 8px!important;font-size:var(--hd-form-font)!important;line-height:1.3!important}
+dialog:not(#loginDialog) .hd-choice .hd-choice-chevron{right:9px;font-size:18px}
+dialog:not(#loginDialog) :is(.field,.crud-field,.supplier-field,.hd-doc-field,.official-editor-grid,.product-editor-form,.hd-oc-form) textarea{min-height:48px!important;height:auto!important;padding:5px 8px!important;font-size:var(--hd-form-font)!important;line-height:1.35!important;resize:vertical}
+dialog:not(#loginDialog) :is(.product-editor-section,.official-editor-section,.hd-v70-docs,.hd-doc-flags,.hd-oc-details,.supplier-mix-provider-block,.hd-customer-prices,.location-chain,.supplier-barcode-form){margin-block:4px;padding:6px 9px;gap:var(--hd-form-gap-y) var(--hd-form-gap-x)}
+dialog:not(#loginDialog) .hd-v70-docs h3{margin:0 0 5px;font-size:14px}
+dialog.official-editor.crud-official-dialog .hd-customer-prices{margin:0 12px 8px;padding:8px 10px}
+dialog.official-editor.crud-official-dialog .hd-customer-prices-intro{margin:3px 0 6px}
+dialog.official-editor.crud-official-dialog .hd-customer-price-status{margin-top:6px;padding:4px 8px}
+dialog.official-editor.crud-official-dialog .supplier-location-section .location-chain{padding:6px 0 3px}
+dialog:not(#loginDialog) .product-editor-form>.catalog-footnote{padding:5px 8px;line-height:1.35;margin:0}
+dialog:not(#loginDialog) :is(.product-price-table,.hd-oc-table,.hd-doc-table) :is(th,td){padding:4px 7px!important;line-height:1.3}
+dialog:not(#loginDialog) .hd-oc-details-tools{margin-bottom:4px}
+dialog:not(#loginDialog) :is(.crud-footer,.official-editor-actions,.product-editor-actions,.supplier-dialog-actions,.location-editor-actions,.hd-doc-modal-footer,.hd-oc-actions,.hd-lookup-footer,.supplier-mix-footer){padding:6px 12px;gap:6px}
+dialog:not(#loginDialog) :is(.crud-footer,.official-editor-actions,.product-editor-actions,.supplier-dialog-actions,.location-editor-actions,.hd-doc-modal-footer,.hd-oc-actions,.hd-lookup-footer,.supplier-mix-footer) .button{min-height:var(--hd-form-control)!important;padding:4px 10px!important;font-size:12px;line-height:1.3}
+dialog.hd-oc-modal--editor .hd-oc-form > .hd-oc-actions{padding-block:6px!important}
+dialog:not(#loginDialog) .crud-supplier-dialog .supplier-status{padding-block:5px}
+dialog:not(#loginDialog) :is(.hd-doc-message,.hd-receipt-feedback,.location-editor-status){margin-block:3px;line-height:1.35}
+dialog:not(#loginDialog) .users-password-help{padding:7px 9px;line-height:1.4}
+dialog:not(#loginDialog) :is(.crud-close,.hd-doc-close,.hd-oc-close){min-width:36px;min-height:36px;width:36px;height:36px}
+@media(min-width:900px) and (pointer:fine){
+ dialog.hd-v70-dialog .hd-v70-docs .hd-doc-grid{grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+}
+@media(max-width:760px),(pointer:coarse){
+ :root{--hd-form-control:40px;--hd-form-font:16px;--hd-form-gap-y:7px;--hd-form-pad-x:10px}
+ dialog:not(#loginDialog) :is(.crud-footer,.official-editor-actions,.product-editor-actions,.supplier-dialog-actions,.location-editor-actions,.hd-doc-modal-footer,.hd-oc-actions,.hd-lookup-footer,.supplier-mix-footer) .button{min-height:44px!important}
+}
