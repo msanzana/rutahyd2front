@@ -269,6 +269,8 @@
   }
   const api = Object.freeze({
     configure, authenticate, login, logout, signOut, status,
+    reviewReceiptDraft: receiptId=>send('/recepciones-borrador/'+id(receiptId)+'/revision'),
+    cancelReceiptDraft: (receiptId,datos)=>send('/recepciones-borrador/'+id(receiptId)+'/anular','POST',datos),
     createReceiptDraft: datos=>send('/recepciones-borrador','POST',datos),
     getReceiptDraft: receiptId=>send('/recepciones-borrador/'+id(receiptId)),
     updateReceiptDraft: (receiptId,datos)=>send('/recepciones-borrador/'+id(receiptId),'PUT',datos),
