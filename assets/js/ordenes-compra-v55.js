@@ -46,7 +46,7 @@
    if(subtitle)heading.append(el('p',subtitle));
    head.append(heading);
    const close=el('button','×','hd-oc-close');
-   close.type='button';close.setAttribute('aria-label','Cerrar ventana');
+   close.type='button';close.setAttribute('aria-label','Cerrar ventana');close.title='Cerrar ventana';
    close.addEventListener('click',()=>dialog.close());
    head.append(close);box.append(head);dialog.append(box);
    document.body.append(dialog);

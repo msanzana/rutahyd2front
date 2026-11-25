@@ -98,7 +98,7 @@
    title.append(make('span','RUTA H&D · UBICACIONES','overline'),
      make('h2',(edit?'Editar ':'Nueva ')+TITLES[TYPES.indexOf(tipo)]),
      make('p','La estructura respeta país, región, provincia, comuna y ciudad.'));
-   title.append(button('×',()=>dlg.close(),'crud-close'));
+   const closeWindow=button('×',()=>dlg.close(),'crud-close');closeWindow.setAttribute('aria-label','Cerrar ventana');closeWindow.title='Cerrar ventana';title.append(closeWindow);
    shell.append(title);
    const grid=make('div',null,'location-editor-grid');
    window.RutaHDListUI?.recordCode(grid,record?.id??null);

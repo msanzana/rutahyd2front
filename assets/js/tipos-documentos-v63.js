@@ -42,8 +42,8 @@
   const head=elem('header',undefined,'hd-doc-modal-head');
   const h=elem('h2',edit?'Modificar documento':'Nuevo documento');
   head.append(h,elem('p','Catálogo de documentos de Ruta H&D y códigos del SII.'));
-  const close=button('Cerrar ventana',()=>dialog.close(),'hd-doc-close');
-  close.setAttribute('aria-label','Cerrar ventana');head.append(close);
+  const close=button('×',()=>dialog.close(),'hd-doc-close');
+  close.setAttribute('aria-label','Cerrar ventana');close.title='Cerrar ventana';head.append(close);
   const body=elem('div',undefined,'hd-doc-modal-scroll');
   const fields=elem('div',undefined,'hd-doc-grid');
   ui()?.recordCode?.(fields,record?.id??null);

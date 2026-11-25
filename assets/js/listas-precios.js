@@ -88,7 +88,7 @@
    const form=el('form',undefined,'crud-shell');
    const heading=el('div',undefined,'crud-heading');
    heading.append(el('h2',item?'Editar lista de precios':'Nueva lista de precios'));
-   heading.append(btn('×',()=>dialog.close(),'crud-close'));form.append(heading);
+   const closeWindow=btn('×',()=>dialog.close(),'crud-close');closeWindow.setAttribute('aria-label','Cerrar ventana');closeWindow.title='Cerrar ventana';heading.append(closeWindow);form.append(heading);
    const fields=el('div',undefined,'crud-fields price-list-fields');
    const field=(name,value,max)=>{
      const wrap=el('label',undefined,'field'),caption=el('span',name),input=el('input');
