@@ -1,0 +1,14 @@
+/* V93 · feedback legible y trazabilidad documental Kardex */
+.hd93-alert{display:block!important;white-space:pre-line;overflow-wrap:anywhere;line-height:1.45!important;font-size:13px!important;font-weight:650;padding:9px 12px!important;margin:5px 0!important;min-height:0!important;border:1px solid #e6b7c0;border-left:4px solid #b12c45;border-radius:8px;color:#8d2137!important;background:#fff1f3!important}
+.hd93-alert[data-hd93-tone="info"]{background:#eef4ff!important;color:#245584!important;border-color:#b6cbe7;border-left-color:#4578bc}
+.hd93-alert[data-hd93-tone="success"]{background:#edf8f0!important;color:#21643b!important;border-color:#b9dfc4;border-left-color:#2c8b50}
+.hd93-alert[data-hd93-tone="error"]::before{content:"Revise lo siguiente";display:block;font-size:12px;font-weight:800;margin-bottom:3px}
+.hd93-invalid{border-color:#b12c45!important;outline:2px solid #d8647b!important;outline-offset:1px!important}
+.hd92-review .hd-doc-modal-footer .hd93-alert{flex:1 1 100%;max-height:min(145px,24dvh);overflow:auto}
+.hd92-kardex-dialog .hd-doc-table{min-width:940px}
+.hd92-kardex-dialog .hd93-folio{font-weight:700;white-space:nowrap;font-variant-numeric:tabular-nums}
+.hd92-kardex-dialog .hd93-document{min-width:110px}
+html[data-theme="oscuro"] .hd93-alert{background:#4e2635!important;color:#ffd4dc!important;border-color:#ab5c76;border-left-color:#fa8fa5}
+html[data-theme="oscuro"] .hd93-alert[data-hd93-tone="info"]{background:#243b56!important;color:#b8dbff!important;border-color:#6083ac}
+html[data-theme="oscuro"] .hd93-alert[data-hd93-tone="success"]{background:#234a35!important;color:#b9f0ca!important;border-color:#5d956e}
+.hd93-alert[hidden]{display:none!important}
