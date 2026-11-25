@@ -1,0 +1,17 @@
+/* V98 · inventario de producto, solo lectura */
+.hd98-stock{min-width:0;grid-column:1/-1;padding:9px 12px;border:1px solid #e5d8f0;border-radius:10px;background:#fff;color:#402957}
+.hd98-stock h3{font-size:14px;margin:0 0 7px;padding:0 0 5px}
+.hd98-stock-table{min-width:520px;width:100%;font-size:12px}
+.hd98-stock-table :is(th,td){padding:5px 8px!important;line-height:1.4}
+.hd98-stock-table :is(th,td):not(:first-child){text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.hd98-stock-table .hd98-disponible,.hd98-stock-table .hd98-cantidad_fisica{font-weight:800}
+.hd98-stock-table tfoot :is(th,td){background:#eee4f8;color:#542e7b;font-weight:800;border-top:1px solid #dac9eb}
+.hd98-stock-note{font-size:11px;line-height:1.4;margin:6px 0 0;color:#715d82}
+.hd98-stock-legacy{padding:5px 8px;background:#fff5e5;color:#80510b;border-radius:6px}
+.hd98-inactive{margin-left:6px;font-size:10px;color:#86510c}
+html[data-theme=oscuro] .hd98-stock{background:#332641;color:#f0e4fa;border-color:#6b527d}
+html[data-theme=oscuro] .hd98-stock-table tfoot :is(th,td){background:#49325e;color:#f1ddff;border-color:#75558d}
+html[data-theme=oscuro] .hd98-stock-note{color:#d8c3e7}
+html[data-theme=oscuro] .hd98-stock-legacy{background:#543e26;color:#ffdb98}
+html[data-theme=oscuro] .hd98-inactive{color:#ffd18a}
+@media(max-width:600px){.hd98-stock{padding:8px}.hd98-stock-table :is(th,td){padding:6px!important}}
