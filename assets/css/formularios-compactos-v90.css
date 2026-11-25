@@ -3,12 +3,13 @@
 dialog:not(#loginDialog) :is(.product-editor-form,.official-editor-grid,.crud-fields,.supplier-dialog-form,.location-editor-shell,.location-editor-grid,.hd-doc-modal-scroll,.hd-lookup-shell,.hd-oc-form-scroll,.supplier-mix-content){gap:var(--hd-form-gap-y) var(--hd-form-gap-x)}
 dialog:not(#loginDialog) :is(.product-editor-form,.official-editor-grid,.crud-fields,.supplier-dialog-form,.location-editor-shell,.hd-doc-modal-scroll,.supplier-mix-content){padding:var(--hd-form-pad-y) var(--hd-form-pad-x)}
 dialog:not(#loginDialog) :is(.crud-heading,.official-editor-heading,.product-editor-heading,.supplier-dialog-header,.location-editor-heading,.hd-doc-modal-head,.hd-lookup-head,.modal-heading){padding:6px 12px;gap:4px}
+dialog:not(#loginDialog) :is(.crud-heading,.official-editor-heading,.product-editor-heading,.supplier-dialog-header,.location-editor-heading){padding-inline-end:54px}
 dialog:not(#loginDialog) :is(.crud-heading,.official-editor-heading,.product-editor-heading,.supplier-dialog-header,.location-editor-heading,.hd-doc-modal-head,.hd-oc-modal-heading,.hd-lookup-head) h2{font-size:17px;line-height:1.25;margin-block:0}
 dialog:not(#loginDialog) :is(.crud-heading,.official-editor-heading,.product-editor-heading,.supplier-dialog-header,.location-editor-heading,.hd-doc-modal-head,.hd-oc-modal-heading,.hd-lookup-head) p{margin-block:2px;font-size:12px;line-height:1.35}
 dialog:not(#loginDialog) :is(.crud-form-grid,.hd-doc-grid,.hd-oc-identity,.hd-oc-fields,.hd-oc-totals,.location-chain,.supplier-barcode-form,.product-barcode-row,.hd-customer-identity-row){gap:var(--hd-form-gap-y) var(--hd-form-gap-x)}
 dialog:not(#loginDialog) :is(.field,.crud-field,.hd-doc-field,.supplier-field,.location-field,.hd-record-id-field,.hd-customer-identity-field,.official-customer-price-field){gap:2px;min-width:0;line-height:1.3}
 dialog:not(#loginDialog) :is(.field,.crud-field,.supplier-field,.location-field,.hd-record-id-field,.hd-customer-identity-field,.official-customer-price-field)>span{font-size:12px;line-height:1.3;min-height:0;margin:0}
-dialog:not(#loginDialog) :is(.field,.crud-field,.hd-doc-field,.supplier-field,.location-field,.hd-record-id-field,.hd-customer-identity-field,.official-customer-price-field,.product-price-table,.hd-oc-details,.hd-v70-dialog) :is(input:not([type=checkbox]):not([type=radio]):not([type=file]):not([type=hidden]):not([type=range]):not([type=color]):not([type=button]):not([type=submit]),select:not(.hd-choice-native)){
+dialog:not(#loginDialog) :is(.field,.crud-field,.hd-doc-field,.supplier-field,.location-field,.hd-record-id-field,.hd-customer-identity-field,.official-customer-price-field,.product-price-table,.hd-oc-details,.hd-v70-dialog) :is(input:not(.hd-choice-search):not([type=checkbox]):not([type=radio]):not([type=file]):not([type=hidden]):not([type=range]):not([type=color]):not([type=button]):not([type=submit]),select:not(.hd-choice-native)){
  min-height:var(--hd-form-control)!important;padding:4px 8px!important;font-size:var(--hd-form-font)!important;line-height:1.3!important;box-sizing:border-box
 }
 dialog.official-editor.crud-official-dialog .hd-customer-identity-field>input{height:var(--hd-form-control)!important;min-height:var(--hd-form-control)!important;border-radius:8px!important}
@@ -27,7 +28,7 @@ dialog:not(#loginDialog) .hd-oc-details-tools{margin-bottom:4px}
 dialog:not(#loginDialog) :is(.crud-footer,.official-editor-actions,.product-editor-actions,.supplier-dialog-actions,.location-editor-actions,.hd-doc-modal-footer,.hd-oc-actions,.hd-lookup-footer,.supplier-mix-footer){padding:6px 12px;gap:6px}
 dialog:not(#loginDialog) :is(.crud-footer,.official-editor-actions,.product-editor-actions,.supplier-dialog-actions,.location-editor-actions,.hd-doc-modal-footer,.hd-oc-actions,.hd-lookup-footer,.supplier-mix-footer) .button{min-height:var(--hd-form-control)!important;padding:4px 10px!important;font-size:12px;line-height:1.3}
 dialog.hd-oc-modal--editor .hd-oc-form > .hd-oc-actions{padding-block:6px!important}
-dialog:not(#loginDialog) .crud-supplier-dialog .supplier-status{padding-block:5px}
+dialog.crud-supplier-dialog .supplier-status{padding-block:5px}
 dialog:not(#loginDialog) :is(.hd-doc-message,.hd-receipt-feedback,.location-editor-status){margin-block:3px;line-height:1.35}
 dialog:not(#loginDialog) .users-password-help{padding:7px 9px;line-height:1.4}
 dialog:not(#loginDialog) :is(.crud-close,.hd-doc-close,.hd-oc-close){min-width:36px;min-height:36px;width:36px;height:36px}
