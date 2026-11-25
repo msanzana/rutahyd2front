@@ -163,13 +163,13 @@
     finally{finish?.();}
   }
 
-  async function pdfOrden(idValue) {
+  async function pdfOrden(idValue,resource='ordenes-compra') {
     if(!endpoint||!bearer)throw Error('Inicia sesión para ver el documento.');
     const token=bearer;
-    const done=window.RutaHDCarga?.start({path:'/ordenes-compra/'+idValue+'/pdf',method:'GET'});
+    const done=window.RutaHDCarga?.start({path:'/'+resource+'/'+idValue+'/pdf',method:'GET'});
     const abort=new AbortController(),timer=setTimeout(()=>abort.abort(),30000);
     try{
-      const response=await fetch(endpoint+'/ordenes-compra/'+id(idValue)+'/pdf',{
+      const response=await fetch(endpoint+'/'+resource+'/'+id(idValue)+'/pdf',{
         headers:{Authorization:'Bearer '+token,Accept:'application/pdf'},
         credentials:'same-origin',cache:'no-store',signal:abort.signal
       });
@@ -269,6 +269,8 @@
   }
   const api = Object.freeze({
     configure, authenticate, login, logout, signOut, status,
+    regularizationPdf: sid=>pdfOrden(sid,'solicitudes-regularizacion'),
+    retryRegularizationMail: (nid,datos)=>send('/notificaciones-regularizacion/'+id(nid)+'/reenviar','POST',datos),
     consolidationCandidates: oc=>send('/consolidaciones-recepcion/candidatas/'+id(oc)),
     createConsolidation: datos=>send('/consolidaciones-recepcion','POST',datos),
     getConsolidation: cid=>send('/consolidaciones-recepcion/'+id(cid)),
