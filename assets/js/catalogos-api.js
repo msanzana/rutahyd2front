@@ -269,6 +269,7 @@
   }
   const api = Object.freeze({
     configure, authenticate, login, logout, signOut, status,
+    operationalPurchasePdf: (kind,cid)=>{if(!['recepcion','consolidacion'].includes(kind))throw Error('Tipo de documento inválido.');return pdfOrden(cid,'documentos-recepcion/'+kind);},
     regularizationPdf: sid=>pdfOrden(sid,'solicitudes-regularizacion'),
     retryRegularizationMail: (nid,datos)=>send('/notificaciones-regularizacion/'+id(nid)+'/reenviar','POST',datos),
     consolidationCandidates: oc=>send('/consolidaciones-recepcion/candidatas/'+id(oc)),
