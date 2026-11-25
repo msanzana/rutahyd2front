@@ -1,12 +1,12 @@
 (()=>{
 'use strict';
 const columns={
-facturas:{id:'Código',folio:'Folio',proveedor:'Proveedor',documento:'Documento',fecha_documento:'Fecha',total:'Total',signo_contable:'Signo',estado:'Estado'},
-recepciones:{id:'Código',estado:'Estado'},
-consolidaciones:{id:'Código',estado:'Estado'},
-stock:{id:'Código',sku:'SKU',producto:'Producto',bodega:'Bodega',disponible:'Disponible',transito:'Tránsito',cantidad_fisica:'Físico'},
+facturas:{id:'Código',folio:'Folio',proveedor:'Proveedor',documento:'Documento',fecha_documento:'Fecha',orden_compra:'Orden de compra',total:'Total',signo_contable:'Signo',estado:'Estado'},
+recepciones:{id:'Código',numero_interno:'Recepción',proveedor:'Proveedor',bodega:'Bodega',orden_compra:'Orden de compra',total:'Total',estado:'Estado'},
+consolidaciones:{id:'Código',numero_interno:'Consolidación',proveedor:'Proveedor',bodega:'Bodega',orden_compra:'Orden de compra',total:'Total',estado:'Estado'},
+stock:{id:'Código',sku:'SKU',producto:'Producto',bodega:'Bodega',disponible:'Disponible',transito:'Tránsito',comprometido:'Comprometido',cantidad_fisica:'Físico'},
 kardex:{id:'Código',sku:'SKU',producto:'Producto',bodega:'Bodega',fecha_movimiento:'Fecha',operacion_codigo:'Operación',cantidad_documento:'Cantidad',fisico_anterior:'Anterior',fisico_actual:'Actual',costo_unitario_neto:'Costo neto'},
-libro:{id:'Código',periodo_tributario:'Período',folio:'Folio',rut_emisor:'RUT',razon_social_emisor:'Proveedor',monto_neto:'Neto',monto_exento:'Exento',monto_iva_recuperable:'IVA recuperable',monto_total:'Total',signo_contable:'Signo',estado_rcv:'Conciliación'}
+libro:{id:'Código',periodo_tributario:'Período',folio:'Folio',fecha_documento:'Fecha',orden_compra:'Orden de compra',rut_emisor:'RUT',razon_social_emisor:'Proveedor',monto_neto:'Neto',monto_exento:'Exento',monto_iva_recuperable:'IVA recuperable',monto_total:'Total',signo_contable:'Signo',estado_rcv:'Conciliación'}
 };
 const el=(tag,text,cls)=>{const e=document.createElement(tag);if(text!=null)e.textContent=text;if(cls)e.className=cls;return e;};
 function mount(root,key){
@@ -16,15 +16,17 @@ function mount(root,key){
  if(['recepciones','consolidaciones'].includes(key)){
   const create=el('button',key==='recepciones'?'+ Nueva recepción':'+ Nueva consolidación','button primary');create.type='button';create.dataset.action='nuevo-documento';create.onclick=()=>openNew();create.classList.add('hd-v70-new');form.append(create);
  }
- const warehouse=el('select'), state=el('select'), from=el('input'), to=el('input');
+ const warehouse=el('select'), state=el('select'), from=el('input'), to=el('input'), supplierFilter=el('input'), ocFilter=el('input');
+ const isPurchases=['facturas','recepciones','consolidaciones','libro'].includes(key),hasWarehouse=['recepciones','consolidaciones','stock','kardex'].includes(key);
  let fieldSeq=0;const field=(title,input)=>{const l=el('label',title,'hd-doc-field');input.id=input.id||('hd-'+key+'-field-'+(++fieldSeq));input.setAttribute('aria-label',title);l.htmlFor=input.id;l.append(input);return l;};
  const option=(v,t)=>{const o=el('option',t);o.value=v;return o;};
  search.type='search';search.placeholder=key==='kardex'?'SKU o nombre':'Buscar registros';search.maxLength=120;
  form.append(field('Buscar',search));
- if(key==='kardex'){warehouse.append(option('','Seleccione bodega'));form.append(field('Bodega',warehouse));}
+ if(hasWarehouse){warehouse.append(option('',key==='kardex'?'Seleccione bodega':'Todas las bodegas'));form.append(field('Bodega',warehouse));}
+ if(isPurchases){supplierFilter.type='search';supplierFilter.placeholder='Nombre o RUT';supplierFilter.maxLength=120;ocFilter.type='search';ocFilter.placeholder='Número de OC';ocFilter.maxLength=80;form.append(field('Proveedor',supplierFilter),field('Orden de compra',ocFilter));}
  if(['facturas','recepciones','consolidaciones'].includes(key)){state.append(option('','Todos los estados'));for(const v of ['ACTIVA','PENDIENTE','RECEPCIONADA','DESCUADRADA','FINALIZADA','CONSOLIDADA'])state.append(option(v,v));form.append(field('Estado',state));}
- from.type=to.type='date';if(key==='facturas')form.append(field('Desde',from),field('Hasta',to));
- const submit=el('button','Buscar','button primary');submit.type='submit';form.append(submit);const newButton=form.querySelector('.hd-v70-new');if(newButton)form.append(newButton);
+ from.type=to.type='date';if(isPurchases)form.append(field('Desde',from),field('Hasta',to));
+ const submit=el('button','Buscar','button primary');submit.type='submit';form.append(submit);const clear=el('button','Limpiar','button ghost');clear.type='button';clear.onclick=()=>{form.reset();applied={buscar:'',filters:{}};page=1;void load(true);};form.append(clear);const newButton=form.querySelector('.hd-v70-new');if(newButton)form.append(newButton);
  const scroll=el('div',null,'hd-doc-table-scroll'), table=el('table',null,'hd-table hd-doc-table'), head=el('thead'), tr=el('tr'), body=el('tbody');
  Object.values(fields).forEach(name=>tr.append(el('th',name)));if(key==='kardex')tr.append(el('th','Acciones'));head.append(tr);table.append(head,body);scroll.append(table);
  status.setAttribute('role','status');panel.append(heading,form,status,top,scroll,bottom);root.replaceChildren(panel);
@@ -133,14 +135,14 @@ function mount(root,key){
   try{
    const data=await window.RutaHDApiCatalogos.purchaseConsultation(key,page,applied.buscar,applied.filters);
    if(request!==seq||!panel.isConnected)return;
-   if(key==='kardex'&&Array.isArray(data.bodegas)){const old=warehouse.value;warehouse.replaceChildren(option('','Seleccione bodega'));for(const b of data.bodegas)warehouse.append(option(String(b.id),b.nombre));if([...warehouse.options].some(o=>o.value===old))warehouse.value=old;else if(data.bodegas.length===1)warehouse.value=String(data.bodegas[0].id);}
+   if(hasWarehouse&&Array.isArray(data.bodegas)){const old=warehouse.value;warehouse.replaceChildren(option('',key==='kardex'?'Seleccione bodega':'Todas las bodegas'));for(const b of data.bodegas)warehouse.append(option(String(b.id),b.nombre));if([...warehouse.options].some(o=>o.value===old))warehouse.value=old;else if(key==='kardex'&&data.bodegas.length===1)warehouse.value=String(data.bodegas[0].id);}
    for(const item of data.data||[]){const row=el('tr');if(key==='libro'&&Number(item.signo_contable)<0)row.classList.add('hd-v67-credit');Object.keys(fields).forEach(k=>row.append(el('td',item[k]??'—')));if(key==='kardex'){const td=el('td');td.append(eye(item));row.append(td);}body.append(row);}
    if(!body.children.length){const row=el('tr'),cell=el('td','No se encontraron registros.');cell.colSpan=Object.keys(fields).length+(key==='kardex'?1:0);row.append(cell);body.append(row);}
    const last=Math.max(1,Number(data.last_page||1));for(const p of [top,bottom])pager(p,page,last,data.total,n=>{page=n;void load(true);});status.textContent=data.total+' registros';
    if(scrollUp)up(panel);
   }catch(e){if(request===seq&&panel.isConnected)status.textContent=e.userMessage||'No fue posible consultar los registros.';}
  }
- form.addEventListener('submit',e=>{e.preventDefault();const filters={};if(state.value)filters.estado=state.value;if(from.value)filters.desde=from.value;if(to.value)filters.hasta=to.value;applied={buscar:search.value.trim(),filters};page=1;void load(true);});void load();
+ form.addEventListener('submit',e=>{e.preventDefault();const filters={};if(state.value)filters.estado=state.value;if(from.value&&to.value&&from.value>to.value){status.textContent='La fecha Hasta no puede ser anterior a Desde.';return;}if(from.value)filters.desde=from.value;if(to.value)filters.hasta=to.value;if(isPurchases&&supplierFilter.value.trim())filters.proveedor=supplierFilter.value.trim();if(isPurchases&&ocFilter.value.trim())filters.orden_compra=ocFilter.value.trim();if(hasWarehouse&&key!=='kardex'&&warehouse.value)filters.bodega_id=warehouse.value;applied={buscar:search.value.trim(),filters};page=1;void load(true);});void load();
 }
 window.RutaHDComprasConsultas=Object.freeze({mount});
 })();
