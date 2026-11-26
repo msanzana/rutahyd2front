@@ -1,0 +1,62 @@
+/* V103: paleta funcional corporativa. Solo presentación; no altera tamaños de controles. */
+:is([data-hd-section-tone="violeta"],[data-hd-heading-tone="violeta"]){--hd-section-accent:#6D28D9;--hd-section-bg:#F3EDF9;--hd-section-line:#DCCDEA;--hd-section-ink:#54308B}
+html:is([data-theme="oscuro"],[data-theme="dark"]) :is([data-hd-section-tone="violeta"],[data-hd-heading-tone="violeta"]){--hd-section-accent:#A78BFA;--hd-section-bg:#38294B;--hd-section-line:#624C7C;--hd-section-ink:#E4D7FF}
+:is([data-hd-section-tone="azul"],[data-hd-heading-tone="azul"]){--hd-section-accent:#365B89;--hd-section-bg:#EDF3FA;--hd-section-line:#CEDDEE;--hd-section-ink:#284A74}
+html:is([data-theme="oscuro"],[data-theme="dark"]) :is([data-hd-section-tone="azul"],[data-hd-heading-tone="azul"]){--hd-section-accent:#82A9D7;--hd-section-bg:#28394D;--hd-section-line:#465D78;--hd-section-ink:#C9DFF7}
+:is([data-hd-section-tone="petroleo"],[data-hd-heading-tone="petroleo"]){--hd-section-accent:#23756E;--hd-section-bg:#EAF5F2;--hd-section-line:#C8E0DA;--hd-section-ink:#195C57}
+html:is([data-theme="oscuro"],[data-theme="dark"]) :is([data-hd-section-tone="petroleo"],[data-hd-heading-tone="petroleo"]){--hd-section-accent:#6DB7AE;--hd-section-bg:#253E3D;--hd-section-line:#416761;--hd-section-ink:#C5E8DF}
+:is([data-hd-section-tone="indigo"],[data-hd-heading-tone="indigo"]){--hd-section-accent:#62558D;--hd-section-bg:#F2EFF8;--hd-section-line:#DBD4E9;--hd-section-ink:#4D4174}
+html:is([data-theme="oscuro"],[data-theme="dark"]) :is([data-hd-section-tone="indigo"],[data-hd-heading-tone="indigo"]){--hd-section-accent:#AC9DD9;--hd-section-bg:#373149;--hd-section-line:#625777;--hd-section-ink:#DDD4F6}
+:is([data-hd-section-tone="bronce"],[data-hd-heading-tone="bronce"]){--hd-section-accent:#8B6534;--hd-section-bg:#F9F3E9;--hd-section-line:#E7D8BF;--hd-section-ink:#6B4B24}
+html:is([data-theme="oscuro"],[data-theme="dark"]) :is([data-hd-section-tone="bronce"],[data-hd-heading-tone="bronce"]){--hd-section-accent:#D1B17F;--hd-section-bg:#44372B;--hd-section-line:#6B563D;--hd-section-ink:#F2DFBF}
+:is([data-hd-section-tone="pizarra"],[data-hd-heading-tone="pizarra"]){--hd-section-accent:#546477;--hd-section-bg:#EFF3F6;--hd-section-line:#D6DFE7;--hd-section-ink:#404F63}
+html:is([data-theme="oscuro"],[data-theme="dark"]) :is([data-hd-section-tone="pizarra"],[data-hd-heading-tone="pizarra"]){--hd-section-accent:#A2B1C2;--hd-section-bg:#303942;--hd-section-line:#53616F;--hd-section-ink:#DFE7EF}
+
+/* Encabezados de formularios: la marca sigue siendo violeta. */
+dialog:not(#loginDialog):not([data-hd-loading]) :is(.crud-heading,.official-editor-heading,.product-editor-heading,.supplier-dialog-header,.location-editor-heading,.hd-doc-modal-head,.hd-oc-modal-heading,.modal-heading,.hd-lookup-head,.product-gallery-header){
+ box-shadow:inset 3px 0 0 #8B5CB7;
+}
+html:is([data-theme="oscuro"],[data-theme="dark"]) dialog:not(#loginDialog):not([data-hd-loading]) :is(.crud-heading,.official-editor-heading,.product-editor-heading,.supplier-dialog-header,.location-editor-heading,.hd-doc-modal-head,.hd-oc-modal-heading,.modal-heading,.hd-lookup-head,.product-gallery-header){
+ box-shadow:inset 3px 0 0 #B69ADD;
+}
+/* Paneles semánticos: tono suave, no se propaga a campos ni a estados. */
+:is(dialog:not(#loginDialog):not([data-hd-loading]),#workspaceContent) [data-hd-section-tone]{
+ background-color:var(--hd-section-bg)!important;
+ border-color:var(--hd-section-line)!important;
+ box-shadow:inset 3px 0 0 var(--hd-section-accent);
+ border-radius:9px;
+}
+:is(dialog:not(#loginDialog):not([data-hd-loading]),#workspaceContent) [data-hd-heading-tone]{
+ color:var(--hd-section-ink)!important;
+ background-color:var(--hd-section-bg)!important;
+ border-color:var(--hd-section-line)!important;
+ box-shadow:inset 3px 0 0 var(--hd-section-accent);
+ border-radius:6px;
+ padding:5px 9px!important;
+ box-sizing:border-box;
+ min-width:0;
+ overflow-wrap:anywhere;
+}
+/* Sección con título propio: evitar doble franja o fondo redundante. */
+:is(dialog:not(#loginDialog):not([data-hd-loading]),#workspaceContent) [data-hd-section-tone]>[data-hd-heading-tone]{
+ background-color:transparent!important;
+ box-shadow:none;padding-inline-start:4px!important;
+}
+/* La sección de recepción no pierde el ancho ganado en V102. */
+dialog[data-hd-receipt-window] .hd102-lines-scroll[data-hd-section-tone]{box-shadow:none}
+dialog[data-hd-receipt-window] .hd102-receipt-lines th{
+ background-color:var(--hd-section-bg,#EAF5F2)!important;
+ color:var(--hd-section-ink,#195C57)!important;
+ border-color:var(--hd-section-line,#C8E0DA)!important;
+}
+:is(dialog:not(#loginDialog):not([data-hd-loading]),#workspaceContent) [data-hd-section-tone] :is(.hd-doc-table,.product-price-table,.hd-oc-table,.product-detail-table,.hd98-stock-table) th{
+ background-color:var(--hd-section-bg)!important;color:var(--hd-section-ink)!important;
+}
+@media(max-width:760px){
+ :is(dialog:not(#loginDialog):not([data-hd-loading]),#workspaceContent) [data-hd-heading-tone]{padding:5px 7px!important}
+ dialog[data-hd-receipt-window] .hd102-lines-scroll[data-hd-section-tone]{background-color:transparent!important}
+}
+/* No depender del color cuando el usuario fuerza alto contraste. */
+@media(forced-colors:active){
+ [data-hd-heading-tone],[data-hd-section-tone]{box-shadow:none!important;border-inline-start:2px solid CanvasText!important}
+}
