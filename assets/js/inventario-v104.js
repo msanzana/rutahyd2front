@@ -297,8 +297,11 @@ async function countDetail(id,reload,ready=false){
   if(!plans.length)summary.append(el('p','Sin revisión registrada disponible.'));
   for(const o of x.operaciones||[]){const dt=table(['SKU','Producto','Cantidad','Variación','CPP','Kardex']),sub=el('section',null,'surface-panel');
    for(const l of o.detalles||[])row(dt.b,[l.sku,l.producto,num(l.cantidad),num(l.delta_disponible),num(l.costo_unitario_snapshot),l.kardex_id||'Pendiente']);
-   sub.append(el('h4',o.numero_interno+' · '+o.motivo_nombre_snapshot+' · '+o.estado_nombre),dt.wrap,el('p','Respaldos: '+((o.respaldos||[]).map(f=>f.nombre).join(' · ')||'Sin archivos')));summary.append(sub);
+   sub.append(el('h4',o.numero_interno+' · '+o.motivo_nombre_snapshot+' · '+o.estado_nombre),dt.wrap,el('p','Respaldos'));
+   for(const f of o.respaldos||[]){if(f.id&&o.id)sub.append(btn(f.nombre,async()=>{try{const blob=await api().countAttachment(id,o.id,f.id);if(d.open)countDownload(blob,f.nombre);}catch(e){error(status,e);}}));else sub.append(el('p',f.nombre));}
+   if(!(o.respaldos||[]).length)sub.append(el('p','Sin archivos'));summary.append(sub);
   }
+  if(x.revision)foot.append(btn('Acta PDF',async()=>{try{const blob=await api().countPdf(id);if(d.open)countDownload(blob,'conteo-'+id+'.pdf');}catch(e){error(status,e);}},'button ghost'));
   content.insertBefore(summary,status);
   if(write&&h.estado==='EN_REVISION'&&can('inventario.operaciones.aprobar')&&!x.ajustes_preparados)foot.append(btn(x.autorizado?'Preparar ajustes':'Autorizar diferencias',()=>{d.close();countApproval(id,reload,x.autorizado);},'button primary'));
   if(write&&x.cierre_habilitado===true&&x.ajustes_preparados&&h.estado==='EN_REVISION'&&can('inventario.operaciones.confirmar'))foot.append(btn('Confirmar conteo',()=>{d.close();countClose(id,reload);},'button primary'));
@@ -310,6 +313,7 @@ async function countDetail(id,reload,ready=false){
  }
  }catch(e){error(status,e);}
 }
+function countDownload(blob,name){const url=URL.createObjectURL(blob),a=el('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);}
 function countApproval(id,reload,authorized){
  const {d,content,foot,close}=modal(authorized?'Preparar ajustes de conteo':'Autorizar diferencias'),status=el('p','Revalidando corte…','hd-doc-status'),preview=el('section'),reason=el('textarea'),files=input('file');
  reason.rows=3;reason.maxLength=1000;files.multiple=true;files.accept='.pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg';
