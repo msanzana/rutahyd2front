@@ -9,14 +9,15 @@ const btn=(text,fn,cls='button ghost')=>{const b=el('button',text,cls);b.type='b
 const selectorDisponible=s=>s?.seleccion_habilitada===true&&s?.modo_sucursal_unica===true;
 let current=null,activeDialog=null,sequence=0;
 function updateMenu(){
- const item=document.getElementById('menuBranchContext'),label=document.getElementById('menuBranchLabel');
+ const item=document.getElementById('menuBranchContext'),label=document.getElementById('menuBranchLabel'),header=document.getElementById('hdBranchCurrent');
+ if(header){header.hidden=!(acl()?.authenticated()&&current);header.querySelector('strong').textContent=current?.nombre||'';header.title=current?current.codigo+' · '+current.nombre:'';}
  if(item){item.hidden=!acl()?.authenticated();item.textContent=current?'Sucursal actual':'Sucursales autorizadas';}
  if(label){label.hidden=!acl()?.authenticated();label.textContent=current?current.codigo+' · '+current.nombre:'Contexto de sucursal en preparación';}
 }
 function chooser(initial,{required=false,onLogout=()=>{}}={}){
  if(activeDialog?.open)return Promise.resolve(false);
- const d=el('dialog',null,'hd-doc-modal hd-v67 hd-v70-dialog'),shell=el('div',null,'hd-doc-form'),head=el('div',null,'hd-doc-modal-head'),body=el('div',null,'hd-doc-modal-scroll'),foot=el('div',null,'hd-doc-modal-footer');
- d.setAttribute('aria-label',required?'Seleccionar sucursal':'Sucursales autorizadas');d.style.maxWidth='640px';
+ const d=el('dialog',null,'hd-doc-modal hd-v67 hd-v70-dialog hd-branch-dialog'),shell=el('div',null,'hd-doc-form'),head=el('div',null,'hd-doc-modal-head'),body=el('div',null,'hd-doc-modal-scroll'),foot=el('div',null,'hd-doc-modal-footer');
+ d.setAttribute('aria-label',required?'Seleccionar sucursal':'Sucursales autorizadas');
  const title=el('h2',required?'Seleccionar sucursal':'Sucursales autorizadas'),close=btn('×',()=>d.close(),'hd-doc-close');close.title='Cerrar';close.setAttribute('aria-label','Cerrar');close.hidden=required;
  head.append(title,close);shell.append(head,body,foot);d.append(shell);document.body.append(d);activeDialog=d;
  let state=initial,chosen=null,busy=false,completed=false;
@@ -25,24 +26,28 @@ function chooser(initial,{required=false,onLogout=()=>{}}={}){
    body.replaceChildren();foot.replaceChildren();chosen=null;
    const enabled=required&&selectorDisponible(state);
    body.append(el('p',enabled?'Selecciona la sucursal para ingresar al sistema.':'Configuración en preparación. Estas son las sucursales a las que tienes acceso; todavía no se aplica un filtro operativo por sucursal.','hd-doc-status'));
-   if(enabled)body.append(el('p','Modo de sucursal única. La separación operativa multisucursal aún está en preparación.','hd-doc-status'));
-   const group=el('div',null,'hd-v70-docs');group.setAttribute('role','group');group.setAttribute('aria-label','Sucursales disponibles');
+
+   const group=el('div',null,'hd-branch-options');group.setAttribute('role',enabled?'radiogroup':'group');group.setAttribute('aria-label','Sucursales disponibles');
    for(const s of state.sucursales||[]){
-    const label=el('label',null,'hd-doc-field');label.style.cssText='display:flex;align-items:center;gap:12px;padding:12px;border:1px solid #cfc3dc;border-radius:10px;margin-bottom:8px';
-    if(enabled){const radio=el('input');radio.type='radio';radio.name='sucursal-v107';radio.value=String(s.id);radio.style.width='auto';radio.onchange=()=>{chosen=s;save.disabled=false;};label.append(radio);}
-    const text=el('div');text.append(el('strong',s.codigo+' · '+s.nombre),el('p',s.direccion||'Sin dirección'));label.append(text);group.append(label);
+    const label=el(enabled?'label':'div',null,'hd-branch-card');
+    if(enabled){const radio=el('input',null,'hd-branch-radio');radio.type='radio';radio.name='sucursal-v107';radio.value=String(s.id);radio.setAttribute('aria-label',s.nombre+' · '+s.codigo);radio.onchange=()=>{if(!busy){chosen=s;save.disabled=false;}};label.append(radio);}
+    const symbol=el('span',null,'hd-branch-symbol');symbol.setAttribute('aria-hidden','true');
+    const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('fill','none');svg.setAttribute('stroke','currentColor');svg.setAttribute('stroke-width','1.7');svg.setAttribute('stroke-linecap','round');svg.setAttribute('stroke-linejoin','round');
+    const path=document.createElementNS(ns,'path');path.setAttribute('d','M3 9l2-5h14l2 5M4 13v7h16v-7M3 9v2a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0V9H3M9 20v-5h6v5');svg.append(path);symbol.append(svg);label.append(symbol);
+    const info=el('div',null,'hd-branch-info');info.append(el('strong',s.nombre,'hd-branch-name'),el('span',s.codigo+(s.ciudad?' · '+s.ciudad:''),'hd-branch-code'),el('span',s.direccion?'Dirección: '+s.direccion:'Sin dirección','hd-branch-address'));label.append(info);
+    const mark=el('span',enabled?'✓':'Activa',enabled?'hd-branch-check':'hd-branch-active');mark.setAttribute('aria-hidden','true');label.append(mark);group.append(label);
    }
    if(!(state.sucursales||[]).length)group.append(el('p','No tienes sucursales activas asignadas. Contacta a Administración.'));
    body.append(group);
-   const status=el('p',null,'hd-doc-status');status.setAttribute('role','status');body.append(status);
+   const status=el('p',null,'hd-doc-status hd-branch-status');status.setAttribute('role','status');body.append(status);
    const save=btn(required?'Ingresar':'Cambiar sucursal',async()=>{
-    if(!chosen||busy||!enabled)return;busy=true;save.disabled=true;close.disabled=true;cancel.disabled=true;
+    if(!chosen||busy||!enabled)return;busy=true;save.disabled=true;close.disabled=true;cancel.disabled=true;group.querySelectorAll('input').forEach(i=>i.disabled=true);
     try{const result=await api().selectBranchContext(chosen.id,state.version_contexto);current=result.sucursal_actual;completed=true;updateMenu();d.close();if(!required){document.getElementById('workspaceContent')?.replaceChildren();window.RutaHDProduccion?.navigate('inicio');}}
     catch(e){status.textContent=e?.userMessage||'No fue posible seleccionar la sucursal. Actualice la lista.';status.setAttribute('role','alert');}
-    finally{busy=false;save.disabled=false;close.disabled=false;cancel.disabled=false;}
-   },'button primary');save.disabled=true;
+    finally{busy=false;save.disabled=false;close.disabled=false;cancel.disabled=false;group.querySelectorAll('input').forEach(i=>i.disabled=false);}
+   },'button primary hd-branch-enter');save.disabled=true;
    const cancel=btn(required?'Cerrar sesión':'Cerrar',()=>{if(!busy){if(required)onLogout();d.close();}});
-   foot.append(cancel);if(enabled)foot.append(save);
+   cancel.classList.add('hd-branch-cancel');foot.append(cancel);if(enabled)foot.append(save);
   }
   d.addEventListener('cancel',e=>{if(required||busy)e.preventDefault();});
   d.addEventListener('close',()=>{activeDialog=null;d.remove();resolve(completed||!required);},{once:true});
@@ -66,6 +71,7 @@ async function openMenu(){
 }
 function mount(){
  const anchor=document.getElementById('menuProfile');if(!anchor||document.getElementById('menuBranchContext'))return;
+ const top=document.getElementById('userMenuAnchor');if(top&&!document.getElementById('hdBranchCurrent')){const badge=el('div',null,'hd-branch-current');badge.id='hdBranchCurrent';badge.hidden=true;badge.setAttribute('aria-label','Sucursal actual');badge.append(el('span','Sucursal','hd-branch-current-label'),el('strong',''));top.before(badge);}
  const label=el('small',null,'hd-doc-status');label.id='menuBranchLabel';label.hidden=true;label.style.cssText='padding:8px 12px;display:block';
  const item=btn('Sucursales autorizadas',()=>void openMenu());item.id='menuBranchContext';item.className=anchor.className;item.setAttribute('role','menuitem');item.hidden=true;anchor.before(label,item);updateMenu();
 }
