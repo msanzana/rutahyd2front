@@ -272,6 +272,14 @@
   }
   const api = Object.freeze({
     configure, authenticate, login, logout, signOut, status,
+    branches: (page=1,buscar='')=>send('/sucursales?'+new URLSearchParams({page:String(page),buscar})),
+    createBranch: data=>send('/sucursales','POST',data),
+    updateBranch: (sid,data)=>send('/sucursales/'+id(sid),'PUT',data),
+    branchStatus: (sid,activo)=>send('/sucursales/'+id(sid)+'/estado','PATCH',{activo}),
+    branchWarehouses: (sid,page=1,buscar='')=>send('/sucursales/'+id(sid)+'/bodegas?'+new URLSearchParams({page:String(page),buscar})),
+    assignBranchWarehouse: (sid,bid)=>send('/sucursales/'+id(sid)+'/bodegas/'+id(bid),'PUT',{}),
+    branchUsers: (sid,page=1,buscar='')=>send('/sucursales/'+id(sid)+'/usuarios?'+new URLSearchParams({page:String(page),buscar})),
+    branchAccess: (sid,uid,activo)=>send('/sucursales/'+id(sid)+'/usuarios/'+id(uid),'PUT',{activo}),
     inventoryCatalogs: (page=1,buscar='',rapido=false)=>send('/inventario/catalogos?'+new URLSearchParams({page:String(page),buscar,rapido:rapido?'1':'0'})),
     inventoryUpdateReason: (rid,datos)=>send('/inventario/motivos/'+id(rid),'PUT',datos),
     inventoryAdjustments: (page=1,buscar='')=>send('/inventario/ajustes-rapidos?'+new URLSearchParams({page:String(page),buscar})),
