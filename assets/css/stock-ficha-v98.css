@@ -15,3 +15,24 @@ html[data-theme=oscuro] .hd98-stock-note{color:#d8c3e7}
 html[data-theme=oscuro] .hd98-stock-legacy{background:#543e26;color:#ffdb98}
 html[data-theme=oscuro] .hd98-inactive{color:#ffd18a}
 @media(max-width:600px){.hd98-stock{padding:8px}.hd98-stock-table :is(th,td){padding:6px!important}}
+
+/* V101: limite de viewport aun con reglas globales de modales. */
+dialog.modal.catalog-dialog.product-detail-dialog{
+ box-sizing:border-box!important;min-width:0!important;
+ width:min(1100px,calc(100vw - 28px))!important;
+ max-width:calc(100vw - 28px)!important;
+}
+dialog.modal.catalog-dialog.product-detail-dialog .product-detail-shell,
+dialog.modal.catalog-dialog.product-detail-dialog .product-detail-content,
+dialog.modal.catalog-dialog.product-detail-dialog .product-detail-section{
+ min-width:0!important;max-width:100%!important;box-sizing:border-box!important;
+}
+dialog.modal.catalog-dialog.product-detail-dialog .product-detail-table-scroll,
+dialog .hd98-stock .product-detail-table-scroll{
+ min-width:0!important;width:100%;max-width:100%!important;overflow-x:auto!important;box-sizing:border-box!important;
+}
+@media(max-width:760px){
+ dialog.modal.catalog-dialog.product-detail-dialog{width:calc(100vw - 16px)!important;max-width:calc(100vw - 16px)!important}
+ dialog.modal.catalog-dialog.product-detail-dialog .product-detail-content{grid-template-columns:minmax(0,1fr)!important;padding:8px!important}
+ dialog.modal.catalog-dialog.product-detail-dialog .product-detail-wide{grid-column:1/-1!important}
+}
