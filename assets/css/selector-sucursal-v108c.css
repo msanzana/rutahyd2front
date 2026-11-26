@@ -1,0 +1,49 @@
+/* V108C · Solo selector y cabecera de sucursal. */
+dialog.hd-branch-dialog{box-sizing:border-box;width:min(420px,calc(100vw - 28px));max-width:420px;min-width:0;max-height:min(88dvh,620px);height:auto;padding:0;border:1px solid var(--line,#ded5eb);border-radius:18px;background:var(--surface,#fff);color:var(--text,#251b35);box-shadow:0 22px 74px #1d10384d;overflow:auto}
+dialog.hd-branch-dialog::backdrop{background:#20123680}
+dialog.hd-branch-dialog .hd-doc-form{display:flex;flex-direction:column;gap:0;min-height:0;height:auto;background:var(--surface,#fff)}
+dialog.hd-branch-dialog .hd-doc-modal-head{padding:20px 22px 8px;min-height:0;border:0;background:transparent}
+dialog.hd-branch-dialog .hd-doc-modal-head h2{font-size:20px;line-height:1.25;font-weight:750;letter-spacing:-.4px;margin:0;color:var(--text)}
+dialog.hd-branch-dialog .hd-doc-modal-head button[hidden]{display:none!important}
+dialog.hd-branch-dialog .hd-doc-modal-scroll{display:flex;flex-direction:column;gap:12px;padding:0 22px 14px;min-height:0;height:auto;overflow:auto}
+dialog.hd-branch-dialog .hd-doc-status{font-size:12px;line-height:1.4;margin:0;color:var(--muted)}
+.hd-branch-options{display:grid;gap:8px;min-width:0}
+.hd-branch-card{position:relative;box-sizing:border-box;display:flex;align-items:center;gap:12px;padding:12px;border:1.5px solid var(--line,#ded5eb);border-radius:12px;background:var(--surface,#fff);min-height:76px;min-width:0;transition:background .15s,border-color .15s,box-shadow .15s}
+label.hd-branch-card{cursor:pointer}
+label.hd-branch-card:hover{border-color:#a78bca;background:#faf7ff}
+.hd-branch-card:has(.hd-branch-radio:checked){border-color:#6d28d9;background:#f2eafa;box-shadow:0 0 0 1px #6d28d9}
+.hd-branch-card:has(.hd-branch-radio:focus-visible){outline:3px solid #a78bfa;outline-offset:3px}
+dialog.hd-branch-dialog input.hd-branch-radio{position:absolute!important;width:1px!important;height:1px!important;min-width:0!important;min-height:0!important;padding:0!important;margin:0!important;opacity:0;clip-path:inset(50%);overflow:hidden}
+.hd-branch-symbol{width:40px;height:40px;flex:0 0 40px;display:grid;place-items:center;background:#eee6f8;color:#6d28d9;border-radius:10px}
+.hd-branch-symbol svg{width:23px;height:23px}
+.hd-branch-info{min-width:0;flex:1;display:flex;flex-direction:column;gap:2px}
+.hd-branch-name{font-size:16px;line-height:1.2;font-weight:750;color:var(--text);overflow-wrap:anywhere}
+.hd-branch-code,.hd-branch-address{font-size:11px;line-height:1.4;color:var(--muted);overflow-wrap:anywhere}
+.hd-branch-check{display:grid;place-items:center;flex:0 0 23px;width:23px;height:23px;border:1.5px solid #b7a8c9;border-radius:50%;color:transparent;font-size:14px;font-weight:750;background:var(--surface,#fff)}
+.hd-branch-card:has(.hd-branch-radio:checked) .hd-branch-check{background:#6d28d9;border-color:#6d28d9;color:white}
+.hd-branch-active{font-size:10px;color:var(--muted);white-space:nowrap}
+dialog.hd-branch-dialog .hd-branch-status:empty{display:none}
+dialog.hd-branch-dialog .hd-branch-status[role=alert]{color:#a62b4d}
+dialog.hd-branch-dialog .hd-doc-modal-footer{display:flex;align-items:center;justify-content:flex-end;gap:10px;border-top:1px solid var(--line);padding:12px 22px 17px;background:transparent}
+dialog.hd-branch-dialog .hd-doc-modal-footer .hd-branch-enter{flex:0 0 auto;width:auto;min-width:114px;min-height:36px!important;padding:7px 19px!important;border:1px solid #6d28d9;border-radius:10px;background:#6d28d9;color:white;font-size:13px;font-weight:700;box-shadow:none}
+dialog.hd-branch-dialog .hd-doc-modal-footer .hd-branch-enter:disabled{opacity:.5;cursor:not-allowed}
+dialog.hd-branch-dialog .hd-doc-modal-footer .hd-branch-cancel{flex:0 0 auto;width:auto;min-height:36px!important;padding:7px 11px!important;border:1px solid transparent;border-radius:10px;font-size:12px;color:var(--muted);background:transparent}
+.hd-branch-current{display:flex;flex-direction:column;justify-content:center;min-width:0;max-width:160px;padding:6px 12px;gap:0;border:1px solid #ddd0f1;border-radius:10px;background:#f5effc;color:#5423a0;line-height:1.15}
+.hd-branch-current[hidden]{display:none!important}
+.hd-branch-current-label{font-size:9px;font-weight:650;letter-spacing:.6px;text-transform:uppercase}
+.hd-branch-current strong{font-size:15px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+html[data-theme=oscuro] .hd-branch-current{background:#392650;border-color:#65458b;color:#eadcff}
+html[data-theme=oscuro] label.hd-branch-card:hover{background:#302340}
+html[data-theme=oscuro] .hd-branch-card:has(.hd-branch-radio:checked){background:#3d2859;border-color:#b39af8;box-shadow:0 0 0 1px #b39af8}
+html[data-theme=oscuro] .hd-branch-symbol{background:#493366;color:#d9c6ff}
+html[data-theme=oscuro] dialog.hd-branch-dialog .hd-branch-status[role=alert]{color:#ffafc5}
+@media(max-width:600px){
+ dialog.hd-branch-dialog .hd-doc-modal-head{padding:16px 16px 8px}
+ dialog.hd-branch-dialog .hd-doc-modal-scroll{padding:0 16px 12px}
+ dialog.hd-branch-dialog .hd-doc-modal-footer{padding:10px 16px 14px}
+ dialog.hd-branch-dialog .hd-doc-modal-footer :is(.hd-branch-enter,.hd-branch-cancel){min-height:44px!important}
+ .hd-branch-current{max-width:100px;padding:5px 8px;flex-shrink:1}
+ .hd-branch-current strong{font-size:13px}
+ .hd-branch-current-label{font-size:8px}
+}
+@media(prefers-reduced-motion:reduce){.hd-branch-card{transition:none}}
