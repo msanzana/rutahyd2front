@@ -272,6 +272,8 @@
   }
   const api = Object.freeze({
     configure, authenticate, login, logout, signOut, status,
+    branchContext: ()=>send('/contexto-sucursal'),
+    selectBranchContext: (sid,version)=>send('/contexto-sucursal','POST',{sucursal_id:Number(id(sid)),version_contexto:version}),
     branches: (page=1,buscar='')=>send('/sucursales?'+new URLSearchParams({page:String(page),buscar})),
     createBranch: data=>send('/sucursales','POST',data),
     updateBranch: (sid,data)=>send('/sucursales/'+id(sid),'PUT',data),
