@@ -286,6 +286,7 @@
     inventoryUpdateReason: (rid,datos)=>send('/inventario/motivos/'+id(rid),'PUT',datos),
     transfers: (page=1,buscar='',filters={})=>send('/inventario/traspasos?'+new URLSearchParams({page:String(page),buscar,...filters})),
     transfer: rid=>send('/inventario/traspasos/'+id(rid)),
+    transferPdf: rid=>pdfOrden(rid,'inventario/traspasos'),
     transferWarehouses: ()=>send('/inventario/traspasos/bodegas'),
     transferCreate: data=>send('/inventario/traspasos','POST',data),
     transferAction: (rid,action,data)=>{if(!['aprobar','anular','confirmar','despachar'].includes(action))throw Error('Acción inválida.');return send('/inventario/traspasos/'+id(rid)+'/'+action,'POST',data);},
