@@ -272,6 +272,18 @@
   }
   const api = Object.freeze({
     configure, authenticate, login, logout, signOut, status,
+    inventoryCatalogs: (page=1,buscar='',rapido=false)=>send('/inventario/catalogos?'+new URLSearchParams({page:String(page),buscar,rapido:rapido?'1':'0'})),
+    inventoryUpdateReason: (rid,datos)=>send('/inventario/motivos/'+id(rid),'PUT',datos),
+    inventoryAdjustments: (page=1,buscar='')=>send('/inventario/ajustes-rapidos?'+new URLSearchParams({page:String(page),buscar})),
+    inventoryAdjustment: rid=>send('/inventario/ajustes-rapidos/'+id(rid)),
+    inventoryCandidates: (page=1,buscar='')=>send('/inventario/ajustes-rapidos/candidatos?'+new URLSearchParams({page:String(page),buscar})),
+    inventoryOrigin: kid=>send('/inventario/ajustes-rapidos/origen/'+id(kid)),
+    inventoryWarehouses: ()=>send('/inventario/ajustes-rapidos/bodegas'),
+    inventoryCreateAdjustment: datos=>send('/inventario/ajustes-rapidos','POST',datos),
+    inventoryAdjustmentAction: (rid,action,datos)=>{
+      if(!['aprobar','anular','confirmar'].includes(action))throw Error('Acción inválida');
+      return send('/inventario/ajustes-rapidos/'+id(rid)+'/'+action,'POST',datos);
+    },
     operationalPurchasePdf: (kind,cid)=>{if(!['recepcion','consolidacion'].includes(kind))throw Error('Tipo de documento inválido.');return pdfOrden(cid,'documentos-recepcion/'+kind);},
     regularizationPdf: sid=>pdfOrden(sid,'solicitudes-regularizacion'),
     retryRegularizationMail: (nid,datos)=>send('/notificaciones-regularizacion/'+id(nid)+'/reenviar','POST',datos),
