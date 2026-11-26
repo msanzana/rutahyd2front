@@ -43,10 +43,10 @@ function mount(root){
  if(!acl()?.isAdmin()){root.replaceChildren(el('p','Acceso exclusivo de Administración.'));return;}
  const panel=el('section',null,'hd-documents'),info=el('p','Configure las sucursales, sus bodegas y los accesos. El contexto operativo obligatorio aún no está activado.','hd-doc-status'),host=el('div');panel.append(info,host);root.replaceChildren(panel);
  let refresh=()=>{};
- refresh=paged(host,['ID','Código','Sucursal','Ciudad','Bodegas','Usuarios asignados','Estado','Acciones'],(p,q)=>api().branches(p,q),(body,s,reload)=>{
+ refresh=paged(host,['ID','Código','Sucursal','Ciudad','Dirección','Bodegas','Usuarios asignados','Estado','Acciones'],(p,q)=>api().branches(p,q),(body,s,reload)=>{
   const actions=el('div',null,'list-actions');
   actions.append(window.RutaHDListUI.action('Editar '+s.nombre,()=>editor(s,reload),{kind:'editar'}),window.RutaHDListUI.action('Bodegas y accesos de '+s.nombre,()=>assignments(s,reload),{kind:'ver'}));
-  const tr=el('tr');for(const x of [s.id,s.codigo,s.nombre,s.ciudad||'Sin ubicación',s.bodegas_count,s.usuarios_count])tr.append(el('td',x));
+  const tr=el('tr');for(const x of [s.id,s.codigo,s.nombre,s.ciudad||'Sin ubicación',s.direccion||'—',s.bodegas_count,s.usuarios_count])tr.append(el('td',x));
   const state=el('td');state.append(window.RutaHDListUI.statusSwitch(s.nombre,!!Number(s.activo),async wanted=>{await api().branchStatus(s.id,wanted);void reload();}));tr.append(state);
   const action=el('td');action.append(actions);tr.append(action);body.append(tr);
  },{newAction:()=>editor(null,refresh)});
@@ -54,6 +54,7 @@ function mount(root){
 function editor(s,reload){
  const m=modal(s?'Editar sucursal':'Nueva sucursal'),code=input(),record=input(),name=input(),loc=el('div'),status=el('p',null,'hd-doc-status');
  record.disabled=true;record.value=s?String(s.id):'Automático';code.value=s?.codigo||'';code.maxLength=30;code.disabled=!!s;name.value=s?.nombre||'';name.maxLength=130;
+ const address=input();address.maxLength=200;address.value=s?.direccion||'';
  let changed=false,selector=null,loading=false;
  const section=el('section',null,'hd-v70-docs');section.append(el('h3','Datos generales'),field('ID',record),field('Código de sucursal',code),field('Nombre',name));
  const geo=el('section',null,'supplier-location-section');geo.append(el('h3','Ubicación geográfica'),el('p',s?.ciudad||'Sin ubicación asignada'));
@@ -62,13 +63,13 @@ function editor(s,reload){
    try{selector=await window.RutaHDUbicaciones.mountSelector(loc,s?.ciudad_id||null);changed=true;clear.disabled=false;}catch(e){error(status,e);change.disabled=false;}finally{loading=false;save.disabled=false;}
  });
  const clear=btn('Dejar sin ubicación',()=>{loc.replaceChildren();selector=null;changed=true;change.disabled=false;clear.disabled=true;geoState.textContent='Sin ubicación';});clear.disabled=!s?.ciudad_id;
- const geoState=el('p');geo.append(change,clear,geoState,loc);m.content.append(section,geo,status);
+ const geoState=el('p');geo.append(change,clear,geoState,loc,field('Dirección',address));m.content.append(section,geo,status);
  const save=btn('Guardar',async()=>{
   if(!name.value.trim()||(!s&&!/^[A-Z0-9][A-Z0-9_-]{0,29}$/.test(code.value.trim().toUpperCase()))){error(status,{message:'Ingrese nombre y un código válido.'});return;}
   if(loading)return;
   let city=changed?(selector?.value()??null):(s?.ciudad_id??null);
   if(selector&&!city){error(status,{message:'Seleccione una ciudad o utilice Dejar sin ubicación.'});return;}
-  const payload={nombre:name.value.trim(),ciudad_id:city};if(!s)payload.codigo=code.value.trim().toUpperCase();
+  const payload={nombre:name.value.trim(),ciudad_id:city,direccion:address.value.trim()||null};if(!s)payload.codigo=code.value.trim().toUpperCase();
   busyDialog(m,true);try{if(s)await api().updateBranch(s.id,payload);else await api().createBranch(payload);m.d.close();void reload();}catch(e){error(status,e);}finally{busyDialog(m,false);}
  },'button primary');
  m.d.addEventListener('cancel',e=>{if(m.d.dataset.busy==='1')e.preventDefault();});
