@@ -56,7 +56,10 @@ function chooser(initial,{required=false,onLogout=()=>{}}={}){
 }
 async function beforeLogin(){
  current=null;
- const state=await api().branchContext();
+ // Finaliza la carga de autenticación antes de abrir otro diálogo en top-layer.
+ window.RutaHDCarga?.reset();
+ let state;
+ try{state=await api().branchContext();}finally{window.RutaHDCarga?.reset();}
  if(!selectorDisponible(state))return true;
  return chooser(state,{required:true});
 }
