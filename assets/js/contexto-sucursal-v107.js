@@ -4,13 +4,13 @@
 const api=()=>window.RutaHDApiCatalogos,acl=()=>window.RutaHDAccesos;
 const el=(tag,txt,cls)=>{const n=document.createElement(tag);if(txt!=null)n.textContent=txt;if(cls)n.className=cls;return n;};
 const btn=(text,fn,cls='button ghost')=>{const b=el('button',text,cls);b.type='button';b.onclick=fn;return b;};
-// Mantener false en V107: ni un error de contexto ni una configuración SQL prematura
-// deben bloquear el login o aparentar aislamiento de las operaciones aún no adaptadas.
-const SELECTOR_ACTIVO=false;
+// Confirmación exclusiva de sucursal única, sin simular aislamiento operativo.
+// Solo el servidor puede habilitar la confirmación de sucursal única.
+const selectorDisponible=s=>s?.seleccion_habilitada===true&&s?.modo_sucursal_unica===true;
 let current=null,activeDialog=null,sequence=0;
 function updateMenu(){
  const item=document.getElementById('menuBranchContext'),label=document.getElementById('menuBranchLabel');
- if(item){item.hidden=!acl()?.authenticated();item.textContent=SELECTOR_ACTIVO?'Cambiar de sucursal':'Sucursales autorizadas';}
+ if(item){item.hidden=!acl()?.authenticated();item.textContent=current?'Sucursal actual':'Sucursales autorizadas';}
  if(label){label.hidden=!acl()?.authenticated();label.textContent=current?current.codigo+' · '+current.nombre:'Contexto de sucursal en preparación';}
 }
 function chooser(initial,{required=false,onLogout=()=>{}}={}){
@@ -23,9 +23,9 @@ function chooser(initial,{required=false,onLogout=()=>{}}={}){
  return new Promise(resolve=>{
   function render(){
    body.replaceChildren();foot.replaceChildren();chosen=null;
-   const enabled=SELECTOR_ACTIVO&&state.aislamiento_completo&&state.contexto_obligatorio;
-   body.append(el('p',enabled?'Selecciona la sucursal en la que deseas trabajar.':'Configuración en preparación. Estas son las sucursales a las que tienes acceso; todavía no se aplica un filtro operativo por sucursal.','hd-doc-status'));
-   if(enabled&&!required)body.append(el('p','Al confirmar se volverá al inicio y se descartarán las vistas cargadas.','hd-doc-status'));
+   const enabled=required&&selectorDisponible(state);
+   body.append(el('p',enabled?'Selecciona la sucursal para ingresar al sistema.':'Configuración en preparación. Estas son las sucursales a las que tienes acceso; todavía no se aplica un filtro operativo por sucursal.','hd-doc-status'));
+   if(enabled)body.append(el('p','Modo de sucursal única. La separación operativa multisucursal aún está en preparación.','hd-doc-status'));
    const group=el('div',null,'hd-v70-docs');group.setAttribute('role','group');group.setAttribute('aria-label','Sucursales disponibles');
    for(const s of state.sucursales||[]){
     const label=el('label',null,'hd-doc-field');label.style.cssText='display:flex;align-items:center;gap:12px;padding:12px;border:1px solid #cfc3dc;border-radius:10px;margin-bottom:8px';
@@ -50,9 +50,9 @@ function chooser(initial,{required=false,onLogout=()=>{}}={}){
  });
 }
 async function beforeLogin(){
- if(!SELECTOR_ACTIVO)return true;
+ current=null;
  const state=await api().branchContext();
- if(!state.aislamiento_completo||!state.contexto_obligatorio)throw Error('Contexto operativo no habilitado.');
+ if(!selectorDisponible(state))return true;
  return chooser(state,{required:true});
 }
 async function openMenu(){
