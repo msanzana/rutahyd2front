@@ -166,8 +166,12 @@ function mount(root,key){
   async function catalogs(){
    try{
     const all=async fn=>{let out=[],n=1,d;do{if(!dialog.open)break;d=await fn(n++);out.push(...(d.data||d.items||[]));}while(dialog.open&&n<=Math.min(100,d.last_page||1));return out;};
-    const [types,warehouses]=await Promise.all([all(page=>api.documentTypes({page,activo:1})),all(page=>api.resources('bodegas',page,'',25))]);if(!dialog.open)return;
+    const [types,context]=await Promise.all([all(page=>api.documentTypes({page,activo:1})),api.purchaseConsultation('recepciones',1,'',{})]);if(!dialog.open)return;
+    if(!Array.isArray(context?.bodegas))throw Error('No se pudieron verificar las bodegas de la sucursal.');
+    const warehouses=context.bodegas;
+    if(!warehouses.length)throw Error('La sucursal no tiene bodegas activas asignadas.');
     for(const d of types)if(Number(d.documento_compra)===1&&['FACTURA','FACTURA_COMPRA','BOLETA','GUIA'].includes(d.familia)){const o=option(String(d.id),d.nombre);o.dataset.sii=String(d.codigo_sii??'');docType.append(o);}
+    depot.replaceChildren(option('','Seleccione bodega'));
     for(const b of warehouses)if(Number(b.activo??1)===1)depot.append(option(String(b.id),b.nombre));
    }catch(e){if(dialog.open)hd93Alert(docStatus,hd93Error(e,'No fue posible cargar los tipos de documento o las bodegas.'));throw e;}
   }
