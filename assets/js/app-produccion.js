@@ -9,7 +9,7 @@
   const acl=()=>window.RutaHDAccesos;
   const CONSULTAS={"compras_facturas":"Facturas de compra","compras_recepciones":"Recepciones","compras_consolidaciones":"Consolidaciones","compras_libro":"Libro de compras","bodega_stock":"Stock","bodega_kardex":"Kardex"};
   const SERVICES=Object.freeze({ ...CONSULTAS,
-    administracion:'Administración',administracion_documentos:'Documentos',administracion_inventario:'Catálogos de inventario',administracion_sucursales:'Sucursales',bodega_ajuste_rapido:'Ajuste rápido',bodega_ajustes_generales:'Ajustes generales',compras:'Compras',compras_ordenes:'Órdenes de Compra',ventas:'Ventas',
+    administracion:'Administración',administracion_documentos:'Documentos',administracion_inventario:'Catálogos de inventario',administracion_sucursales:'Sucursales',bodega_ajuste_rapido:'Ajuste rápido',bodega_ajustes_generales:'Ajustes generales',bodega_traspasos:'Traspasos',compras:'Compras',compras_ordenes:'Órdenes de Compra',ventas:'Ventas',
     proveedores:'Proveedores',proveedores_productos:'Proveedores productos',clientes:'Clientes',
     clientes_listado:'Listado de clientes',productos:'Productos',listas_precios:'Listas de precios',
     bodega:'Bodega',cuentas_corrientes:'Cuentas corrientes',
@@ -60,7 +60,7 @@
     for(const key of Object.keys(CONSULTAS)){
       const b=$('.sidebar [data-nav="'+key+'"]');if(b)b.hidden=!allowed(key);
     }
-    for(const key of ['bodega_ajuste_rapido','bodega_ajustes_generales','administracion_inventario','administracion_sucursales']){const b=$('.sidebar [data-nav="'+key+'"]');if(b)b.hidden=!allowed(key);}
+    for(const key of ['bodega_ajuste_rapido','bodega_ajustes_generales','bodega_traspasos','administracion_inventario','administracion_sucursales']){const b=$('.sidebar [data-nav="'+key+'"]');if(b)b.hidden=!allowed(key);}
     $('#toggleBodegaSubnav').hidden=!logged()||!(acl().has('inventario.gestionar')||allowed('bodega_ajuste_rapido'));
     const clientsToggle=$('#toggleClientSubnav');
     if(clientsToggle)clientsToggle.hidden=!logged();
@@ -223,7 +223,7 @@
     if(section==='administracion_documentos')return acl().isAdmin()||acl().has('administracion.documentos.ver');
     if(section==='administracion_inventario')return acl().isAdmin()||acl().has('inventario.catalogos.ver');
     if(section==='administracion_sucursales')return acl().isAdmin();
-    if(['bodega_ajuste_rapido','bodega_ajustes_generales'].includes(section))return acl().isAdmin()||acl().has('inventario.operaciones.ver');
+    if(['bodega_ajuste_rapido','bodega_ajustes_generales','bodega_traspasos'].includes(section))return acl().isAdmin()||acl().has('inventario.operaciones.ver');
     if(section.startsWith('ubicaciones.'))
       return LOCATION_CATALOGS.has(section.split('.')[1])&&acl().isAdmin();
     if(section==='proveedores_productos')return acl().canSeeSubmodule('proveedores_productos');
@@ -329,6 +329,9 @@
     }else if(section==='administracion_inventario'){
       $('#workspaceDescription').textContent='Grupos, motivos y códigos oficiales de inventario.';
       window.RutaHDInventarioV104.catalogs(content);
+    }else if(section==='bodega_traspasos'){
+      $('#workspaceDescription').textContent='Traspasos entre bodegas, despacho y recepción.';
+      window.RutaHDInventarioV104.transfers(content);
     }else if(section==='bodega_ajustes_generales'){
       window.RutaHDInventarioV104.generalAdjustments(content);
     }else if(section==='bodega_ajuste_rapido'){
