@@ -79,6 +79,7 @@
     try{
       api().configure(location.origin);
       const user=await api().login(mail.value.trim(),secret);
+      if(!await window.RutaHDContextoSucursalV107.beforeLogin()){await api().logout();return;}
       acl().setSession(user);
       loggedIn();
     }catch(e){
