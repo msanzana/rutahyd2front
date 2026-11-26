@@ -124,10 +124,16 @@
   }
   function disposeLocal(owner,entry){
     clearTimeout(entry.timer);entry.tickets.clear();entry.status.remove();
-    owner.removeAttribute('data-hd-local-loading');localReads.delete(owner);localEntries.delete(entry);
+    owner.removeAttribute('data-hd-local-loading');for(const node of entry.fields||[])node.removeAttribute('data-hd-loading-field');localReads.delete(owner);localEntries.delete(entry);
     owner.removeEventListener('close',entry.onClose);
   }
-  function localRead(owner,text){
+  function pendingFields(owner,path){
+    const clean=String(path||'').split('?')[0].replace(/^\/+/,''),selectors=[];
+    if(clean.startsWith('tipos-documentos'))selectors.push('#hd-recepcion-documento-tipo');
+    if(clean.startsWith('recursos/bodegas'))selectors.push('#hd-recepcion-bodega');
+    return selectors.flatMap(selector=>[...owner.querySelectorAll(selector)].map(node=>node.closest('label')||node.parentElement).filter(Boolean));
+  }
+  function localRead(owner,text,path){
     let entry=localReads.get(owner);
     if(!entry){
       const status=document.createElement('div');status.className='hd-form-loading';status.hidden=true;
@@ -136,13 +142,14 @@
       const message=document.createElement('span');message.className='hd-form-loading-text';status.append(ring,message);
       const region=owner.querySelector('.hd-doc-modal-scroll,.product-detail-content,.crud-dialog-body,.modal-body,.crud-body,.product-editor-scroll');
       if(region)region.prepend(status);else owner.prepend(status);
-      entry={owner,status,message,tickets:new Map(),timer:null,onClose:null};
+      entry={owner,status,message,tickets:new Map(),timer:null,onClose:null,fields:new Set()};
       entry.onClose=()=>disposeLocal(owner,entry);owner.addEventListener('close',entry.onClose);
       localReads.set(owner,entry);localEntries.add(entry);
     }
-    const ticket=++serial;entry.tickets.set(ticket,text);owner.setAttribute('data-hd-local-loading','');
+    const ticket=++serial;entry.tickets.set(ticket,{text,fields:pendingFields(owner,path)});owner.setAttribute('data-hd-local-loading','');
     const paint=()=>{
-      const latest=[...entry.tickets.values()].at(-1)||'Cargando información…';
+      const latest=[...entry.tickets.values()].at(-1)?.text||'Cargando información…';
+      const next=new Set([...entry.tickets.values()].flatMap(t=>t.fields));for(const node of entry.fields)if(!next.has(node))node.removeAttribute('data-hd-loading-field');for(const node of next)if(!entry.status.hidden)node.setAttribute('data-hd-loading-field','');entry.fields=next;
       entry.message.textContent=latest+(entry.tickets.size>1?' · '+entry.tickets.size+' consultas en curso':'');
     };
     paint();
@@ -157,7 +164,7 @@
   function start({path='',method='GET',message=''}={}){
     const owner=currentOwner();
     if(owner&&String(method).toUpperCase()==='GET')
-      return localRead(owner,String(message||label(path,method)).slice(0,120));
+      return localRead(owner,String(message||label(path,method)).slice(0,120),path);
     // Es intencional que el popup no aparezca para lecturas instantáneas:
     // evita parpadeos en listas y catálogos cacheados.
     const ticket=++serial;
