@@ -25,6 +25,11 @@
     'recursos/clientes':'clientes',
     'recursos/bodegas':'bodegas',
     'fotos':'fotografías',
+    'recepciones-borrador':'datos de recepción',
+    'consolidaciones-recepcion':'datos de consolidación',
+    'ordenes-compra':'órdenes de compra',
+    'tipos-documentos':'tipos de documento',
+    'consultas-compras':'datos de compras',
     'ventas':'ventas',
     'clientes':'clientes',
     'proveedores':'proveedores',
@@ -110,29 +115,47 @@
       if(!active.size&&dialog?.open)dialog.close();
     },wait);
   }
-  // Lecturas del formulario de recepción: estado local, sin poner un
-  // diálogo modal encima de los controles de salida. Las escrituras
-  // mantienen el overlay bloqueante y sus tickets independientes.
-  const localReads=new WeakMap();
+  // Lecturas parciales de cualquier formulario o buscador abierto.
+  // No bloquear Cerrar ni ocultar el contenido que ya se ha cargado.
+  const localReads=new WeakMap(),localEntries=new Set();
+  function currentOwner(){
+    const open=[...document.querySelectorAll('dialog[open]:not([data-hd-loading])')];
+    return open.filter(d=>d.matches(':modal')).at(-1)||open.at(-1)||null;
+  }
+  function disposeLocal(owner,entry){
+    clearTimeout(entry.timer);entry.tickets.clear();entry.status.remove();
+    owner.removeAttribute('data-hd-local-loading');localReads.delete(owner);localEntries.delete(entry);
+    owner.removeEventListener('close',entry.onClose);
+  }
   function localRead(owner,text){
     let entry=localReads.get(owner);
     if(!entry){
-      const status=document.createElement('p');
-      status.className='hd-receipt-loading';status.setAttribute('role','status');
-      status.setAttribute('aria-live','polite');
-      entry={status,tickets:new Map()};localReads.set(owner,entry);
-      owner.querySelector('.hd-doc-modal-head')?.append(status);
+      const status=document.createElement('div');status.className='hd-form-loading';status.hidden=true;
+      status.setAttribute('role','status');status.setAttribute('aria-live','polite');status.setAttribute('aria-atomic','true');
+      const ring=document.createElement('span');ring.className='hd-form-loading-ring';ring.setAttribute('aria-hidden','true');
+      const message=document.createElement('span');message.className='hd-form-loading-text';status.append(ring,message);
+      const region=owner.querySelector('.hd-doc-modal-scroll,.product-detail-content,.crud-dialog-body,.modal-body,.crud-body,.product-editor-scroll');
+      if(region)region.prepend(status);else owner.prepend(status);
+      entry={owner,status,message,tickets:new Map(),timer:null,onClose:null};
+      entry.onClose=()=>disposeLocal(owner,entry);owner.addEventListener('close',entry.onClose);
+      localReads.set(owner,entry);localEntries.add(entry);
     }
-    const ticket=++serial;entry.tickets.set(ticket,text);
+    const ticket=++serial;entry.tickets.set(ticket,text);owner.setAttribute('data-hd-local-loading','');
     const paint=()=>{
-      entry.status.hidden=!entry.tickets.size;
-      entry.status.textContent=entry.tickets.size?[...entry.tickets.values()].at(-1):'';
+      const latest=[...entry.tickets.values()].at(-1)||'Cargando información…';
+      entry.message.textContent=latest+(entry.tickets.size>1?' · '+entry.tickets.size+' consultas en curso':'');
     };
-    paint();let closed=false;
-    return ()=>{if(closed)return;closed=true;entry.tickets.delete(ticket);paint();};
+    paint();
+    if(entry.status.hidden&&entry.timer===null)entry.timer=setTimeout(()=>{
+      entry.timer=null;if(entry.tickets.size&&owner.open&&owner.isConnected){entry.status.hidden=false;paint();}
+    },SHOW_DELAY_MS);
+    let closed=false;
+    return ()=>{if(closed)return;closed=true;entry.tickets.delete(ticket);
+      if(entry.tickets.size)paint();else if(localReads.get(owner)===entry)disposeLocal(owner,entry);
+    };
   }
   function start({path='',method='GET',message=''}={}){
-    const owner=document.querySelector('dialog[data-hd-receipt-window][open]');
+    const owner=currentOwner();
     if(owner&&String(method).toUpperCase()==='GET')
       return localRead(owner,String(message||label(path,method)).slice(0,120));
     // Es intencional que el popup no aparezca para lecturas instantáneas:
@@ -157,10 +180,11 @@
   function reset(){
     clearTimers();
     active.clear();
+    for(const entry of [...localEntries])disposeLocal(entry.owner,entry);
     if(dialog?.open)dialog.close();
   }
   window.RutaHDCarga=Object.freeze({
     start,track,reset,
-    isLoading:()=>active.size>0
+    isLoading:()=>active.size>0||localEntries.size>0
   });
 })();
