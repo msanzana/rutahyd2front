@@ -290,11 +290,49 @@ async function countDetail(id,reload,ready=false){
   else if(Number(l.contado_por)!==uid&&!(l.recontado||l.cantidad_recontada!==undefined&&l.cantidad_recontada!==null))a.append(window.RutaHDListUI.action('Recontar '+l.sku,()=>{d.close();countMeasurement(id,l,'recontar',reload);},{kind:'editar'}));
  }row(t.b,[l.sku,l.producto,...(blind?[]:[num(l.saldo_corte)]),value(l,'cantidad_contada','contado'),value(l,'cantidad_recontada','recontado')],a);}
  status.textContent='';content.replaceChildren(el('h3',h.numero_interno+' · '+h.estado),el('p','Bodega '+h.bodega_id+' · Corte '+(h.fecha_corte||'Pendiente')),el('p',blind?'Conteo ciego: saldo de corte oculto.':'Consulta de cantidades registradas.'),t.wrap,status);
+ if(['EN_REVISION','CONFIRMADO'].includes(h.estado)){
+  const plans=x.revision?.planes||[],byId=new Map((x.detalles||[]).map(l=>[Number(l.producto_id),l])),reviewTable=table(['SKU','Producto','Saldo corte','Conteo final','Diferencia','Resultado']);
+  for(const p of plans){const l=byId.get(Number(p.producto_id))||{};row(reviewTable.b,[l.sku||String(p.producto_id),l.producto||'—',num(p.esperado),num(p.contado),num(p.diferencia),p.resultado+(p.bloqueos?.length?' · Requiere regularización':'')]);}
+  const summary=el('section',null,'surface-panel');summary.append(el('h3','Conciliación de inventario'),el('p','Cuadrados: '+plans.filter(p=>p.resultado==='CUADRADO').length+' · Sobrantes: '+plans.filter(p=>p.resultado==='SOBRANTE').length+' · Faltantes: '+plans.filter(p=>p.resultado==='FALTANTE').length),reviewTable.wrap,el('p',x.autorizado?'Diferencias autorizadas':'Autorización pendiente'),el('p',x.ajustes_preparados?'Ajustes preparados':'Preparación de ajustes pendiente'));
+  if(!plans.length)summary.append(el('p','Sin revisión registrada disponible.'));
+  for(const o of x.operaciones||[]){const dt=table(['SKU','Producto','Cantidad','Variación','CPP','Kardex']),sub=el('section',null,'surface-panel');
+   for(const l of o.detalles||[])row(dt.b,[l.sku,l.producto,num(l.cantidad),num(l.delta_disponible),num(l.costo_unitario_snapshot),l.kardex_id||'Pendiente']);
+   sub.append(el('h4',o.numero_interno+' · '+o.motivo_nombre_snapshot+' · '+o.estado_nombre),dt.wrap,el('p','Respaldos: '+((o.respaldos||[]).map(f=>f.nombre).join(' · ')||'Sin archivos')));summary.append(sub);
+  }
+  content.insertBefore(summary,status);
+  if(write&&h.estado==='EN_REVISION'&&can('inventario.operaciones.aprobar')&&!x.ajustes_preparados)foot.append(btn(x.autorizado?'Preparar ajustes':'Autorizar diferencias',()=>{d.close();countApproval(id,reload,x.autorizado);},'button primary'));
+  if(write&&x.cierre_habilitado===true&&x.ajustes_preparados&&h.estado==='EN_REVISION'&&can('inventario.operaciones.confirmar'))foot.append(btn('Confirmar conteo',()=>{d.close();countClose(id,reload);},'button primary'));
+ }
+ if(write&&x.anulacion_habilitada===true&&['BORRADOR','EN_CONTEO','EN_REVISION'].includes(h.estado)&&can('inventario.operaciones.anular'))foot.append(btn('Anular conteo',()=>{d.close();countCancel(id,reload);}));
  if(write&&h.estado==='EN_CONTEO'&&can('inventario.operaciones.aprobar')){
  let busy=false;const review=btn('Enviar a revisión',async()=>{if(busy)return;busy=true;close.disabled=true;for(const n of foot.querySelectorAll('button'))n.disabled=true;
  try{await api().countAction(id,'revisar',{});d.close();void reload();void countDetail(id,reload,true);}catch(e){error(status,e);}finally{busy=false;close.disabled=false;for(const n of foot.querySelectorAll('button'))n.disabled=false;}},'button primary');foot.append(review);d.addEventListener('cancel',e=>{if(busy)e.preventDefault();});
  }
  }catch(e){error(status,e);}
+}
+function countApproval(id,reload,authorized){
+ const {d,content,foot,close}=modal(authorized?'Preparar ajustes de conteo':'Autorizar diferencias'),status=el('p','Revalidando corte…','hd-doc-status'),preview=el('section'),reason=el('textarea'),files=input('file');
+ reason.rows=3;reason.maxLength=1000;files.multiple=true;files.accept='.pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg';
+ let plan=null,busy=false,submitted=false;const back=btn('Cerrar',()=>{if(!busy)d.close();});
+ const save=btn(authorized?'Preparar ajustes':'Autorizar',async()=>{if(busy||!plan?.puede_autorizar)return;let data;
+  if(authorized){const fs=Array.from(files.files||[]),needs=Object.values(plan.grupos||{}).some(g=>g.length);if((needs&&!fs.length)||fs.length>3||fs.reduce((n,f)=>n+f.size,0)>2097152){error(status,{message:'Adjunte de uno a tres respaldos, máximo 2 MB en total, si existen diferencias.'});return;}data=new FormData();data.append('huella',plan.huella);for(const f of fs)data.append('respaldos[]',f);}
+  else {if(reason.value.trim().length<10){error(status,{message:'Ingrese una justificación de al menos diez caracteres.'});return;}data={huella:plan.huella,motivo:reason.value.trim()};}
+  busy=true;submitted=true;save.disabled=true;back.disabled=true;close.disabled=true;reason.disabled=true;files.disabled=true;
+  try{await api().countAction(id,authorized?'preparar':'autorizar',data);d.close();void reload();void countDetail(id,reload,true);}catch(e){error(status,e);status.append(document.createTextNode(' Puede reintentar la misma solicitud o cerrar y revisar el detalle.'));}finally{busy=false;if(d.open){save.disabled=false;back.disabled=false;close.disabled=false;}}
+ },'button primary');save.disabled=true;
+ content.append(preview,authorized?field('Respaldos (PDF, JPG, PNG)',files):field('Justificación obligatoria',reason),el('p',authorized?'Máximo tres archivos y 2 MB en conjunto. Preparar no modifica stock.':'Autorizar no modifica stock.'),status);foot.append(back,save);d.addEventListener('cancel',e=>{if(busy)e.preventDefault();});
+ void(async()=>{try{const x=await api().countAction(id,'previsualizar',{});if(!d.open)return;plan=x;const t=table(['Producto ID','Esperado','Contado','Diferencia','Resultado']);for(const p of x.planes||[])row(t.b,[p.producto_id,num(p.esperado),num(p.contado),num(p.diferencia),p.resultado]);preview.append(t.wrap,el('p','Sobrantes: '+(x.grupos?.[101]||[]).length+' · Faltantes: '+(x.grupos?.[102]||[]).length));save.disabled=x.puede_autorizar!==true;status.textContent=save.disabled?'Existen diferencias no ajustables. No se permite autorizar.':'';}catch(e){error(status,e);}})();
+}
+function countClose(id,reload){
+ const {d,content,foot,close}=modal('Confirmar conteo'),status=el('p','Revalidando…','hd-doc-status'),accept=input('checkbox');let plan=null,busy=false;const token=uuid(),back=btn('Cerrar',()=>{if(!busy)d.close();});
+ const save=btn('Confirmar y cerrar',async()=>{if(busy||!accept.checked||!plan?.puede_autorizar)return;busy=true;save.disabled=true;back.disabled=true;close.disabled=true;accept.disabled=true;try{await api().countAction(id,'confirmar',{huella:plan.huella,token_confirmacion:token});d.close();void reload();void countDetail(id,reload,true);}catch(e){error(status,e);status.append(document.createTextNode(' Puede reintentar la misma confirmación.'));}finally{busy=false;if(d.open){save.disabled=false;back.disabled=false;close.disabled=false;}}},'button primary');save.disabled=true;accept.onchange=()=>{save.disabled=!accept.checked||!plan?.puede_autorizar;};
+ content.append(el('p','Al confirmar se aplican todos los ajustes autorizados de forma conjunta. El CPP, tránsito y comprometido se conservan.'),field('Confirmo el cierre y los movimientos autorizados',accept),status);foot.append(back,save);d.addEventListener('cancel',e=>{if(busy)e.preventDefault();});
+ void(async()=>{try{plan=await api().countAction(id,'previsualizar',{});if(!d.open)return;status.textContent=plan.puede_autorizar?'Plan vigente.':'Plan no ajustable.';save.disabled=!accept.checked||!plan.puede_autorizar;}catch(e){error(status,e);}})();
+}
+function countCancel(id,reload){
+ const {d,content,foot,close}=modal('Anular conteo'),reason=el('textarea'),status=el('p',null,'hd-doc-status');reason.rows=3;reason.maxLength=1000;let busy=false;
+ const back=btn('Cerrar',()=>{if(!busy)d.close();});const save=btn('Anular conteo',async()=>{if(busy)return;if(reason.value.trim().length<10){error(status,{message:'Ingrese motivo de al menos diez caracteres.'});return;}busy=true;save.disabled=true;close.disabled=true;back.disabled=true;try{await api().countAction(id,'anular',{motivo:reason.value.trim()});d.close();void reload();}catch(e){error(status,e);}finally{busy=false;save.disabled=false;close.disabled=false;back.disabled=false;}},'button primary');
+ content.append(el('p','Se conservará el historial. No se anulan movimientos confirmados.'),field('Motivo de anulación',reason),status);foot.append(back,save);d.addEventListener('cancel',e=>{if(busy)e.preventDefault();});
 }
 window.RutaHDInventarioV104=Object.freeze({catalogs,adjustments,generalAdjustments,transfers,counts});
 })();
