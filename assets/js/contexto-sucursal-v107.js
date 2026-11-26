@@ -60,7 +60,7 @@ async function openMenu(){
  window.RutaHDMenuUsuario?.close();
  if(activeDialog?.open||document.querySelector('dialog[open]'))return;
  const ticket=++sequence;const item=document.getElementById('menuBranchContext');if(item)item.disabled=true;
- try{const state=await api().branchContext();if(ticket!==sequence||!acl()?.authenticated())return;await chooser(state);}
+ try{const state=await api().branchContext();if(ticket!==sequence||!acl()?.authenticated())return;current=state.sucursal_actual||null;updateMenu();await chooser(state);}
  catch(e){if(ticket===sequence&&acl()?.authenticated())window.RutaHDAvisos?.toast?.('warning','Sucursales','No se pudo consultar las sucursales autorizadas.');}
  finally{if(item)item.disabled=false;}
 }
