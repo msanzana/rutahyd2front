@@ -47,3 +47,57 @@ html[data-theme=oscuro] dialog.hd-branch-dialog .hd-branch-status[role=alert]{co
  .hd-branch-current-label{font-size:8px}
 }
 @media(prefers-reduced-motion:reduce){.hd-branch-card{transition:none}}
+
+/* V108CR: neutralizar dimensiones !important de modales de documentos V67/V70.
+   El alcance queda limitado al selector; los CRUD conservan su diseño. */
+html body dialog.hd-doc-modal.hd-v67.hd-v70-dialog.hd-branch-dialog{
+  box-sizing:border-box!important;
+  width:min(420px,calc(100vw - 28px))!important;
+  min-width:0!important;
+  max-width:420px!important;
+  height:auto!important;
+  min-height:0!important;
+  max-height:88vh!important;
+  max-height:88dvh!important;
+  margin:auto!important;
+  padding:0!important;
+  overflow:auto!important;
+}
+html body dialog.hd-doc-modal.hd-v67.hd-v70-dialog.hd-branch-dialog > .hd-doc-form{
+  display:flex!important;
+  flex-direction:column!important;
+  flex:0 1 auto!important;
+  box-sizing:border-box!important;
+  width:100%!important;
+  min-width:0!important;
+  max-width:100%!important;
+  height:auto!important;
+  min-height:0!important;
+  max-height:none!important;
+  gap:0!important;
+  padding:0!important;
+  overflow:visible!important;
+}
+html body dialog.hd-doc-modal.hd-v67.hd-v70-dialog.hd-branch-dialog .hd-doc-modal-scroll{
+  flex:0 1 auto!important;
+  height:auto!important;
+  min-height:0!important;
+  max-height:none!important;
+  overflow:visible!important;
+}
+html body dialog.hd-doc-modal.hd-v67.hd-v70-dialog.hd-branch-dialog :is(.hd-doc-modal-head,.hd-doc-modal-footer){
+  flex:0 0 auto!important;
+  height:auto!important;
+  min-height:0!important;
+}
+html body dialog.hd-doc-modal.hd-v67.hd-v70-dialog.hd-branch-dialog .hd-doc-modal-footer :is(.hd-branch-enter,.hd-branch-cancel){
+  height:36px!important;
+  min-height:36px!important;
+  max-height:none!important;
+}
+@media(max-width:600px){
+  html body dialog.hd-doc-modal.hd-v67.hd-v70-dialog.hd-branch-dialog .hd-doc-modal-footer :is(.hd-branch-enter,.hd-branch-cancel){
+    height:44px!important;
+    min-height:44px!important;
+  }
+}
