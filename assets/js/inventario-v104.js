@@ -226,6 +226,8 @@ async function transferDetail(id,reload,ready=false){
   if(o.estado==='INV_APROBADA')add(actions,receipt?'Confirmar recepción':o.etapa==='DESPACHO'?'Despachar':'Confirmar traspaso',o.etapa==='DESPACHO'?'despachar':'confirmar',o,receipt);
  }
  status.textContent='';content.replaceChildren(el('h3',h.numero_interno+' · '+h.estado_traspaso),el('p',h.bodega_origen+' → '+h.bodega_destino),el('p',h.justificacion),t.wrap,ops,status);
+ const pdf=btn('Comprobante PDF',async()=>{if(busy)return;pdf.disabled=true;try{const blob=await api().transferPdf(id);if(!d.open)return;const url=URL.createObjectURL(blob),a=el('a');a.href=url;a.download='traspaso-'+id+'.pdf';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);}catch(e){error(status,e);}finally{pdf.disabled=false;}},'button ghost');foot.append(pdf);
+
  if(ready&&x.escrituras_habilitadas===true&&can('inventario.operaciones.gestionar')&&['DESPACHADO','PARCIAL'].includes(h.estado_traspaso)&&!x.recepcion_activa)foot.append(btn('Nueva recepción',()=>{d.close();transferForm(x,reload);},'button primary'));
  }catch(e){error(status,e);}
 }
