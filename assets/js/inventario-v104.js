@@ -7,7 +7,7 @@ const btn=(t,fn,c='button ghost')=>{const b=el('button',t,c);b.type='button';b.o
 const field=(t,n)=>{const l=el('label',t,'hd-doc-field');n.setAttribute('aria-label',t);l.append(n);return l;};
 const input=(t='text')=>{const n=el('input');n.type=t;return n;};
 const opt=(v,t)=>{const n=el('option',t);n.value=v;return n;};
-const error=(status,e)=>{status.textContent=e?.message||'No se pudo completar la operación.';status.setAttribute('role','alert');};
+const error=(status,e)=>{status.textContent=e?.userMessage||e?.message||'No se pudo completar la operación.';status.setAttribute('role','alert');};
 const num=x=>String(x??'0').replace(/(\.\d*?)0+$/,'$1').replace(/\.$/,'').replace('.',',');
 const uuid=()=>crypto.randomUUID();
 function table(heads){
@@ -101,7 +101,7 @@ function confirmAction(action){
  return new Promise(resolve=>{
   const {d,content,foot}=modal(action==='confirmar'?'Confirmar ajuste':action==='aprobar'?'Aprobar ajuste':'Anular ajuste');
   let result=null;const reason=el('textarea'),status=el('p',null,'hd-doc-status');reason.rows=3;reason.maxLength=1000;
-  if(action==='confirmar')content.append(el('p','Se aplicarán los movimientos compensatorios al Kardex y al stock. La operación no cambia el documento tributario.'));else content.append(field('Motivo obligatorio',reason));
+  if(action==='confirmar')content.append(el('p','Se aplicarán los movimientos de inventario al Kardex y al stock. La operación no cambia documentos tributarios.'));else content.append(field('Motivo obligatorio',reason));
   content.append(status);foot.append(btn('Volver',()=>d.close()),btn('Confirmar',()=>{if(action!=='confirmar'&&reason.value.trim().length<3){error(status,{message:'Ingrese un motivo de al menos tres caracteres.'});return;}result=action==='confirmar'?'confirmado':reason.value.trim();d.close();},'button primary'));
   d.addEventListener('close',()=>resolve(result),{once:true});
  });
@@ -122,5 +122,45 @@ async function detail(id,reload){
   if(approved)addAction('Confirmar ajuste','confirmar','inventario.operaciones.confirmar');
  }catch(e){error(status,e);}
 }
-window.RutaHDInventarioV104=Object.freeze({catalogs,adjustments});
+function generalAdjustments(root){
+ let reload=()=>{};
+ reload=paged(root,['Número','Motivo','Fecha','Estado','Acciones'],(p,q)=>api().generalAdjustments(p,q),(b,m)=>row(b,[m.numero_interno,m.motivo_nombre_snapshot,m.creado_en,m.estado_nombre],window.RutaHDListUI.action('Ver '+m.numero_interno,()=>generalDetail(m.id,reload),{kind:'ver'})),{newAction:can('inventario.operaciones.gestionar')?()=>generalCreate(reload):null});
+}
+function generalCreate(reload){
+ const {d,content,foot,close}=modal('Nuevo ajuste general'),status=el('p',null,'hd-doc-status'),code=input(),reason=el('select'),warehouse=el('select'),productText=el('span','Sin seleccionar'),qty=input(),just=el('textarea'),files=input('file'),preview=el('section'),grid=el('div',null,'hd-doc-filter'),fileSummary=el('p');
+ code.value='Automático';code.disabled=true;reason.append(opt('','Seleccione motivo'));for(const [v,t] of [[101,'Sobrante de inventario'],[102,'Faltante de inventario'],[107,'Mercadería encontrada']])reason.append(opt(v,t));
+ warehouse.append(opt('','Seleccione bodega'));qty.inputMode='decimal';qty.placeholder='0,00000000';just.rows=3;just.maxLength=4000;files.multiple=true;files.accept='.pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg';
+ let product=null,busy=false,reviewed=null,seq=0,token=uuid(),submitted=false;
+ const data=()=>({motivo_codigo:Number(reason.value),producto_id:Number(product?.id||0),bodega_id:Number(warehouse.value),cantidad:qty.value.trim().replace(',','.')});
+ const fingerprint=()=>JSON.stringify(data());
+ const invalidate=()=>{seq++;reviewed=null;preview.replaceChildren();save.disabled=true;};
+ const search=btn('Buscar producto',async()=>{try{const p=await window.RutaHDBuscadorProductos.openSingle({title:'Producto del ajuste'});if(p&&d.open){product=Array.isArray(p)?p[0]:p;productText.textContent=product.sku+' · '+product.nombre;invalidate();}}catch(e){error(status,e);}});
+ const lock=on=>{busy=on;close.disabled=on;for(const x of [reason,warehouse,qty,just,files,search,review,back])x.disabled=on||submitted;save.disabled=on||!reviewed;};
+ const review=btn('Revisar ajuste',async()=>{if(busy||submitted)return;const v=data();if(!v.motivo_codigo||!v.producto_id||!v.bodega_id||!/^(?:0|[1-9][0-9]{0,19})(?:\.[0-9]{1,8})?$/.test(v.cantidad)||!Number(v.cantidad)){error(status,{message:'Seleccione motivo, producto, bodega y una cantidad positiva de hasta ocho decimales.'});return;}
+  invalidate();const ticket=seq;review.disabled=true;status.textContent='Revisando…';try{const x=await api().generalAdjustmentPreview(v);if(!d.open||ticket!==seq)return;const p=x.plan;const t=table(['Concepto','Anterior','Posterior']);row(t.b,['Disponible',num(p.disponible_anterior),num(p.disponible_actual)]);row(t.b,['Físico',num(p.fisico_anterior),num(p.fisico_actual)]);row(t.b,['CPP',num(p.cpp_anterior),num(p.cpp_actual)]);preview.append(el('h3','Revisión preliminar'),t.wrap,el('p','Valor del ajuste: $ '+num(p.valor_movimiento)),el('p','Tránsito y comprometido se conservan. Guardar no modifica stock.'));reviewed=fingerprint();save.disabled=false;status.textContent='';}catch(e){if(ticket===seq)error(status,e);}finally{if(d.open&&!busy&&!submitted)review.disabled=false;}
+ },'button ghost');
+ const back=btn('Cerrar',()=>{if(!busy)d.close();});
+ const save=btn('Guardar',async()=>{if(busy||!reviewed||reviewed!==fingerprint())return;const fs=Array.from(files.files||[]);if(just.value.trim().length<10||!fs.length||fs.length>3||fs.reduce((n,f)=>n+f.size,0)>2097152){error(status,{message:'Ingrese una justificación de al menos diez caracteres y de uno a tres respaldos (2 MB en total).'});return;}
+  const form=new FormData();for(const [k,v] of Object.entries(data()))form.append(k,String(v));form.append('justificacion',just.value.trim());form.append('token_creacion',token);for(const f of fs)form.append('respaldos[]',f);
+  submitted=true;lock(true);status.textContent='Guardando…';try{const x=await api().generalAdjustmentCreate(form);d.close();void reload();void generalDetail(x.id,reload);}catch(e){error(status,e);status.append(document.createTextNode(' Puede reintentar el mismo guardado o cerrar y revisar el listado.'));}finally{if(d.open){lock(false);back.disabled=false;}}
+ },'button primary');save.disabled=true;review.disabled=true;
+ for(const x of [reason,warehouse,qty])x.addEventListener('input',invalidate);
+ files.onchange=()=>{const fs=Array.from(files.files||[]);fileSummary.textContent=fs.map(f=>f.name).join(' · ');};
+ grid.append(field('Código',code),field('Motivo',reason),field('Bodega',warehouse),field('Cantidad',qty));
+ content.append(grid,field('Producto',productText),search,review,preview,field('Justificación obligatoria',just),field('Respaldos (PDF, JPG, PNG)',files),el('p','Máximo tres archivos y 2 MB en total.'),fileSummary,status);foot.append(back,save);
+ d.addEventListener('cancel',e=>{if(busy)e.preventDefault();});
+ (async()=>{try{const w=await api().inventoryWarehouses();if(!d.open)return;for(const b of w)warehouse.append(opt(b.id,b.nombre));if(w.length===1)warehouse.value=String(w[0].id);review.disabled=!w.length;if(!w.length)error(status,{message:'No hay bodegas activas asignadas a la sucursal.'});}catch(e){error(status,e);}})();
+}
+async function generalDetail(id,reload){
+ const {d,content,foot,close}=modal('Ajuste general'),status=el('p','Cargando…','hd-doc-status');content.append(status);foot.append(btn('Cerrar',()=>d.close()));
+ try{const x=await api().generalAdjustment(id);if(!d.open)return;const o=x.operacion,t=table(['SKU','Producto','Bodega','Cantidad','Variación','CPP','Kardex']);
+ for(const l of x.detalles)row(t.b,[l.sku,l.producto,l.bodega,num(l.cantidad),num(l.delta_disponible),num(l.costo_unitario_snapshot),l.kardex_id||'Pendiente']);
+ const attachments=el('section');attachments.append(el('h3','Respaldos'));for(const a of x.respaldos||[]){const b=btn(a.nombre,async()=>{b.disabled=true;try{const blob=await api().generalAdjustmentAttachment(id,a.id);const url=URL.createObjectURL(blob),link=el('a');link.href=url;link.download=a.nombre;document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}catch(e){error(status,e);}finally{b.disabled=false;}});attachments.append(b);}
+ status.textContent='';content.replaceChildren(el('h3',o.numero_interno+' · '+o.estado_nombre),el('p',o.motivo_nombre_snapshot),el('p',o.justificacion),t.wrap,attachments,el('p','Revisión tributaria: '+o.revision_tributaria),status);
+ let busy=false;const token=uuid();d.addEventListener('cancel',e=>{if(busy)e.preventDefault();});
+ const add=(label,action)=>{if(!can('inventario.operaciones.'+action))return;const b=btn(label,async()=>{if(busy)return;busy=true;let decision;try{decision=await confirmAction(action);if(decision===null||!d.open)return;const v={version:Number(o.version)};if(action==='confirmar')v.token_confirmacion=token;else v.motivo=decision;close.disabled=true;for(const c of foot.querySelectorAll('button'))c.disabled=true;await api().generalAdjustmentAction(id,action,v);d.close();void reload();if(action!=='anular')void generalDetail(id,reload);}catch(e){error(status,e);}finally{busy=false;close.disabled=false;for(const c of foot.querySelectorAll('button'))c.disabled=false;}},action==='anular'?'button ghost':'button primary');foot.append(b);};
+ if(o.estado_codigo==='INV_PEND_APROBACION')add('Aprobar','aprobar');if(['INV_PEND_APROBACION','INV_APROBADA'].includes(o.estado_codigo))add('Anular','anular');if(o.estado_codigo==='INV_APROBADA')add('Confirmar ajuste','confirmar');
+ }catch(e){error(status,e);}
+}
+window.RutaHDInventarioV104=Object.freeze({catalogs,adjustments,generalAdjustments});
 })();
