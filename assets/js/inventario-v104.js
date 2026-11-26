@@ -97,9 +97,9 @@ function create(reload){
   paged(find,['Kardex','Folio','Producto','Bodega','Cantidad','Acciones'],(p,q)=>api().inventoryCandidates(p,q),(b,k)=>row(b,[k.id,k.folio,k.producto,k.bodega,num(k.cantidad)],window.RutaHDListUI.action('Seleccionar salida '+k.id,()=>selectOrigin(k),{kind:'ver'})));
  }catch(e){error(status,e);}})();
 }
-function confirmAction(action){
+function confirmAction(action,subject='ajuste'){
  return new Promise(resolve=>{
-  const {d,content,foot}=modal(action==='confirmar'?'Confirmar ajuste':action==='aprobar'?'Aprobar ajuste':'Anular ajuste');
+  const {d,content,foot}=modal((action==='confirmar'?'Confirmar ':action==='aprobar'?'Aprobar ':'Anular ')+subject);
   let result=null;const reason=el('textarea'),status=el('p',null,'hd-doc-status');reason.rows=3;reason.maxLength=1000;
   if(action==='confirmar')content.append(el('p','Se aplicarán los movimientos de inventario al Kardex y al stock. La operación no cambia documentos tributarios.'));else content.append(field('Motivo obligatorio',reason));
   content.append(status);foot.append(btn('Volver',()=>d.close()),btn('Confirmar',()=>{if(action!=='confirmar'&&reason.value.trim().length<3){error(status,{message:'Ingrese un motivo de al menos tres caracteres.'});return;}result=action==='confirmar'?'confirmado':reason.value.trim();d.close();},'button primary'));
@@ -192,7 +192,7 @@ function transferForm(existing,reload){
  const receiving=!!existing,t=existing?.traspaso,{d,content,foot,close}=modal(receiving?'Nueva recepción de traspaso':'Nuevo traspaso'),status=el('p',null,'hd-doc-status'),code=input(),from=el('select'),to=el('select'),mode=el('select'),just=el('textarea'),grid=el('div',null,'hd-doc-filter'),items=table(['SKU','Producto','Cantidad','Acciones']),entries=new Map();
  let busy=false,submitted=false;const token=uuid();code.value='Automático';code.disabled=true;just.rows=3;just.maxLength=4000;mode.append(opt('INMEDIATO','Inmediato'),opt('DESPACHO_RECEPCION','Despacho y recepción'));from.append(opt('','Seleccione origen'));to.append(opt('','Seleccione destino'));
  function redraw(){items.b.replaceChildren();for(const [id,e] of entries){const tr=el('tr'),qty=e.qty;tr.append(el('td',e.sku),el('td',e.nombre));const c=el('td');c.append(qty);tr.append(c);const a=el('td');a.append(window.RutaHDListUI.action('Quitar '+e.sku,()=>{if(!submitted){entries.delete(id);redraw();}},{kind:'eliminar'}));tr.append(a);items.b.append(tr);}if(!entries.size)empty(items.b,4,'Agregue productos.');}
- function append(p,quantity=''){const id=Number(p.id??p.producto_id);if(!Number.isSafeInteger(id)||id<=0||entries.has(id)||entries.size>=50)return;const qty=input();qty.inputMode='decimal';qty.value=quantity;qty.setAttribute('aria-label','Cantidad '+p.sku);entries.set(id,{sku:p.sku,nombre:p.nombre??p.producto,qty});}
+ function append(p,quantity=''){const id=Number(p.producto_id??p.id);if(!Number.isSafeInteger(id)||id<=0||entries.has(id)||entries.size>=50)return;const qty=input();qty.inputMode='decimal';qty.value=quantity;qty.setAttribute('aria-label','Cantidad '+p.sku);entries.set(id,{sku:p.sku,nombre:p.nombre??p.producto,qty});}
  const find=btn('Buscar producto',async()=>{if(submitted)return;try{const p=await window.RutaHDBuscadorProductos.openSingle({title:'Producto del traspaso',excludeIds:[...entries.keys()]});if(p&&d.open){append(Array.isArray(p)?p[0]:p);redraw();}}catch(e){error(status,e);}});
  if(receiving){for(const p of existing.detalles||[])if(!/^0(?:\.0+)?$/.test(String(p.pendiente_recepcion)))append(p,'');grid.append(field('Código',code),el('p',t.numero_interno+' · '+t.bodega_destino));}else grid.append(field('Código',code),field('Origen',from),field('Destino',to),field('Modalidad',mode));
  const back=btn('Cerrar',()=>{if(!busy)d.close();});
@@ -212,7 +212,7 @@ async function transferDetail(id,reload,ready=false){
  for(const l of x.detalles||[])row(t.b,[l.sku,l.producto,num(l.cantidad_solicitada),num(l.cantidad_despachada),num(l.cantidad_recibida),num(l.pendiente_recepcion),num(l.costo_cpp_snapshot)]);
  ops.append(el('h3','Operaciones'));let busy=false;const tokens=new Map();d.addEventListener('cancel',e=>{if(busy)e.preventDefault();});
  const add=(host,label,action,o,receipt=false)=>{const permission=action==='despachar'?'confirmar':action;if(!ready||x.escrituras_habilitadas!==true||!can('inventario.operaciones.'+permission))return;const b=btn(label,async()=>{if(busy)return;busy=true;try{
-   const decision=await confirmAction(action==='despachar'?'confirmar':action);if(decision===null||!d.open)return;const data={version:Number(o.version)};
+   const decision=await confirmAction(action==='despachar'?'confirmar':action,receipt?'recepción de traspaso':'traspaso');if(decision===null||!d.open)return;const data={version:Number(o.version)};
    if(['confirmar','despachar'].includes(action)){if(!tokens.has(o.id))tokens.set(o.id,uuid());data.token_confirmacion=tokens.get(o.id);}else data.motivo=decision;
    close.disabled=true;for(const n of d.querySelectorAll('button'))n.disabled=true;
    if(receipt)await api().transferReceiptAction(id,o.id,action,data);else await api().transferAction(id,action,data);
