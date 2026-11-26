@@ -286,6 +286,8 @@
     inventoryUpdateReason: (rid,datos)=>send('/inventario/motivos/'+id(rid),'PUT',datos),
     counts: (page=1,buscar='',filters={})=>send('/inventario/conteos?'+new URLSearchParams({page:String(page),buscar,...filters})),
     count: rid=>send('/inventario/conteos/'+id(rid)),
+    countPdf: rid=>pdfOrden(rid,'inventario/conteos'),
+    countAttachment: (rid,oid,aid)=>sendBinary('/inventario/conteos/'+id(rid)+'/operaciones/'+id(oid)+'/respaldos/'+id(aid),'GET',null,true),
     countCreate: data=>send('/inventario/conteos','POST',data),
     countMeasure: (rid,lid,action,data)=>{if(!['contar','recontar'].includes(action))throw Error('Acción inválida.');return send('/inventario/conteos/'+id(rid)+'/lineas/'+id(lid)+'/'+action,'POST',data);},
     countAction: (rid,action,data)=>{if(!['revisar','previsualizar','autorizar','preparar','confirmar','anular'].includes(action))throw Error('Acción inválida.');return send('/inventario/conteos/'+id(rid)+'/'+action,'POST',data);},
