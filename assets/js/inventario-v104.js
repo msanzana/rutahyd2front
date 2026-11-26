@@ -231,5 +231,70 @@ async function transferDetail(id,reload,ready=false){
  if(ready&&x.escrituras_habilitadas===true&&can('inventario.operaciones.gestionar')&&['DESPACHADO','PARCIAL'].includes(h.estado_traspaso)&&!x.recepcion_activa)foot.append(btn('Nueva recepción',()=>{d.close();transferForm(x,reload);},'button primary'));
  }catch(e){error(status,e);}
 }
-window.RutaHDInventarioV104=Object.freeze({catalogs,adjustments,generalAdjustments,transfers});
+function counts(root){
+ const section=el('section',null,'hd-documents hd-v67 surface-panel'),form=el('form',null,'hd-doc-filter hd-search-form'),bar=el('div',null,'hd-search-toolbar'),query=input('search'),search=el('button','Buscar','button primary'),advanced=el('div',null,'hd-doc-filter'),status=el('p',null,'hd-doc-status'),top=el('nav'),bottom=el('nav'),t=table(['Número','Bodega','Alcance','Conteo ciego','Fecha corte','Estado','Acciones']);
+ const state=el('select'),warehouse=el('select');state.append(opt('','Todos'));warehouse.append(opt('','Todas'));
+ const labels={BORRADOR:'Borrador',EN_CONTEO:'En conteo',EN_REVISION:'En revisión',CONFIRMADO:'Confirmado'};
+ for(const [k,v] of Object.entries(labels))state.append(opt(k,v));
+ query.placeholder='Búsqueda general';search.type='submit';advanced.hidden=true;
+ const toggle=btn('Búsqueda avanzada',()=>{advanced.hidden=!advanced.hidden;toggle.setAttribute('aria-expanded',String(!advanced.hidden));});toggle.setAttribute('aria-expanded','false');
+ let page=1,seq=0,term='',filters={},ready=false;
+ const create=btn('+ Nuevo conteo',()=>countForm(load),'button primary hd-v70-new');create.hidden=true;create.style.marginInlineStart='auto';
+ bar.append(field('Buscar',query),search,toggle,create);
+ advanced.append(field('Estado',state),field('Bodega',warehouse),btn('Limpiar',()=>{query.value='';state.value='';warehouse.value='';term='';filters={};void load(1);}));
+ form.append(bar,advanced);section.append(form,status,top,t.wrap,bottom);root.replaceChildren(section);
+ async function load(p=page){const ticket=++seq;page=p;status.textContent='Cargando…';create.hidden=true;try{
+  const x=await api().counts(page,term,filters);if(ticket!==seq||!section.isConnected)return;
+  ready=x.escrituras_habilitadas===true;create.hidden=!(ready&&can('inventario.operaciones.gestionar'));t.b.replaceChildren();
+  for(const m of x.data||[])row(t.b,[m.numero_interno,m.bodega,m.alcance,Number(m.conteo_ciego)?'Sí':'No',m.fecha_corte,labels[m.estado]||m.estado],window.RutaHDListUI.action('Ver '+m.numero_interno,()=>countDetail(m.id,load,ready),{kind:'ver'}));
+  if(!(x.data||[]).length)empty(t.b,7,'Sin registros para esta búsqueda.');
+  status.textContent=ready?'':'Consulta de conteos. Operaciones de escritura aún no habilitadas.';
+  const o={page:x.current_page||page,pages:x.last_page||1,total:x.total||0,autoTop:false,onPage:n=>{void load(n);section.scrollIntoView({block:'start'});}};
+  window.RutaHDListUI.renderPager(top,o);window.RutaHDListUI.renderPager(bottom,o);
+ }catch(e){if(ticket===seq){ready=false;error(status,e);}}}
+ form.onsubmit=e=>{e.preventDefault();term=query.value.trim();filters={};if(state.value)filters.estado=state.value;if(warehouse.value)filters.bodega_id=warehouse.value;void load(1);};
+ void load();void(async()=>{try{const x=await api().transferWarehouses();if(section.isConnected)for(const b of x.bodegas||[])warehouse.append(opt(b.id,b.nombre));}catch(e){if(section.isConnected)error(status,e);}})();
+}
+function countForm(reload){
+ const {d,content,foot,close}=modal('Nuevo conteo selectivo'),status=el('p',null,'hd-doc-status'),code=input(),warehouse=el('select'),blind=input('checkbox'),items=table(['SKU','Producto','Acciones']),entries=new Map();
+ code.value='Automático';code.disabled=true;warehouse.append(opt('','Seleccione bodega'));blind.checked=true;
+ const token=uuid();let busy=false,submitted=false;
+ function redraw(){items.b.replaceChildren();for(const [id,p] of entries)row(items.b,[p.sku,p.nombre??p.producto],window.RutaHDListUI.action('Quitar '+p.sku,()=>{if(!submitted){entries.delete(id);redraw();}},{kind:'eliminar'}));if(!entries.size)empty(items.b,3,'Agregue hasta 50 productos.');}
+ const find=btn('Buscar producto',async()=>{if(submitted)return;try{const p=await window.RutaHDBuscadorProductos.openSingle({title:'Producto del conteo',excludeIds:[...entries.keys()]});if(!p||!d.open)return;const x=Array.isArray(p)?p[0]:p,id=Number(x.producto_id??x.id);if(Number.isSafeInteger(id)&&id>0&&entries.size<50)entries.set(id,x);redraw();}catch(e){error(status,e);}});
+ const back=btn('Cerrar',()=>{if(!busy)d.close();});
+ const save=btn('Iniciar conteo',async()=>{if(busy)return;if(!warehouse.value||!entries.size){error(status,{message:'Seleccione bodega y productos.'});return;}
+  busy=true;submitted=true;close.disabled=true;back.disabled=true;save.disabled=true;for(const n of content.querySelectorAll('input,select,button'))n.disabled=true;
+  try{const x=await api().countCreate({bodega_id:Number(warehouse.value),productos:[...entries.keys()],conteo_ciego:blind.checked,token_creacion:token});d.close();void reload();void countDetail(x.id,reload,true);}
+  catch(e){error(status,e);status.append(document.createTextNode(' Puede reintentar la misma solicitud o cerrar y revisar el listado.'));}
+  finally{busy=false;if(d.open){close.disabled=false;back.disabled=false;save.disabled=false;}}
+ },'button primary');save.disabled=true;
+ content.append(field('Código',code),field('Bodega',warehouse),field('Conteo ciego',blind),el('p','Al iniciar se registra el saldo de corte. No modifica stock.'),find,items.wrap,status);foot.append(back,save);redraw();
+ d.addEventListener('cancel',e=>{if(busy)e.preventDefault();});
+ void(async()=>{try{const x=await api().transferWarehouses();if(!d.open)return;for(const b of x.bodegas||[])warehouse.append(opt(b.id,b.nombre));if((x.bodegas||[]).length===1)warehouse.value=String(x.bodegas[0].id);save.disabled=!(x.bodegas||[]).length;}catch(e){error(status,e);}})();
+}
+function countMeasurement(id,line,action,reload){
+ const {d,content,foot,close}=modal(action==='contar'?'Registrar conteo':'Registrar reconteo'),qty=input(),obs=el('textarea'),status=el('p',null,'hd-doc-status');qty.inputMode='decimal';qty.placeholder='0';obs.maxLength=1000;obs.rows=3;
+ let busy=false,submitted=false;const back=btn('Cerrar',()=>{if(!busy)d.close();});
+ const save=btn('Guardar',async()=>{if(busy)return;const q=qty.value.trim().replace(',','.');if(!/^(?:0|[1-9][0-9]{0,19})(?:\.[0-9]{1,8})?$/.test(q)){error(status,{message:'Ingrese cantidad no negativa de hasta ocho decimales.'});return;}
+ busy=true;submitted=true;qty.disabled=true;obs.disabled=true;close.disabled=true;back.disabled=true;save.disabled=true;
+ try{await api().countMeasure(id,line.id,action,{cantidad:q,observaciones:obs.value.trim()});d.close();void reload();void countDetail(id,reload,true);}catch(e){error(status,e);}finally{busy=false;if(d.open){close.disabled=false;back.disabled=false;save.disabled=false;}}
+ },'button primary');
+ content.append(el('h3',line.sku+' · '+line.producto),field('Cantidad física',qty),field('Observaciones',obs),status);foot.append(back,save);d.addEventListener('cancel',e=>{if(busy)e.preventDefault();});
+}
+async function countDetail(id,reload,ready=false){
+ const {d,content,foot,close}=modal('Conteo de inventario'),status=el('p','Cargando…','hd-doc-status');content.append(status);foot.append(btn('Cerrar',()=>d.close()));
+ try{const x=await api().count(id);if(!d.open)return;const h=x.conteo,blind=!!Number(h.conteo_ciego)&&h.estado==='EN_CONTEO',write=ready&&x.escrituras_habilitadas===true,uid=Number(x.usuario_actual_id),t=table(['SKU','Producto',...(blind?[]:['Saldo de corte']),'Conteo','Reconteo','Acciones']);
+ const value=(l,key,flag)=>l[key]!==undefined&&l[key]!==null?num(l[key]):l[flag]?'Registrado':'Pendiente';
+ for(const l of x.detalles||[]){const a=el('div');if(write&&h.estado==='EN_CONTEO'&&can('inventario.operaciones.gestionar')){
+  if(!(l.contado||l.cantidad_contada!==undefined&&l.cantidad_contada!==null))a.append(window.RutaHDListUI.action('Contar '+l.sku,()=>{d.close();countMeasurement(id,l,'contar',reload);},{kind:'editar'}));
+  else if(Number(l.contado_por)!==uid&&!(l.recontado||l.cantidad_recontada!==undefined&&l.cantidad_recontada!==null))a.append(window.RutaHDListUI.action('Recontar '+l.sku,()=>{d.close();countMeasurement(id,l,'recontar',reload);},{kind:'editar'}));
+ }row(t.b,[l.sku,l.producto,...(blind?[]:[num(l.saldo_corte)]),value(l,'cantidad_contada','contado'),value(l,'cantidad_recontada','recontado')],a);}
+ status.textContent='';content.replaceChildren(el('h3',h.numero_interno+' · '+h.estado),el('p','Bodega '+h.bodega_id+' · Corte '+(h.fecha_corte||'Pendiente')),el('p',blind?'Conteo ciego: saldo de corte oculto.':'Consulta de cantidades registradas.'),t.wrap,status);
+ if(write&&h.estado==='EN_CONTEO'&&can('inventario.operaciones.aprobar')){
+ let busy=false;const review=btn('Enviar a revisión',async()=>{if(busy)return;busy=true;close.disabled=true;for(const n of foot.querySelectorAll('button'))n.disabled=true;
+ try{await api().countAction(id,'revisar',{});d.close();void reload();void countDetail(id,reload,true);}catch(e){error(status,e);}finally{busy=false;close.disabled=false;for(const n of foot.querySelectorAll('button'))n.disabled=false;}},'button primary');foot.append(review);d.addEventListener('cancel',e=>{if(busy)e.preventDefault();});
+ }
+ }catch(e){error(status,e);}
+}
+window.RutaHDInventarioV104=Object.freeze({catalogs,adjustments,generalAdjustments,transfers,counts});
 })();
