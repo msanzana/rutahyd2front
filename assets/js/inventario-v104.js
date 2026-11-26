@@ -65,7 +65,7 @@ function adjustments(root){
 function create(reload){
  const {d,content,foot}=modal('Nuevo ajuste rápido'),status=el('p',null,'hd-doc-status'),code=input(),reason=el('select'),origin=el('div'),target=el('div'),preview=el('div'),just=el('textarea'),find=el('div'),productName=el('span','Sin seleccionar'),warehouse=el('select');
  code.value='Automático';code.disabled=true;reason.append(opt('','Seleccione motivo'));just.rows=3;just.maxLength=4000;
- let selected=null,product=null,creationToken=uuid(),creating=false,optionsLoaded=false;
+ let selected=null,product=null,creationToken=uuid(),creating=false;
  const save=btn('Guardar',async()=>{
   if(!selected||!reason.value||just.value.trim().length<10){error(status,{message:'Seleccione una salida, motivo y justificación de al menos diez caracteres.'});return;}
   if(Number(reason.value)===201&&!product){error(status,{message:'Seleccione el producto realmente entregado.'});return;}
@@ -92,9 +92,18 @@ function create(reload){
  const selectOrigin=async item=>{try{const k=await api().inventoryOrigin(item.id);if(!d.open)return;selected=k;product=null;productName.textContent='Sin seleccionar';origin.textContent=k.producto+' · '+k.bodega+' · '+num(k.cantidad)+' unidades · Kardex '+k.id+' · Folio '+(k.folio||'interno');warehouse.replaceChildren(opt('','Seleccione bodega'));for(const b of warehouses.filter(b=>Number(b.id)!==Number(k.bodega_id)))warehouse.append(opt(b.id,b.nombre));redraw();}catch(e){error(status,e);}};
  let warehouses=[];
  content.append(field('Código',code),el('h3','Documento de referencia'),find,origin,field('Motivo',reason),target,preview,field('Justificación obligatoria',just),status);foot.append(btn('Cerrar',()=>{if(!creating)d.close();}),save);save.disabled=true;
- (async()=>{try{const [c,w]=await Promise.all([api().inventoryCatalogs(1,'',true),api().inventoryWarehouses()]);if(!d.open)return;warehouses=w;for(const m of c.data||[])reason.append(opt(m.codigo,m.nombre));optionsLoaded=true;save.disabled=false;
+ (async()=>{try{const [c,w]=await Promise.all([api().inventoryCatalogs(1,'',true),api().inventoryWarehouses()]);if(!d.open)return;warehouses=w;for(const m of c.data||[])reason.append(opt(m.codigo,m.nombre));save.disabled=false;
   paged(find,['Kardex','Folio','Producto','Bodega','Cantidad','Acciones'],(p,q)=>api().inventoryCandidates(p,q),(b,k)=>row(b,[k.id,k.folio,k.producto,k.bodega,num(k.cantidad)],window.RutaHDListUI.action('Seleccionar salida '+k.id,()=>selectOrigin(k),{kind:'ver'})));
  }catch(e){error(status,e);}})();
+}
+function confirmAction(action){
+ return new Promise(resolve=>{
+  const {d,content,foot}=modal(action==='confirmar'?'Confirmar ajuste':action==='aprobar'?'Aprobar ajuste':'Anular ajuste');
+  let result=null;const reason=el('textarea'),status=el('p',null,'hd-doc-status');reason.rows=3;reason.maxLength=1000;
+  if(action==='confirmar')content.append(el('p','Se aplicarán los movimientos compensatorios al Kardex y al stock. La operación no cambia el documento tributario.'));else content.append(field('Motivo obligatorio',reason));
+  content.append(status);foot.append(btn('Volver',()=>d.close()),btn('Confirmar',()=>{if(action!=='confirmar'&&reason.value.trim().length<3){error(status,{message:'Ingrese un motivo de al menos tres caracteres.'});return;}result=action==='confirmar'?'confirmado':reason.value.trim();d.close();},'button primary'));
+  d.addEventListener('close',()=>resolve(result),{once:true});
+ });
 }
 async function detail(id,reload){
  const {d,content,foot}=modal('Ajuste rápido'),status=el('p','Cargando…','hd-doc-status');content.append(status);foot.append(btn('Cerrar',()=>d.close()));
@@ -103,7 +112,7 @@ async function detail(id,reload){
   status.textContent='';content.replaceChildren(el('h3',o.numero_interno+' · '+o.estado_nombre),el('p',o.motivo_nombre_snapshot),el('p','Referencia Kardex '+o.referencia_kardex_id+' · Folio '+(o.referencia_folio||'interno')),el('p',o.justificacion),t.wrap,el('p','Revisión tributaria: '+o.revision_tributaria),status);
   const pending=o.estado_codigo==='INV_PEND_APROBACION',approved=o.estado_codigo==='INV_APROBADA';let busy=false;const token=uuid();
   const addAction=(label,action,permission)=>{if(!can(permission))return;const b=btn(label,async()=>{if(busy)return;
-   const data={version:Number(o.version)};if(action==='confirmar'){if(!window.confirm('Confirmar los movimientos compensatorios de inventario?'))return;data.token_confirmacion=token;}else{const m=window.prompt('Motivo de '+action);if(m===null)return;if(m.trim().length<3){error(status,{message:'Ingrese un motivo válido.'});return;}data.motivo=m.trim();}
+   const data={version:Number(o.version)};const decision=await confirmAction(action);if(decision===null||!d.open)return;if(action==='confirmar')data.token_confirmacion=token;else data.motivo=decision;
    busy=true;for(const control of foot.querySelectorAll('button'))control.disabled=true;
    try{await api().inventoryAdjustmentAction(id,action,data);d.close();void reload();if(action!=='anular')void detail(id,reload);}catch(e){error(status,e);}finally{busy=false;for(const control of foot.querySelectorAll('button'))control.disabled=false;}
   },action==='anular'?'button ghost':'button primary');foot.append(b);};
