@@ -116,9 +116,9 @@
         headers: {
           Authorization: 'Bearer ' + sessionBearer,
           Accept: 'application/json',
-          ...(body !== undefined ? {'Content-Type':'application/json'} : {})
+          ...(body !== undefined && !(body instanceof FormData) ? {'Content-Type':'application/json'} : {})
         },
-        ...(body !== undefined ? {body:JSON.stringify(body)} : {}),
+        ...(body !== undefined ? {body:body instanceof FormData?body:JSON.stringify(body)} : {}),
         signal:controller.signal,
         credentials:'same-origin',
         cache:'no-store'
@@ -191,14 +191,14 @@
     }finally{clearTimeout(timer);done?.();}
   }
 
-  async function sendBinaryCore(path,method='GET',files=null) {
+  async function sendBinaryCore(path,method='GET',files=null,attachment=false) {
     if(!endpoint||!bearer)throw new Error('Debes iniciar sesión.');
     const token=bearer;
     const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),45000);
     try {
       const response=await fetch(endpoint+path,{
         method,
-        headers:{Authorization:'Bearer '+token,Accept:files?'application/json':'image/*'},
+        headers:{Authorization:'Bearer '+token,Accept:files?'application/json':attachment?'application/octet-stream':'image/*'},
         ...(files?{body:files}:{}),
         credentials:'same-origin',cache:'no-store',signal:controller.signal
       });
@@ -224,7 +224,7 @@
         return response.json();
       }
       const kind=(response.headers.get('Content-Type')||'').split(';')[0];
-      if(!['image/jpeg','image/png','image/webp'].includes(kind))
+      if(attachment?kind!=='application/octet-stream':!['image/jpeg','image/png','image/webp'].includes(kind))
         throw Error('La API no devolvió una fotografía válida.');
       const blob=await response.blob();
       if(blob.size>2097152+2048)throw Error('La imagen supera el límite de carga.');
@@ -232,9 +232,9 @@
     }finally{clearTimeout(timer);}
   }
 
-  async function sendBinary(path,method='GET',files=null){
+  async function sendBinary(path,method='GET',files=null,attachment=false){
     const finish=window.RutaHDCarga?.start({path,method});
-    try{return await sendBinaryCore(path,method,files);}
+    try{return await sendBinaryCore(path,method,files,attachment);}
     finally{finish?.();}
   }
 
@@ -284,6 +284,12 @@
     branchAccess: (sid,uid,activo)=>send('/sucursales/'+id(sid)+'/usuarios/'+id(uid),'PUT',{activo}),
     inventoryCatalogs: (page=1,buscar='',rapido=false)=>send('/inventario/catalogos?'+new URLSearchParams({page:String(page),buscar,rapido:rapido?'1':'0'})),
     inventoryUpdateReason: (rid,datos)=>send('/inventario/motivos/'+id(rid),'PUT',datos),
+    generalAdjustments: (page=1,buscar='')=>send('/inventario/ajustes?'+new URLSearchParams({page:String(page),buscar})),
+    generalAdjustment: rid=>send('/inventario/ajustes/'+id(rid)),
+    generalAdjustmentPreview: data=>send('/inventario/ajustes/revision','POST',data),
+    generalAdjustmentCreate: data=>{if(!(data instanceof FormData))throw Error('Adjunte los respaldos.');return send('/inventario/ajustes','POST',data);},
+    generalAdjustmentAttachment: (rid,aid)=>sendBinary('/inventario/ajustes/'+id(rid)+'/respaldos/'+id(aid),'GET',null,true),
+    generalAdjustmentAction: (rid,action,data)=>{if(!['aprobar','anular','confirmar'].includes(action))throw Error('Acción inválida.');return send('/inventario/ajustes/'+id(rid)+'/'+action,'POST',data);},
     inventoryAdjustments: (page=1,buscar='')=>send('/inventario/ajustes-rapidos?'+new URLSearchParams({page:String(page),buscar})),
     inventoryAdjustment: rid=>send('/inventario/ajustes-rapidos/'+id(rid)),
     inventoryCandidates: (page=1,buscar='')=>send('/inventario/ajustes-rapidos/candidatos?'+new URLSearchParams({page:String(page),buscar})),
