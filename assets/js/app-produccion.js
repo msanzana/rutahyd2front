@@ -9,7 +9,7 @@
   const acl=()=>window.RutaHDAccesos;
   const CONSULTAS={"compras_facturas":"Facturas de compra","compras_recepciones":"Recepciones","compras_consolidaciones":"Consolidaciones","compras_libro":"Libro de compras","bodega_stock":"Stock","bodega_kardex":"Kardex"};
   const SERVICES=Object.freeze({ ...CONSULTAS,
-    administracion:'Administración',administracion_documentos:'Documentos',compras:'Compras',compras_ordenes:'Órdenes de Compra',ventas:'Ventas',
+    administracion:'Administración',administracion_documentos:'Documentos',administracion_inventario:'Catálogos de inventario',bodega_ajuste_rapido:'Ajuste rápido',compras:'Compras',compras_ordenes:'Órdenes de Compra',ventas:'Ventas',
     proveedores:'Proveedores',proveedores_productos:'Proveedores productos',clientes:'Clientes',
     clientes_listado:'Listado de clientes',productos:'Productos',listas_precios:'Listas de precios',
     bodega:'Bodega',cuentas_corrientes:'Cuentas corrientes',
@@ -60,7 +60,8 @@
     for(const key of Object.keys(CONSULTAS)){
       const b=$('.sidebar [data-nav="'+key+'"]');if(b)b.hidden=!allowed(key);
     }
-    $('#toggleBodegaSubnav').hidden=!logged()||!acl().has('inventario.gestionar');
+    for(const key of ['bodega_ajuste_rapido','administracion_inventario']){const b=$('.sidebar [data-nav="'+key+'"]');if(b)b.hidden=!allowed(key);}
+    $('#toggleBodegaSubnav').hidden=!logged()||!(acl().has('inventario.gestionar')||allowed('bodega_ajuste_rapido'));
     const clientsToggle=$('#toggleClientSubnav');
     if(clientsToggle)clientsToggle.hidden=!logged();
     const clientsList=$('#clientSubnav [data-nav="clientes_listado"]');
@@ -220,6 +221,8 @@
     if(!logged())return false;
     if(section==='usuarios'||section==='perfiles')return acl().isAdmin();
     if(section==='administracion_documentos')return acl().isAdmin()||acl().has('administracion.documentos.ver');
+    if(section==='administracion_inventario')return acl().isAdmin()||acl().has('inventario.catalogos.ver');
+    if(section==='bodega_ajuste_rapido')return acl().isAdmin()||acl().has('inventario.operaciones.ver');
     if(section.startsWith('ubicaciones.'))
       return LOCATION_CATALOGS.has(section.split('.')[1])&&acl().isAdmin();
     if(section==='proveedores_productos')return acl().canSeeSubmodule('proveedores_productos');
@@ -277,7 +280,7 @@
       const active=button.dataset.nav===section || (section.startsWith('catalogos.')&&
         button.dataset.nav===categoryOrigin) ||
         (section.startsWith('ubicaciones.')&&button.dataset.nav==='administracion') ||
-        ((section==='usuarios'||section==='perfiles'||section==='administracion_documentos')&&button.dataset.nav==='administracion') ||
+        ((section==='usuarios'||section==='perfiles'||section==='administracion_documentos'||section==='administracion_inventario')&&button.dataset.nav==='administracion') ||
         (section==='proveedores_productos'&&button.dataset.nav==='proveedores') ||
         (section.startsWith('compras_')&&button.dataset.nav==='compras') || (section.startsWith('bodega_')&&button.dataset.nav==='bodega') ||
         (section==='clientes_listado'&&button.dataset.nav==='clientes') ||
@@ -296,7 +299,7 @@
       $('#ubicacionesSubnav').hidden=false;
       $('#toggleUbicacionesSubnav').setAttribute('aria-expanded','true');
     }else if(section.startsWith('catalogos.'))expand(categoryOrigin);
-    else if(['administracion','administracion_documentos','usuarios','perfiles'].includes(section))expand('administracion');
+    else if(['administracion','administracion_documentos','administracion_inventario','usuarios','perfiles'].includes(section))expand('administracion');
     else if(section==='productos'||section==='listas_precios')expand('productos');
     else if(section==='proveedores'||section==='proveedores_productos')expand('proveedores');
     else if(section.startsWith('compras_'))expand('compras');
@@ -319,6 +322,12 @@
     if(CONSULTAS[section]){
       $('#workspaceDescription').textContent='Consulta de registros comerciales e inventario.';
       window.RutaHDComprasConsultas.mount(content,section.split('_')[1]);
+    }else if(section==='administracion_inventario'){
+      $('#workspaceDescription').textContent='Grupos, motivos y códigos oficiales de inventario.';
+      window.RutaHDInventarioV104.catalogs(content);
+    }else if(section==='bodega_ajuste_rapido'){
+      $('#workspaceDescription').textContent='Regularizaciones autorizadas de entregas registradas.';
+      window.RutaHDInventarioV104.adjustments(content);
     }else if(section==='administracion_documentos'){
       $('#workspaceDescription').textContent='Catálogo de documentos DTE e internos, permisos, códigos SII y vigencia.';
       window.RutaHDTiposDocumentos?.mount(content);
