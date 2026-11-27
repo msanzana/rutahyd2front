@@ -110,7 +110,7 @@ async function detail(id,reload){
  const {d,content,foot,close}=modal('Ajuste rápido'),status=el('p','Cargando…','hd-doc-status');content.append(status);foot.append(btn('Cerrar',()=>d.close()));
  try{const x=await api().inventoryAdjustment(id);if(!d.open)return;const o=x.operacion,t=table(['SKU','Producto','Bodega','Disponible actual','Variación','Kardex']);
   for(const l of x.detalles)row(t.b,[l.sku,l.producto,l.bodega,num(l.disponible),num(l.delta_disponible),l.kardex_id||'Pendiente']);
-  status.textContent='';content.replaceChildren(el('h3',o.numero_interno+' · '+o.estado_nombre),el('p',o.motivo_nombre_snapshot),el('p','Referencia Kardex '+o.referencia_kardex_id+' · Folio '+(o.referencia_folio||'interno')),el('p',o.justificacion),t.wrap,el('p','Revisión tributaria: '+o.revision_tributaria),status);
+  status.textContent='';content.replaceChildren(el('h3',o.numero_interno+' · '+o.estado_nombre),el('p',o.motivo_nombre_snapshot),el('p','Referencia Kardex '+o.referencia_kardex_id+' · Folio '+(o.referencia_folio||'interno')),el('p',o.justificacion),t.wrap,el('p','Revisión tributaria: '+o.revision_tributaria),...(ui.tax?[el('p','Evaluación de aviso SII: '+(o.evaluacion_aviso_sii||'Sin evaluar')),el('p','La confirmación de inventario no envía avisos al SII.')]:[]),status);
   const pending=o.estado_codigo==='INV_PEND_APROBACION',approved=o.estado_codigo==='INV_APROBADA';let busy=false;const token=uuid();d.addEventListener('cancel',e=>{if(busy)e.preventDefault();});
   const addAction=(label,action,permission)=>{if(!can(permission))return;const b=btn(label,async()=>{if(busy)return;
    const data={version:Number(o.version)};const decision=await confirmAction(action);if(decision===null||!d.open)return;if(action==='confirmar')data.token_confirmacion=token;else data.motivo=decision;
@@ -128,7 +128,7 @@ function generalAdjustments(root,ui=adjustmentUI){
  reload=paged(root,['Número','Motivo','Fecha','Estado','Acciones'],(p,q)=>api()[ui.list](p,q),(b,m)=>row(b,[m.numero_interno,m.motivo_nombre_snapshot,m.creado_en,m.estado_nombre],window.RutaHDListUI.action('Ver '+m.numero_interno,()=>generalDetail(m.id,reload,ui),{kind:'ver'})),{newAction:can('inventario.operaciones.gestionar')&&ui.motives.length?()=>generalCreate(reload,ui):null,newLabel:ui.newLabel});
 }
 function generalCreate(reload,ui=adjustmentUI){
- const {d,content,foot,close}=modal(ui.title==='Merma'?'Nueva merma':'Nuevo ajuste general'),status=el('p',null,'hd-doc-status'),code=input(),reason=el('select'),warehouse=el('select'),productText=el('span','Sin seleccionar'),qty=input(),just=el('textarea'),files=input('file'),preview=el('section'),grid=el('div',null,'hd-doc-filter'),fileSummary=el('p');
+ const {d,content,foot,close}=modal(ui.createTitle||(ui.title==='Merma'?'Nueva merma':'Nuevo ajuste general')),status=el('p',null,'hd-doc-status'),code=input(),reason=el('select'),warehouse=el('select'),productText=el('span','Sin seleccionar'),qty=input(),just=el('textarea'),files=input('file'),preview=el('section'),grid=el('div',null,'hd-doc-filter'),fileSummary=el('p');
  code.value='Automático';code.disabled=true;reason.append(opt('','Seleccione motivo'));for(const [v,t] of ui.motives)reason.append(opt(v,t));
  warehouse.append(opt('','Seleccione bodega'));qty.inputMode='decimal';qty.placeholder='0,00000000';just.rows=3;just.maxLength=4000;files.multiple=true;files.accept='.pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg';
  let product=null,busy=false,reviewed=null,seq=0,token=uuid(),submitted=false;
@@ -138,7 +138,7 @@ function generalCreate(reload,ui=adjustmentUI){
  const search=btn('Buscar producto',async()=>{try{const p=await window.RutaHDBuscadorProductos.openSingle({title:'Producto del ajuste'});if(p&&d.open){product=Array.isArray(p)?p[0]:p;productText.textContent=product.sku+' · '+product.nombre;invalidate();}}catch(e){error(status,e);}});
  const lock=on=>{busy=on;close.disabled=on;for(const x of [reason,warehouse,qty,just,files,search,review,back])x.disabled=on||submitted;save.disabled=on||!reviewed;};
  const review=btn('Revisar ajuste',async()=>{if(busy||submitted)return;const v=data();if(!v.motivo_codigo||!v.producto_id||!v.bodega_id||!/^(?:0|[1-9][0-9]{0,19})(?:\.[0-9]{1,8})?$/.test(v.cantidad)||!Number(v.cantidad)){error(status,{message:'Seleccione motivo, producto, bodega y una cantidad positiva de hasta ocho decimales.'});return;}
-  invalidate();const ticket=seq;review.disabled=true;status.textContent='Revisando…';try{const x=await api()[ui.preview](v);if(!d.open||ticket!==seq)return;const p=x.plan;const t=table(['Concepto','Anterior','Posterior']);row(t.b,['Disponible',num(p.disponible_anterior),num(p.disponible_actual)]);row(t.b,['Físico',num(p.fisico_anterior),num(p.fisico_actual)]);row(t.b,['CPP',num(p.cpp_anterior),num(p.cpp_actual)]);preview.append(el('h3','Revisión preliminar'),t.wrap,el('p','Valor del ajuste: $ '+num(p.valor_movimiento)),el('p','Tránsito y comprometido se conservan. Guardar no modifica stock.'));reviewed=fingerprint();save.disabled=false;status.textContent='';}catch(e){if(ticket===seq)error(status,e);}finally{if(d.open&&!busy&&!submitted)review.disabled=false;}
+  invalidate();const ticket=seq;review.disabled=true;status.textContent='Revisando…';try{const x=await api()[ui.preview](v);if(!d.open||ticket!==seq)return;const p=x.plan;const t=table(['Concepto','Anterior','Posterior']);row(t.b,['Disponible',num(p.disponible_anterior),num(p.disponible_actual)]);row(t.b,['Físico',num(p.fisico_anterior),num(p.fisico_actual)]);row(t.b,['CPP',num(p.cpp_anterior),num(p.cpp_actual)]);preview.append(el('h3','Revisión preliminar'),t.wrap,el('p','Valor del ajuste: $ '+num(p.valor_movimiento)),el('p','Tránsito y comprometido se conservan. Guardar no modifica stock.'));if(ui.tax)preview.append(el('p','Evaluación de aviso SII: '+(p.evaluacion_aviso_sii||'Pendiente')));reviewed=fingerprint();save.disabled=false;status.textContent='';}catch(e){if(ticket===seq)error(status,e);}finally{if(d.open&&!busy&&!submitted)review.disabled=false;}
  },'button ghost');
  const back=btn('Cerrar',()=>{if(!busy)d.close();});
  const save=btn('Guardar',async()=>{if(busy||!reviewed||reviewed!==fingerprint())return;const fs=Array.from(files.files||[]);if(just.value.trim().length<10||!fs.length||fs.length>3||fs.reduce((n,f)=>n+f.size,0)>2097152){error(status,{message:'Ingrese una justificación de al menos diez caracteres y de uno a tres respaldos (2 MB en total).'});return;}
@@ -160,7 +160,7 @@ async function generalDetail(id,reload,ui=adjustmentUI){
  status.textContent='';content.replaceChildren(el('h3',o.numero_interno+' · '+o.estado_nombre),el('p',o.motivo_nombre_snapshot),el('p',o.justificacion),t.wrap,attachments,el('p','Revisión tributaria: '+o.revision_tributaria),status);
  let busy=false;const token=uuid();d.addEventListener('cancel',e=>{if(busy)e.preventDefault();});
  const add=(label,action)=>{if(!can('inventario.operaciones.'+action))return;const b=btn(label,async()=>{if(busy)return;busy=true;let decision;try{decision=await confirmAction(action);if(decision===null||!d.open)return;const v={version:Number(o.version)};if(action==='confirmar')v.token_confirmacion=token;else v.motivo=decision;close.disabled=true;for(const c of foot.querySelectorAll('button'))c.disabled=true;await api()[ui.action](id,action,v);d.close();void reload();if(action!=='anular')void generalDetail(id,reload,ui);}catch(e){error(status,e);}finally{busy=false;close.disabled=false;for(const c of foot.querySelectorAll('button'))c.disabled=false;}},action==='anular'?'button ghost':'button primary');foot.append(b);};
- if(o.estado_codigo==='INV_PEND_APROBACION')add('Aprobar','aprobar');if(['INV_PEND_APROBACION','INV_APROBADA'].includes(o.estado_codigo))add('Anular','anular');if(o.estado_codigo==='INV_APROBADA')add(ui.title==='Merma'?'Confirmar merma':'Confirmar ajuste','confirmar');
+ if(o.estado_codigo==='INV_PEND_APROBACION')add('Aprobar','aprobar');if(['INV_PEND_APROBACION','INV_APROBADA'].includes(o.estado_codigo))add('Anular','anular');if(o.estado_codigo==='INV_APROBADA')add(ui.confirmLabel||(ui.title==='Merma'?'Confirmar merma':'Confirmar ajuste'),'confirmar');
  }catch(e){error(status,e);}
 }
 
@@ -171,6 +171,16 @@ async function mermas(root){
   if(cap.habilitado!==true){loading.textContent='Módulo no disponible.';return;}
   const motives=(cap.motivos||[]).filter(m=>[301,302,303,304].includes(Number(m.codigo))).map(m=>[m.codigo,m.nombre]);
   generalAdjustments(root,{title:'Merma',newLabel:'+ Nueva merma',motives,list:'mermas',detail:'merma',preview:'mermaPreview',create:'mermaCreate',attachment:'mermaAttachment',action:'mermaAction'});
+ }catch(e){if(loading.isConnected)error(loading,e);}
+}
+
+async function specialLosses(root){
+ const loading=el('p','Cargando pérdidas y siniestros…','hd-doc-status');root.replaceChildren(loading);
+ try{
+  const cap=await api().specialLossCapabilities();if(!loading.isConnected)return;
+  if(cap.habilitado!==true){loading.textContent='Módulo no disponible.';return;}
+  const motives=(cap.motivos||[]).filter(m=>[306,307,308,309,310,311,401,402,403,404,405,406,408,409].includes(Number(m.codigo))).map(m=>[m.codigo,m.nombre+(m.evaluar_aviso_sii?' · Evaluación SII':'')]);
+  generalAdjustments(root,{title:'Pérdida especial',createTitle:'Nueva pérdida o siniestro',confirmLabel:'Confirmar pérdida',newLabel:'+ Nueva pérdida',motives,tax:true,list:'specialLosses',detail:'specialLoss',preview:'specialLossPreview',create:'specialLossCreate',attachment:'specialLossAttachment',action:'specialLossAction'});
  }catch(e){if(loading.isConnected)error(loading,e);}
 }
 function transfers(root){
@@ -528,5 +538,5 @@ async function reservationDetail(id,reload=()=>{}){
  }catch(e){if(d.open)error(status,e);}
  finally{if(d.open)content.setAttribute('aria-busy','false');}
 }
-window.RutaHDInventarioV104=Object.freeze({catalogs,adjustments,generalAdjustments,transfers,counts,reservations,mermas});
+window.RutaHDInventarioV104=Object.freeze({catalogs,adjustments,generalAdjustments,transfers,counts,reservations,mermas,specialLosses});
 })();
