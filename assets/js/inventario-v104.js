@@ -384,6 +384,13 @@ async function reservationDetail(id){
   if(!(x.operaciones||[]).length)empty(ops.b,6,'Sin operaciones visibles.');
   status.textContent='Saldo documental de la reserva; no acredita stock disponible para operar.';
   content.replaceChildren(summary,el('h3','Productos de la reserva'),lines.wrap,el('h3','Operaciones asociadas'),ops.wrap,status);
+  if(x.pdf_habilitado===true){
+   const download=window.RutaHDListUI.action('Descargar comprobante PDF',async()=>{
+    if(download.disabled||!d.open)return;download.disabled=true;
+    try{const blob=await api().reservationPdf(id);if(d.open)countDownload(blob,'reserva-'+id+'.pdf');}
+    catch(e){if(d.open)error(status,e);}finally{if(d.open)download.disabled=false;}
+   },{kind:'pdf'});foot.append(download);
+  }
  }catch(e){if(d.open)error(status,e);}
  finally{if(d.open)content.setAttribute('aria-busy','false');}
 }
