@@ -333,6 +333,8 @@
     lossRecoveryAction: (rid,action,data)=>{if(!['aprobar','anular','confirmar'].includes(action))throw Error('Acción inválida.');return send('/inventario/recuperaciones-perdidas/'+id(rid)+'/'+action,'POST',data);},
     lossRecoveryOrigins: (page=1,buscar='')=>send('/inventario/recuperaciones-perdidas/origenes?'+new URLSearchParams({page:String(page),buscar})),
     lossRecoveryOrigin: rid=>send('/inventario/recuperaciones-perdidas/origenes/'+id(rid)),
+    lossTaxReview: rid=>send('/inventario/perdidas/'+id(rid)+'/revision-tributaria'),
+    lossTaxResolve: (rid,data)=>send('/inventario/perdidas/'+id(rid)+'/revision-tributaria','POST',data),
     generalAdjustment: rid=>send('/inventario/ajustes/'+id(rid)),
     generalAdjustmentPreview: data=>send('/inventario/ajustes/revision','POST',data),
     generalAdjustmentCreate: data=>{if(!(data instanceof FormData))throw Error('Adjunte los respaldos.');return send('/inventario/ajustes','POST',data);},
