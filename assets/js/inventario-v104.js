@@ -153,6 +153,33 @@ function generalCreate(reload,ui=adjustmentUI){
  if(ui.recovery){reason.value='410';reason.disabled=true;warehouse.disabled=true;return;}
  (async()=>{try{const w=await api().inventoryWarehouses();if(!d.open)return;for(const b of w)warehouse.append(opt(b.id,b.nombre));if(w.length===1)warehouse.value=String(w[0].id);review.disabled=!w.length;if(!w.length)error(status,{message:'No hay bodegas activas asignadas a la sucursal.'});}catch(e){error(status,e);}})();
 }
+const lossTaxLabels={NO_APLICA:'No aplica aviso',NO_REQUIERE_AVISO:'No requiere aviso',REQUIERE_AVISO:'Requiere aviso (gestión externa pendiente)'};
+function lossTaxForm(id,state,reload,ui){
+ const {d,content,foot,close}=modal('Revisión tributaria interna'),decision=el('select'),why=el('textarea'),status=el('p',null,'hd-doc-status');
+ let busy=false,payload=null;decision.append(opt('','Seleccione decisión'));for(const key of state.decisiones||[])if(Object.hasOwn(lossTaxLabels,key))decision.append(opt(key,lossTaxLabels[key]));
+ why.rows=4;why.maxLength=1000;status.setAttribute('aria-live','polite');content.append(el('h3',state.numero||'Pérdida'),el('p','La revisión no modifica existencias ni envía avisos al SII.'),field('Decisión',decision),field('Fundamento',why),status);
+ const back=btn('Cerrar',()=>{if(!busy)d.close();});
+ const save=btn('Guardar revisión',async()=>{
+  if(busy)return;
+  if(!payload){if(!Object.hasOwn(lossTaxLabels,decision.value)||!(state.decisiones||[]).includes(decision.value)||why.value.trim().length<10){error(status,{message:'Seleccione una decisión y fundaméntela con al menos diez caracteres.'});return;}
+   payload={version:state.version,decision:decision.value,motivo:why.value.trim()};}
+  busy=true;decision.disabled=true;why.disabled=true;save.disabled=true;back.disabled=true;close.disabled=true;status.textContent='Guardando…';
+  try{await api().lossTaxResolve(id,payload);d.close();void reload();void generalDetail(id,reload,ui);}
+  catch(e){error(status,e);status.append(document.createTextNode(' Reintente la misma solicitud o cierre y vuelva a consultar.'));}
+  finally{busy=false;if(d.open){save.disabled=false;back.disabled=false;close.disabled=false;}}
+ },'button primary');foot.append(back,save);d.addEventListener('cancel',e=>{if(busy)e.preventDefault();});
+}
+async function appendLossTax(d,content,foot,o,reload,ui){
+ if(!can('inventario.operaciones.revisar_tributaria')||o.estado_codigo!=='INV_CONFIRMADA')return;
+ try{
+  const x=await api().lossTaxReview(o.id);if(!d.open)return;
+  const block=el('section');block.append(el('h3','Evaluación tributaria interna'),el('p','Revisión: '+x.revision+' · Evaluación: '+x.evaluacion));
+  if(x.decision){block.append(el('p',lossTaxLabels[x.decision]||'Decisión registrada'),el('p',x.motivo||''));}
+  if(x.gestion_externa_pendiente===true)block.append(el('p','Aviso pendiente de gestión externa. No consta envío al SII.'));
+  content.append(block);
+  if(x.puede_revisar===true&&Array.isArray(x.decisiones)&&x.decisiones.length)foot.append(btn('Revisar tributariamente',()=>{d.close();lossTaxForm(o.id,x,reload,ui);},'button primary'));
+ }catch(e){if(d.open&&o.revision_tributaria==='REVISADA')content.append(el('p','Detalle de evaluación no disponible.'));}
+}
 async function generalDetail(id,reload,ui=adjustmentUI){
  const {d,content,foot,close}=modal(ui.title),status=el('p','Cargando…','hd-doc-status');content.append(status);foot.append(btn('Cerrar',()=>d.close()));
  try{const x=await api()[ui.detail](id);if(!d.open)return;const o=x.operacion,t=table(['SKU','Producto','Bodega','Cantidad','Variación',ui.recovery?'Costo histórico':'CPP','Kardex']);
@@ -162,6 +189,7 @@ async function generalDetail(id,reload,ui=adjustmentUI){
  let busy=false;const token=uuid();d.addEventListener('cancel',e=>{if(busy)e.preventDefault();});
  const add=(label,action)=>{if(!can('inventario.operaciones.'+action))return;const b=btn(label,async()=>{if(busy)return;busy=true;let decision;try{decision=await confirmAction(action);if(decision===null||!d.open)return;const v={version:Number(o.version)};if(action==='confirmar')v.token_confirmacion=token;else v.motivo=decision;close.disabled=true;for(const c of foot.querySelectorAll('button'))c.disabled=true;await api()[ui.action](id,action,v);d.close();void reload();if(action!=='anular')void generalDetail(id,reload,ui);}catch(e){error(status,e);}finally{busy=false;close.disabled=false;for(const c of foot.querySelectorAll('button'))c.disabled=false;}},action==='anular'?'button ghost':'button primary');foot.append(b);};
  if(o.estado_codigo==='INV_PEND_APROBACION')add('Aprobar','aprobar');if(['INV_PEND_APROBACION','INV_APROBADA'].includes(o.estado_codigo))add('Anular','anular');if(o.estado_codigo==='INV_APROBADA')add(ui.confirmLabel||(ui.title==='Merma'?'Confirmar merma':'Confirmar ajuste'),'confirmar');
+ if(ui.taxReview)void appendLossTax(d,content,foot,o,reload,ui);
  }catch(e){error(status,e);}
 }
 
@@ -171,7 +199,7 @@ async function mermas(root){
   const cap=await api().mermaCapabilities();if(!loading.isConnected)return;
   if(cap.habilitado!==true){loading.textContent='Módulo no disponible.';return;}
   const motives=(cap.motivos||[]).filter(m=>[301,302,303,304].includes(Number(m.codigo))).map(m=>[m.codigo,m.nombre]);
-  generalAdjustments(root,{title:'Merma',newLabel:'+ Nueva merma',motives,list:'mermas',detail:'merma',preview:'mermaPreview',create:'mermaCreate',attachment:'mermaAttachment',action:'mermaAction'});
+  generalAdjustments(root,{title:'Merma',taxReview:true,newLabel:'+ Nueva merma',motives,list:'mermas',detail:'merma',preview:'mermaPreview',create:'mermaCreate',attachment:'mermaAttachment',action:'mermaAction'});
  }catch(e){if(loading.isConnected)error(loading,e);}
 }
 
@@ -181,7 +209,7 @@ async function specialLosses(root){
   const cap=await api().specialLossCapabilities();if(!loading.isConnected)return;
   if(cap.habilitado!==true){loading.textContent='Módulo no disponible.';return;}
   const motives=(cap.motivos||[]).filter(m=>[306,307,308,309,310,311,401,402,403,404,405,406,408,409].includes(Number(m.codigo))).map(m=>[m.codigo,m.nombre+(m.evaluar_aviso_sii?' · Evaluación SII':'')]);
-  generalAdjustments(root,{title:'Pérdida especial',createTitle:'Nueva pérdida o siniestro',confirmLabel:'Confirmar pérdida',newLabel:'+ Nueva pérdida',motives,tax:true,list:'specialLosses',detail:'specialLoss',preview:'specialLossPreview',create:'specialLossCreate',attachment:'specialLossAttachment',action:'specialLossAction'});
+  generalAdjustments(root,{title:'Pérdida especial',createTitle:'Nueva pérdida o siniestro',confirmLabel:'Confirmar pérdida',newLabel:'+ Nueva pérdida',motives,tax:true,taxReview:true,list:'specialLosses',detail:'specialLoss',preview:'specialLossPreview',create:'specialLossCreate',attachment:'specialLossAttachment',action:'specialLossAction'});
  }catch(e){if(loading.isConnected)error(loading,e);}
 }
 
