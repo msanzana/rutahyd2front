@@ -286,6 +286,7 @@
     inventoryUpdateReason: (rid,datos)=>send('/inventario/motivos/'+id(rid),'PUT',datos),
     reservations: (page=1,buscar='',filters={})=>send('/inventario/reservas?'+new URLSearchParams({page:String(page),buscar,...filters})),
     reservation: rid=>send('/inventario/reservas/'+id(rid)),
+    reservationPdf: rid=>pdfOrden(rid,'inventario/reservas'),
     counts: (page=1,buscar='',filters={})=>send('/inventario/conteos?'+new URLSearchParams({page:String(page),buscar,...filters})),
     count: rid=>send('/inventario/conteos/'+id(rid)),
     countPdf: rid=>pdfOrden(rid,'inventario/conteos'),
