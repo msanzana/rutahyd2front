@@ -20,10 +20,10 @@ function modal(title){
  const d=el('dialog',null,'hd-doc-modal hd-v67 hd-v70-dialog'),shell=el('div',null,'hd-doc-form'),head=el('div',null,'hd-doc-modal-head'),content=el('div',null,'hd-doc-modal-scroll'),foot=el('div',null,'hd-doc-modal-footer'),close=btn('×',()=>d.close(),'hd-doc-close');
  close.setAttribute('aria-label','Cerrar');close.title='Cerrar';close.style.cssText='display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;min-width:36px;min-height:36px;flex:0 0 36px;border-radius:11px;font-size:24px;line-height:1;padding:0;margin-left:auto';head.append(el('h2',title),close);shell.append(head,content,foot);d.append(shell);document.body.append(d);d.addEventListener('close',()=>d.remove(),{once:true});d.showModal();return {d,content,foot,close};
 }
-function paged(host,heads,fetcher,render,{newAction=null}={}){
+function paged(host,heads,fetcher,render,{newAction=null,newLabel='+ Nuevo ajuste'}={}){
  const section=el('section',null,'hd-documents hd-v67 surface-panel'),form=el('form',null,'hd-doc-filter hd-search-form'),toolbar=el('div',null,'hd-search-toolbar'),q=input('search'),search=el('button','Buscar','button primary'),status=el('p',null,'hd-doc-status'),top=el('nav'),bottom=el('nav'),t=table(heads);
  q.placeholder='Búsqueda general';search.type='submit';toolbar.append(field('Buscar',q),search);
- if(newAction){const b=btn('+ Nuevo ajuste',newAction,'button primary hd-v70-new');b.dataset.action='nuevo-documento';b.style.marginInlineStart='auto';toolbar.append(b);}form.append(toolbar);
+ if(newAction){const b=btn(newLabel,newAction,'button primary hd-v70-new');b.dataset.action='nuevo-documento';b.style.marginInlineStart='auto';toolbar.append(b);}form.append(toolbar);
  section.append(form,status,top,t.wrap,bottom);host.replaceChildren(section);
  let page=1,seq=0,term='';
  async function load(n=page){
@@ -125,7 +125,7 @@ async function detail(id,reload){
 const adjustmentUI={title:'Ajuste general',newLabel:'+ Nuevo ajuste',motives:[[101,'Sobrante de inventario'],[102,'Faltante de inventario'],[107,'Mercadería encontrada']],list:'generalAdjustments',detail:'generalAdjustment',preview:'generalAdjustmentPreview',create:'generalAdjustmentCreate',attachment:'generalAdjustmentAttachment',action:'generalAdjustmentAction'};
 function generalAdjustments(root,ui=adjustmentUI){
  let reload=()=>{};
- reload=paged(root,['Número','Motivo','Fecha','Estado','Acciones'],(p,q)=>api()[ui.list](p,q),(b,m)=>row(b,[m.numero_interno,m.motivo_nombre_snapshot,m.creado_en,m.estado_nombre],window.RutaHDListUI.action('Ver '+m.numero_interno,()=>generalDetail(m.id,reload,ui),{kind:'ver'})),{newAction:can('inventario.operaciones.gestionar')?()=>generalCreate(reload,ui):null,newLabel:ui.newLabel});
+ reload=paged(root,['Número','Motivo','Fecha','Estado','Acciones'],(p,q)=>api()[ui.list](p,q),(b,m)=>row(b,[m.numero_interno,m.motivo_nombre_snapshot,m.creado_en,m.estado_nombre],window.RutaHDListUI.action('Ver '+m.numero_interno,()=>generalDetail(m.id,reload,ui),{kind:'ver'})),{newAction:can('inventario.operaciones.gestionar')&&ui.motives.length?()=>generalCreate(reload,ui):null,newLabel:ui.newLabel});
 }
 function generalCreate(reload,ui=adjustmentUI){
  const {d,content,foot,close}=modal(ui.title==='Merma'?'Nueva merma':'Nuevo ajuste general'),status=el('p',null,'hd-doc-status'),code=input(),reason=el('select'),warehouse=el('select'),productText=el('span','Sin seleccionar'),qty=input(),just=el('textarea'),files=input('file'),preview=el('section'),grid=el('div',null,'hd-doc-filter'),fileSummary=el('p');
