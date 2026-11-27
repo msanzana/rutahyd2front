@@ -284,6 +284,7 @@
     branchAccess: (sid,uid,activo)=>send('/sucursales/'+id(sid)+'/usuarios/'+id(uid),'PUT',{activo}),
     inventoryCatalogs: (page=1,buscar='',rapido=false)=>send('/inventario/catalogos?'+new URLSearchParams({page:String(page),buscar,rapido:rapido?'1':'0'})),
     inventoryUpdateReason: (rid,datos)=>send('/inventario/motivos/'+id(rid),'PUT',datos),
+    reservationCapabilities: ()=>send('/inventario/reservas/capacidades'),
     reservations: (page=1,buscar='',filters={})=>send('/inventario/reservas?'+new URLSearchParams({page:String(page),buscar,...filters})),
     reservation: rid=>send('/inventario/reservas/'+id(rid)),
     reservationPdf: rid=>pdfOrden(rid,'inventario/reservas'),
