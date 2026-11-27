@@ -9,7 +9,7 @@
   const acl=()=>window.RutaHDAccesos;
   const CONSULTAS={"compras_facturas":"Facturas de compra","compras_recepciones":"Recepciones","compras_consolidaciones":"Consolidaciones","compras_libro":"Libro de compras","bodega_stock":"Stock","bodega_kardex":"Kardex"};
   const SERVICES=Object.freeze({ ...CONSULTAS,
-    administracion:'Administración',administracion_documentos:'Documentos',administracion_inventario:'Catálogos de inventario',administracion_sucursales:'Sucursales',bodega_ajuste_rapido:'Ajuste rápido',bodega_ajustes_generales:'Ajustes generales',bodega_traspasos:'Traspasos',bodega_conteos:'Conteos de inventario',bodega_reservas:'Reservas de inventario',compras:'Compras',compras_ordenes:'Órdenes de Compra',ventas:'Ventas',
+    administracion:'Administración',administracion_documentos:'Documentos',administracion_inventario:'Catálogos de inventario',administracion_sucursales:'Sucursales',bodega_ajuste_rapido:'Ajuste rápido',bodega_ajustes_generales:'Ajustes generales',bodega_traspasos:'Traspasos',bodega_conteos:'Conteos de inventario',bodega_reservas:'Reservas de inventario',bodega_mermas:'Mermas de inventario',compras:'Compras',compras_ordenes:'Órdenes de Compra',ventas:'Ventas',
     proveedores:'Proveedores',proveedores_productos:'Proveedores productos',clientes:'Clientes',
     clientes_listado:'Listado de clientes',productos:'Productos',listas_precios:'Listas de precios',
     bodega:'Bodega',cuentas_corrientes:'Cuentas corrientes',
@@ -25,7 +25,7 @@
     condiciones_tributarias:'Condiciones tributarias',
     paises:'Países',regiones:'Regiones',provincias:'Provincias',
     comunas:'Comunas',ciudades:'Ciudades'};
-  let current='inicio',online=false,reservasDisponibles=false,reservasSeq=0;
+  let current='inicio',online=false,reservasDisponibles=false,reservasSeq=0,mermasDisponibles=false,mermasSeq=0;
   const logged=()=>Boolean(acl()?.authenticated());
   const recoveringNow=()=>Boolean(window.RutaHDRecuperacion?.isActive());
 
@@ -60,7 +60,7 @@
     for(const key of Object.keys(CONSULTAS)){
       const b=$('.sidebar [data-nav="'+key+'"]');if(b)b.hidden=!allowed(key);
     }
-    for(const key of ['bodega_ajuste_rapido','bodega_ajustes_generales','bodega_traspasos','bodega_conteos','bodega_reservas','administracion_inventario','administracion_sucursales']){const b=$('.sidebar [data-nav="'+key+'"]');if(b)b.hidden=!allowed(key);}
+    for(const key of ['bodega_ajuste_rapido','bodega_ajustes_generales','bodega_traspasos','bodega_conteos','bodega_reservas','bodega_mermas','administracion_inventario','administracion_sucursales']){const b=$('.sidebar [data-nav="'+key+'"]');if(b)b.hidden=!allowed(key);}
     $('#toggleBodegaSubnav').hidden=!logged()||!(acl().has('inventario.gestionar')||allowed('bodega_ajuste_rapido'));
     const clientsToggle=$('#toggleClientSubnav');
     if(clientsToggle)clientsToggle.hidden=!logged();
@@ -223,6 +223,7 @@
     if(section==='administracion_documentos')return acl().isAdmin()||acl().has('administracion.documentos.ver');
     if(section==='administracion_inventario')return acl().isAdmin()||acl().has('inventario.catalogos.ver');
     if(section==='administracion_sucursales')return acl().isAdmin();
+    if(section==='bodega_mermas')return mermasDisponibles&&(acl().isAdmin()||acl().has('inventario.operaciones.ver'));
     if(section==='bodega_reservas')return reservasDisponibles&&(acl().isAdmin()||acl().has('inventario.operaciones.ver'));
     if(['bodega_ajuste_rapido','bodega_ajustes_generales','bodega_traspasos','bodega_conteos'].includes(section))return acl().isAdmin()||acl().has('inventario.operaciones.ver');
     if(section.startsWith('ubicaciones.'))
@@ -330,6 +331,9 @@
     }else if(section==='administracion_inventario'){
       $('#workspaceDescription').textContent='Grupos, motivos y códigos oficiales de inventario.';
       window.RutaHDInventarioV104.catalogs(content);
+    }else if(section==='bodega_mermas'){
+      $('#workspaceDescription').textContent='Registro de pérdidas físicas y respaldos de inventario.';
+      window.RutaHDInventarioV104.mermas(content);
     }else if(section==='bodega_reservas'){
       $('#workspaceDescription').textContent='Reservas, liberaciones y vencimientos de inventario.';
       window.RutaHDInventarioV104.reservations(content);
@@ -392,11 +396,19 @@
     }catch{if(ticket!==reservasSeq||!logged())return;reservasDisponibles=false;}
     menuAccess();
   }
+  async function refreshMermaAccess(){
+    const ticket=++mermasSeq;
+    if(!logged()||!(acl().isAdmin()||acl().has('inventario.operaciones.ver')))return;
+    try{const x=await api().mermaCapabilities();if(ticket!==mermasSeq||!logged())return;mermasDisponibles=x?.habilitado===true;}
+    catch{if(ticket!==mermasSeq||!logged())return;mermasDisponibles=false;}
+    menuAccess();
+  }
   function loggedIn(){
+    mermasDisponibles=false;++mermasSeq;
     reservasDisponibles=false;
     ++reservasSeq;
     menuAccess();
-    void refreshReservationAccess();
+    void refreshReservationAccess();void refreshMermaAccess();
     clearMenuSearch();
     const requested=location.hash.slice(1)||'inicio';
     navigate(allowed(requested)?requested:'inicio');
@@ -406,6 +418,7 @@
     $('.environment-notice').hidden=true;
   }
   function loggedOut(){
+    mermasDisponibles=false;++mermasSeq;
     reservasDisponibles=false;++reservasSeq;
     menuAccess();
     clearMenuSearch();
