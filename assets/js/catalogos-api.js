@@ -325,7 +325,7 @@
     specialLossAttachment: (rid,aid)=>sendBinary('/inventario/perdidas-especiales/'+id(rid)+'/respaldos/'+id(aid),'GET',null,true),
     specialLossAction: (rid,action,data)=>{if(!['aprobar','anular','confirmar'].includes(action))throw Error('Acción inválida.');return send('/inventario/perdidas-especiales/'+id(rid)+'/'+action,'POST',data);},
     lossRecoveryCapabilities: ()=>send('/inventario/recuperaciones-perdidas/capacidades'),
-    lossRecoveryes: (page=1,buscar='')=>send('/inventario/recuperaciones-perdidas?'+new URLSearchParams({page:String(page),buscar})),
+    lossRecoveries: (page=1,buscar='')=>send('/inventario/recuperaciones-perdidas?'+new URLSearchParams({page:String(page),buscar})),
     lossRecovery: rid=>send('/inventario/recuperaciones-perdidas/'+id(rid)),
     lossRecoveryPreview: data=>send('/inventario/recuperaciones-perdidas/revision','POST',data),
     lossRecoveryCreate: data=>{if(!(data instanceof FormData))throw Error('Adjunte los respaldos.');return send('/inventario/recuperaciones-perdidas','POST',data);},
