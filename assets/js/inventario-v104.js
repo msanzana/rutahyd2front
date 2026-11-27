@@ -339,6 +339,124 @@ function countCancel(id,reload){
  content.append(el('p','Se conservará el historial. No se anulan movimientos confirmados.'),field('Motivo de anulación',reason),status);foot.append(back,save);d.addEventListener('cancel',e=>{if(busy)e.preventDefault();});
 }
 
+
+/* V109E5C: formularios candidatos. La API debe autorizar cada acción explícitamente. */
+const reservationPermission={crear:'gestionar',aprobar:'aprobar',confirmar:'confirmar',anular:'anular',liberar:'gestionar',programar:'gestionar',vencer:'gestionar'};
+function reservationAllowed(x,key,op=null){
+ const permission=reservationPermission[key];
+ if(!permission||x?.escrituras_habilitadas!==true||!can('inventario.operaciones.'+permission))return false;
+ return op?op.acciones_habilitadas?.[key]===true:x.acciones_habilitadas?.[key]===true;
+}
+function reservationQty(value){
+ const q=String(value??'').trim().replace(',','.');
+ if(!/^(?:0|[1-9][0-9]{0,19})(?:\.[0-9]{1,8})?$/.test(q))throw Error('Ingrese una cantidad positiva de hasta ocho decimales.');
+ const [a,b='']=q.split('.');const exact=BigInt(a+b.padEnd(8,'0'));
+ if(exact<=0n)throw Error('La cantidad debe ser mayor que cero.');
+ return {q,exact};
+}
+function reservationId(v){
+ const s=String(v??'').trim();
+ if(!/^[1-9][0-9]*$/.test(s)||!Number.isSafeInteger(Number(s)))throw Error('Identificador inválido.');
+ return Number(s);
+}
+function reservationForm(title,description,build,submit,reload,done=null){
+ const {d,content,foot,close}=modal(title),status=el('p',null,'hd-doc-status'),body=el('div');
+ status.setAttribute('aria-live','polite');content.append(el('p',description),body,status);
+ const fields=build(body);let busy=false,payload=null;
+ const back=btn('Cerrar',()=>{if(!busy)d.close();});
+ const save=btn('Guardar',async()=>{
+  if(busy)return;
+  try{if(payload===null)payload=fields.read();}catch(e){error(status,e);return;}
+  busy=true;save.disabled=true;back.disabled=true;close.disabled=true;
+  for(const n of body.querySelectorAll('input,select,textarea,button'))n.disabled=true;
+  status.textContent='Procesando…';
+  try{const result=await submit(payload);d.close();void reload();if(done)void done(result);}
+  catch(e){error(status,e);status.append(document.createTextNode(' Puede reintentar la misma solicitud o cerrar y revisar el listado.'));}
+  finally{busy=false;if(d.open){save.disabled=false;back.disabled=false;close.disabled=false;}}
+ },'button primary');
+ foot.append(back,save);d.addEventListener('cancel',e=>{if(busy)e.preventDefault();});return d;
+}
+function reservationReason(body,label='Justificación'){
+ const n=el('textarea');n.rows=3;n.maxLength=1000;body.append(field(label,n));
+ return ()=>{const v=n.value.trim();if(v.length<10)throw Error('Ingrese una justificación de al menos diez caracteres.');return v;};
+}
+function reservationCreateForm(reload){
+ const token=uuid();
+ reservationForm('Nueva reserva','La solicitud no compromete existencias hasta su aprobación y confirmación.',body=>{
+  const code=input(),note=input(),warehouse=el('select'),t=table(['SKU','Producto','Bodega','Cantidad','Acciones']),entries=new Map();
+  code.value='Automático';code.disabled=true;note.inputMode='numeric';warehouse.append(opt('','Seleccione bodega'));
+  body.append(field('Código',code),field('Nota de venta (ID)',note),field('Bodega',warehouse));
+  const reason=reservationReason(body);
+  function redraw(){
+   t.b.replaceChildren();
+   for(const [key,p] of entries){const tr=el('tr');for(const v of [p.sku,p.name,p.warehouse])tr.append(el('td',v));const q=el('td');q.append(p.qty);tr.append(q);const a=el('td');a.append(window.RutaHDListUI.action('Quitar '+p.sku,()=>{entries.delete(key);redraw();},{kind:'eliminar'}));tr.append(a);t.b.append(tr);}
+   if(!entries.size)empty(t.b,5,'Agregue hasta 50 pares de producto y bodega.');
+  }
+  const find=btn('Buscar producto',async()=>{
+   try{
+    const bid=reservationId(warehouse.value),wn=warehouse.selectedOptions[0]?.textContent;
+    const v=await window.RutaHDBuscadorProductos.openSingle({title:'Producto para reservar'});
+    if(!v||!body.isConnected||find.disabled)return;
+    const p=Array.isArray(v)?v[0]:v,pid=reservationId(p.producto_id??p.id),key=pid+':'+bid;
+    if(entries.has(key))throw Error('El producto ya está agregado en esta bodega.');
+    if(entries.size>=50)throw Error('Máximo 50 pares de producto y bodega.');
+    const qty=input();qty.inputMode='decimal';qty.value='1';qty.setAttribute('aria-label','Cantidad '+(p.sku||pid));
+    entries.set(key,{pid,bid,qty,sku:p.sku||String(pid),name:p.nombre??p.producto??'—',warehouse:wn});redraw();findStatus.textContent='';
+   }catch(e){error(findStatus,e);}
+  });
+  const findStatus=el('p',null,'hd-doc-status');body.append(find,findStatus,t.wrap);redraw();
+  void(async()=>{try{const x=await api().transferWarehouses();if(body.isConnected)for(const b of x.bodegas||[])warehouse.append(opt(b.id,b.nombre));}catch(e){if(body.isConnected)error(findStatus,e);}})();
+  return {read:()=>{if(!entries.size)throw Error('Agregue al menos un producto.');return {nota_venta_id:reservationId(note.value),justificacion:reason(),token_creacion:token,items:[...entries.values()].map(p=>({producto_id:p.pid,bodega_id:p.bid,cantidad:reservationQty(p.qty.value).q}))};}};
+ },data=>api().reservationCreate(data),reload,x=>reservationDetail(x.id,reload));
+}
+function reservationReleaseForm(x,reload){
+ const h=x.reserva,token=uuid();
+ reservationForm('Solicitar liberación','La liberación devuelve cantidades comprometidas al disponible únicamente después de confirmarse.',body=>{
+  const rows=[],t=table(['SKU','Producto','Bodega','Saldo documental','Cantidad a liberar']);
+  for(const l of x.detalles||[]){
+   if(!l.saldo_documental||/^0(?:\.0+)?$/.test(String(l.saldo_documental)))continue;
+   const tr=el('tr');for(const v of [l.sku,l.producto,l.bodega,num(l.saldo_documental)])tr.append(el('td',v));
+   const n=input();n.inputMode='decimal';n.placeholder='0';n.setAttribute('aria-label','Liberar '+l.sku+' '+l.bodega);const td=el('td');td.append(n);tr.append(td);t.b.append(tr);rows.push({l,n});
+  }
+  body.append(t.wrap);const reason=reservationReason(body);
+  return {read:()=>{
+   const items=[];for(const {l,n} of rows){
+    const v=n.value.trim().replace(',','.');if(!v||/^0(?:\.0+)?$/.test(v))continue;
+    const q=reservationQty(v);if(q.exact>reservationQty(l.saldo_documental).exact)throw Error('La cantidad supera el saldo documental.');
+    items.push({producto_id:reservationId(l.producto_id),bodega_id:reservationId(l.bodega_id),cantidad:q.q});
+   }
+   if(!items.length)throw Error('Indique al menos una cantidad a liberar.');
+   return {items,motivo:reason(),token_creacion:token};
+  }};
+ },data=>api().reservationRelease(h.id,data),reload,()=>reservationDetail(h.id,reload));
+}
+function reservationOperationForm(x,o,action,reload){
+ const h=x.reserva,release=Number(o.motivo_codigo_snapshot)===711,token=uuid(),version=reservationId(o.version);
+ const title={aprobar:'Aprobar solicitud',confirmar:'Confirmar operación',anular:'Anular solicitud'}[action];
+ const description=action==='confirmar'?(release?'Se devolverá stock comprometido al disponible.':'Se reclasificará stock disponible a comprometido.'):'Esta acción no modifica el inventario.';
+ const send=data=>action==='anular'?api().reservationCancel(h.id,o.id,data):release?api().reservationReleaseAction(h.id,o.id,action,data):api().reservationAction(h.id,action,data);
+ reservationForm(title,description,body=>{
+  body.append(el('h3',o.numero_interno||h.numero_interno));
+  if(action==='confirmar'){
+   const agree=input('checkbox');body.append(field('Confirmo la operación de inventario',agree));
+   return {read:()=>{if(!agree.checked)throw Error('Debe confirmar la operación.');return {version,token_confirmacion:token};}};
+  }
+  const reason=reservationReason(body,action==='anular'?'Motivo de anulación':'Justificación de aprobación');
+  return {read:()=>({version,motivo:reason()})};
+ },send,reload,()=>{if(!(action==='anular'&&!release))void reservationDetail(h.id,reload);});
+}
+function reservationExpiryForm(x,action,reload){
+ const h=x.reserva,token=uuid(),program=action==='programar';
+ reservationForm(program?'Programar vencimiento':'Solicitar liberación por vencimiento',program?'La fecha no libera existencias automáticamente.':'Se solicitará la liberación del saldo pendiente; exige aprobación y confirmación.',body=>{
+  if(program){
+   const date=input('datetime-local');date.step='1';body.append(field('Fecha y hora de vencimiento',date));const reason=reservationReason(body);
+   return {read:()=>{let v=date.value.replace('T',' ');if(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(v))v+=':00';if(!/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(v))throw Error('Ingrese fecha y hora.');return {vence_en:v,motivo:reason()};}};
+  }
+  const check=input('checkbox');body.append(field('Solicitar liberación de todo el saldo pendiente',check));
+  return {read:()=>{if(!check.checked)throw Error('Confirme la solicitud.');return {token_creacion:token};}};
+ },data=>api().reservationExpiry(h.id,program?'programar':'solicitar',data),reload,()=>reservationDetail(h.id,reload));
+}
+
 /* V109E5B1: consultas de reservas; sin mutaciones ni saldos acreditados. */
 const reservationLabels={PENDIENTE:'Pendiente',ACTIVA:'Activa',PARCIAL:'Parcial',CONSUMIDA:'Consumida',LIBERADA:'Liberada'};
 const reservationState=x=>reservationLabels[x]||'Estado no reconocido';
@@ -350,16 +468,18 @@ function reservations(root){
  const toggle=btn('Búsqueda avanzada',()=>{advanced.hidden=!advanced.hidden;toggle.setAttribute('aria-expanded',String(!advanced.hidden));});toggle.setAttribute('aria-expanded','false');
  top.setAttribute('aria-label','Paginación superior');bottom.setAttribute('aria-label','Paginación inferior');status.setAttribute('aria-live','polite');
  let page=1,seq=0,term='',filters={};
- bar.append(field('Buscar',query),search,toggle);
+ const create=btn('+ Nueva reserva',()=>reservationCreateForm(load),'button primary hd-v70-new');create.hidden=true;create.style.marginInlineStart='auto';
+ bar.append(field('Buscar',query),search,toggle,create);
  advanced.append(field('Estado',state),field('Bodega',warehouse),field('Nota de venta',note),btn('Limpiar',()=>{query.value='';state.value='';warehouse.value='';note.value='';term='';filters={};void load(1);}));
  form.append(bar,advanced);section.append(form,status,top,t.wrap,bottom);root.replaceChildren(section);
  async function load(p=page){
-  const ticket=++seq;page=p;status.textContent='Cargando reservas…';section.setAttribute('aria-busy','true');t.b.replaceChildren();top.replaceChildren();bottom.replaceChildren();
+  const ticket=++seq;page=p;create.hidden=true;status.textContent='Cargando reservas…';section.setAttribute('aria-busy','true');t.b.replaceChildren();top.replaceChildren();bottom.replaceChildren();
   try{
    const x=await api().reservations(page,term,filters);if(ticket!==seq||!section.isConnected)return;
-   for(const m of x.data||[])row(t.b,[m.numero_interno,m.nota_venta_id?'NV #'+m.nota_venta_id:'—',m.creado_en,m.vence_en?(m.vence_en+(m.vencimiento_alcanzado?' · Vencida':'')):'Sin fecha',reservationState(m.estado)],window.RutaHDListUI.action('Ver '+m.numero_interno,()=>reservationDetail(m.id),{kind:'ver'}));
+   create.hidden=!reservationAllowed(x,'crear');
+   for(const m of x.data||[])row(t.b,[m.numero_interno,m.nota_venta_id?'NV #'+m.nota_venta_id:'—',m.creado_en,m.vence_en?(m.vence_en+(m.vencimiento_alcanzado?' · Vencida':'')):'Sin fecha',reservationState(m.estado)],window.RutaHDListUI.action('Ver '+m.numero_interno,()=>reservationDetail(m.id,load),{kind:'ver'}));
    if(!(x.data||[]).length)empty(t.b,6,'Sin reservas para esta búsqueda.');
-   status.textContent='Consulta documental. Las operaciones de escritura no están habilitadas.';
+   status.textContent=x.escrituras_habilitadas===true?'':'Consulta documental. Las operaciones de escritura no están habilitadas.';
    const o={page:x.current_page||page,pages:x.last_page||1,total:x.total||0,autoTop:false,onPage:n=>{void load(n);section.scrollIntoView({block:'start'});}};
    window.RutaHDListUI.renderPager(top,o);window.RutaHDListUI.renderPager(bottom,o);
   }catch(e){if(ticket===seq&&section.isConnected){error(status,e);empty(t.b,6,'No fue posible cargar las reservas.');}}
@@ -368,7 +488,7 @@ function reservations(root){
  form.onsubmit=e=>{e.preventDefault();if(!form.reportValidity())return;term=query.value.trim();filters={};if(state.value)filters.estado=state.value;if(warehouse.value)filters.bodega_id=warehouse.value;if(note.value.trim())filters.nota_venta_id=note.value.trim();void load(1);};
  void load();void(async()=>{try{const x=await api().transferWarehouses();if(section.isConnected)for(const b of x.bodegas||[])warehouse.append(opt(b.id,b.nombre));}catch(e){if(section.isConnected){warehouse.disabled=true;warehouse.title='No se pudo cargar el filtro de bodegas';}}})();
 }
-async function reservationDetail(id){
+async function reservationDetail(id,reload=()=>{}){
  const {d,content,foot}=modal('Ficha de reserva'),status=el('p','Cargando reserva…','hd-doc-status');
  status.setAttribute('aria-live','polite');content.append(status);content.setAttribute('aria-busy','true');foot.append(btn('Cerrar',()=>d.close()));
  try{
@@ -379,11 +499,14 @@ async function reservationDetail(id){
   const lines=table(['SKU','Producto','Bodega','Cantidad solicitada','Liberada','Despachada','Solicitud pendiente','Saldo documental']);
   for(const l of x.detalles||[])row(lines.b,[l.sku,l.producto,l.bodega,num(l.cantidad_reservada),num(l.cantidad_liberada),num(l.cantidad_despachada),num(l.cantidad_solicitada_pendiente),num(l.saldo_documental)]);
   if(!(x.detalles||[]).length)empty(lines.b,8,'Sin productos.');
-  const ops=table(['Número','Motivo','Estado','Creación','Aprobación','Confirmación']);
-  for(const o of x.operaciones||[])row(ops.b,[o.numero_interno,o.motivo_nombre_snapshot||o.motivo_codigo_snapshot,o.estado,o.creado_en,o.aprobado_en,o.confirmado_en]);
-  if(!(x.operaciones||[]).length)empty(ops.b,6,'Sin operaciones visibles.');
+  const ops=table(['Número','Motivo','Estado','Creación','Aprobación','Confirmación','Acciones']);
+  for(const o of x.operaciones||[]){const actions=el('div');if([710,711].includes(Number(o.motivo_codigo_snapshot)))for(const key of ['aprobar','confirmar','anular']){if(reservationAllowed(x,key,o))actions.append(window.RutaHDListUI.action(({aprobar:'Aprobar',confirmar:'Confirmar',anular:'Anular'})[key],()=>{d.close();reservationOperationForm(x,o,key,reload);},{kind:key==='anular'?'eliminar':'editar'}));}if(!actions.childNodes.length)actions.append(el('span','—'));row(ops.b,[o.numero_interno,o.motivo_nombre_snapshot||o.motivo_codigo_snapshot,o.estado,o.creado_en,o.aprobado_en,o.confirmado_en],actions);}
+  if(!(x.operaciones||[]).length)empty(ops.b,7,'Sin operaciones visibles.');
   status.textContent='Saldo documental de la reserva; no acredita stock disponible para operar.';
   content.replaceChildren(summary,el('h3','Productos de la reserva'),lines.wrap,el('h3','Operaciones asociadas'),ops.wrap,status);
+  if(reservationAllowed(x,'liberar'))foot.append(btn('Liberar reserva',()=>{d.close();reservationReleaseForm(x,reload);},'button primary'));
+  if(reservationAllowed(x,'programar'))foot.append(btn('Programar vencimiento',()=>{d.close();reservationExpiryForm(x,'programar',reload);}));
+  if(reservationAllowed(x,'vencer'))foot.append(btn('Solicitar liberación por vencimiento',()=>{d.close();reservationExpiryForm(x,'solicitar',reload);}));
   if(x.pdf_habilitado===true){
    const download=window.RutaHDListUI.action('Descargar comprobante PDF',async()=>{
     if(download.disabled||!d.open)return;download.disabled=true;
